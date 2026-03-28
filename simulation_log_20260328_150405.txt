@@ -1,0 +1,215 @@
+==================================================
+GLOBAL XENON MODEL — SIMULATION LOG
+timestamp_start: 2026-03-28 15:04:05
+timestamp_end:   2026-03-28 15:04:05
+runtime_seconds: 6.921
+solver_mode:     method=4
+config_file:     params.txt
+==================================================
+
+--------------------------------------------------
+SIMULATION PARAMETERS
+--------------------------------------------------
+Radius Entladungsgefaess           |   2.000000e-02 |      m | R
+Laenge Entladungsgefaess           |   4.000000e-02 |      m | L
+Transparenz Ionen                  |   5.000000e-01 |      - | betai
+Transparenz Neutralgas             |   5.145000e-02 |      - | betag
+Anregefrequenz                     |   2.500000e+06 |     Hz | frequency
+Spulenwindungen                    |   6.000000e+00 |      - | Nw
+Ohmscher Widerstand Spule          |   3.600000e-01 |    Ohm | R_ohm
+Spulenradius                       |   2.000000e-02 |      m | Rc
+Spulenlaenge                       |   4.000000e-02 |      m | lc
+Screengitter-Spannung              |   1.500000e+03 |      V | Vgrid
+Gitterabstand                      |   1.000000e-03 |      m | sgrid
+DC-Leistung RFG (Startwert)        |   1.800000e+01 |      W | P_RFG
+Max RF-Leistung                    |   8.000000e+01 |      W | P_RFG_max
+Massenfluss (Startwert)            |   9.900000e-01 |   sccm | Q0sccm
+--------------------------------------------------
+Q0sccm Start                       |   2.700000e-01 |   sccm | Q0sccm_start
+Q0sccm Schritt                     |   1.000000e-02 |   sccm | Q0sccm_step
+Anzahl Schritte                    |   7.300000e+01 |      - | jjmax
+Ziel-Strahlstrom                   |   1.500000e+01 |     mA | I_soll
+--------------------------------------------------
+Volumen V                          |   5.026548e-05 |    m^3 | V
+Wandflaeche A                      |   7.539822e-03 |    m^2 | A
+omega                              |   1.570796e+07 |  rad/s | omega
+k0                                 |   5.239613e-02 |    1/m | k_0
+Ag (Gasaustritt)                   |   6.465398e-05 |    m^2 | Ag
+Ai (Ionenaustritt)                 |   6.283185e-04 |    m^2 | Ai
+Lambda_0 (therm. Diffusion)        |   2.104840e-02 |      m | lambda_0
+L_coil                             |   1.421223e-06 |      H | L_coil
+J_CL (Child-Langmuir)              |   2.771583e+02 |  A/m^2 | J_CL
+newton_tol                         |   1.000000e-02 |    rel | newton_tol
+
+--------------------------------------------------
+RESULT TABLE
+--------------------------------------------------
+idx  | Q0_sccm  | status                | P_sol_W       | I_mA      | Te_eV   | Tg_K    | n_m-3       | ng_m-3      | resid     | note
+----------------------------------------------------------------------------------------------------------------------------------
+0    | 0.2700   | CONVERGED             |          63.67|     15.036|    6.789|    294.5|     1.38e+17|     7.44e+18|    8.6e-04| ok
+1    | 0.2800   | CONVERGED             |          37.86|     15.023|    6.534|    294.6|     1.41e+17|     8.00e+18|    3.4e-03| ok
+2    | 0.2900   | CONVERGED             |          30.74|     14.990|    6.361|    294.7|     1.43e+17|     8.45e+18|    6.5e-03| ok
+3    | 0.3000   | CONVERGED             |          27.04|     14.975|    6.222|    294.8|     1.44e+17|     8.86e+18|    9.5e-03| ok
+4    | 0.3100   | CONVERGED             |          21.24|     15.002|    5.850|    295.0|     1.50e+17|     1.01e+19|    9.6e-03| ok
+5    | 0.3200   | CONVERGED             |          18.37|     15.005|    5.538|    295.2|     1.54e+17|     1.13e+19|    9.6e-03| ok
+6    | 0.3300   | NUMERICAL_FAIL        |              -|   14.90106|        -|        -|            -|            -|          -| power bisection max iter
+7    | 0.3400   | CONVERGED             |          15.47|     15.029|    5.049|    295.6|     1.63e+17|     1.40e+19|    8.8e-03| ok
+8    | 0.3500   | NUMERICAL_FAIL        |              -|   14.91563|        -|        -|            -|            -|          -| power bisection max iter
+9    | 0.3600   | CONVERGED             |          14.10|     15.012|    4.725|    296.0|     1.70e+17|     1.65e+19|    8.9e-03| ok
+10   | 0.3700   | CONVERGED             |          13.56|     14.977|    4.582|    296.2|     1.73e+17|     1.79e+19|    8.7e-03| ok
+11   | 0.3800   | CONVERGED             |          13.24|     14.958|    4.484|    296.4|     1.75e+17|     1.90e+19|    9.4e-03| ok
+12   | 0.3900   | NUMERICAL_FAIL        |              -|   14.86400|        -|        -|            -|            -|          -| power bisection max iter
+13   | 0.4000   | NUMERICAL_FAIL        |              -|   14.87649|        -|        -|            -|            -|          -| power bisection max iter
+14   | 0.4100   | NUMERICAL_FAIL        |              -|   15.13390|        -|        -|            -|            -|          -| power bisection max iter
+15   | 0.4200   | CONVERGED             |          12.16|     14.957|    4.094|    297.3|     1.86e+17|     2.45e+19|    7.8e-03| ok
+16   | 0.4300   | NUMERICAL_FAIL        |              -|   14.94190|        -|        -|            -|            -|          -| power bisection max iter
+17   | 0.4400   | NUMERICAL_FAIL        |              -|   14.94064|        -|        -|            -|            -|          -| power bisection max iter
+18   | 0.4500   | NUMERICAL_FAIL        |              -|   14.85030|        -|        -|            -|            -|          -| power bisection max iter
+19   | 0.4600   | NUMERICAL_FAIL        |              -|   14.87216|        -|        -|            -|            -|          -| power bisection max iter
+20   | 0.4700   | CONVERGED             |          11.62|     14.984|    3.815|    298.2|     1.96e+17|     3.03e+19|    9.3e-03| ok
+21   | 0.4800   | CONVERGED             |          11.46|     14.982|    3.752|    298.4|     1.99e+17|     3.18e+19|    8.1e-03| ok
+22   | 0.4900   | CONVERGED             |          11.44|     15.002|    3.707|    298.7|     2.01e+17|     3.30e+19|    8.2e-03| ok
+23   | 0.5000   | CONVERGED             |          11.30|     14.983|    3.644|    298.9|     2.03e+17|     3.48e+19|    6.4e-03| ok
+24   | 0.5100   | CONVERGED             |          11.24|     14.983|    3.609|    299.1|     2.05e+17|     3.59e+19|    6.9e-03| ok
+25   | 0.5200   | CONVERGED             |          11.17|     14.988|    3.561|    299.4|     2.07e+17|     3.75e+19|    5.8e-03| ok
+26   | 0.5300   | CONVERGED             |          11.22|     15.013|    3.559|    299.4|     2.08e+17|     3.77e+19|    9.3e-03| ok
+27   | 0.5400   | CONVERGED             |          11.14|     14.997|    3.513|    299.7|     2.10e+17|     3.92e+19|    8.2e-03| ok
+28   | 0.5500   | CONVERGED             |          11.08|     14.999|    3.469|    299.9|     2.12e+17|     4.09e+19|    7.0e-03| ok
+29   | 0.5600   | NUMERICAL_FAIL        |              -|   14.86191|        -|        -|            -|            -|          -| power bisection max iter
+30   | 0.5700   | NUMERICAL_FAIL        |              -|   14.86387|        -|        -|            -|            -|          -| power bisection max iter
+31   | 0.5800   | CONVERGED             |          11.02|     15.019|    3.401|    300.4|     2.16e+17|     4.37e+19|    9.6e-03| ok
+32   | 0.5900   | CONVERGED             |          10.98|     15.015|    3.366|    300.6|     2.18e+17|     4.53e+19|    8.6e-03| ok
+33   | 0.6000   | CONVERGED             |          10.94|     15.015|    3.334|    300.9|     2.20e+17|     4.67e+19|    7.9e-03| ok
+34   | 0.6100   | CONVERGED             |          10.89|     15.015|    3.297|    301.2|     2.22e+17|     4.85e+19|    6.3e-03| ok
+35   | 0.6200   | CONVERGED             |          10.86|     14.958|    3.290|    301.2|     2.22e+17|     4.90e+19|    9.1e-03| ok
+36   | 0.6300   | CONVERGED             |          10.82|     15.018|    3.264|    301.5|     2.24e+17|     5.03e+19|    8.3e-03| ok
+37   | 0.6400   | CONVERGED             |          10.81|     15.025|    3.244|    301.6|     2.26e+17|     5.13e+19|    8.8e-03| ok
+38   | 0.6500   | CONVERGED             |          10.80|     15.015|    3.222|    301.9|     2.27e+17|     5.26e+19|    8.9e-03| ok
+39   | 0.6600   | CONVERGED             |          10.80|     15.005|    3.207|    302.0|     2.28e+17|     5.35e+19|    9.9e-03| ok
+40   | 0.6700   | CONVERGED             |          10.73|     15.014|    3.157|    302.5|     2.31e+17|     5.63e+19|    4.8e-03| ok
+41   | 0.6800   | CONVERGED             |          10.75|     15.006|    3.149|    302.6|     2.32e+17|     5.69e+19|    6.9e-03| ok
+42   | 0.6900   | CONVERGED             |          10.73|     15.006|    3.128|    302.8|     2.33e+17|     5.82e+19|    6.6e-03| ok
+43   | 0.7000   | CONVERGED             |          10.71|     15.006|    3.104|    303.1|     2.35e+17|     5.98e+19|    5.5e-03| ok
+44   | 0.7100   | CONVERGED             |          10.70|     15.006|    3.085|    303.3|     2.37e+17|     6.11e+19|    5.1e-03| ok
+45   | 0.7200   | CONVERGED             |          10.67|     15.005|    3.057|    303.6|     2.39e+17|     6.31e+19|    2.8e-03| ok
+46   | 0.7300   | CONVERGED             |          10.66|     15.003|    3.037|    303.9|     2.40e+17|     6.45e+19|    2.1e-03| ok
+47   | 0.7400   | CONVERGED             |          10.65|     15.003|    3.021|    304.1|     2.42e+17|     6.58e+19|    2.0e-03| ok
+48   | 0.7500   | CONVERGED             |          10.64|     15.003|    3.004|    304.3|     2.43e+17|     6.71e+19|    1.8e-03| ok
+49   | 0.7600   | CONVERGED             |          10.64|     15.003|    2.989|    304.5|     2.44e+17|     6.83e+19|    1.7e-03| ok
+50   | 0.7700   | CONVERGED             |          10.63|     15.003|    2.974|    304.8|     2.46e+17|     6.96e+19|    1.5e-03| ok
+51   | 0.7800   | CONVERGED             |          10.66|     15.011|    2.976|    304.8|     2.46e+17|     6.96e+19|    5.4e-03| ok
+52   | 0.7900   | CONVERGED             |          10.65|     15.011|    2.961|    305.0|     2.47e+17|     7.10e+19|    4.9e-03| ok
+53   | 0.8000   | NUMERICAL_FAIL        |              -|   14.85717|        -|        -|            -|            -|          -| power bisection max iter
+54   | 0.8100   | NUMERICAL_FAIL        |              -|   14.85313|        -|        -|            -|            -|          -| power bisection max iter
+55   | 0.8200   | NUMERICAL_FAIL        |              -|   14.85830|        -|        -|            -|            -|          -| power bisection max iter
+56   | 0.8300   | NUMERICAL_FAIL        |              -|   14.87545|        -|        -|            -|            -|          -| power bisection max iter
+57   | 0.8400   | NUMERICAL_FAIL        |              -|   14.87053|        -|        -|            -|            -|          -| power bisection max iter
+58   | 0.8500   | NUMERICAL_FAIL        |              -|   14.87861|        -|        -|            -|            -|          -| power bisection max iter
+59   | 0.8600   | NUMERICAL_FAIL        |              -|   14.87862|        -|        -|            -|            -|          -| power bisection max iter
+60   | 0.8700   | NUMERICAL_FAIL        |              -|   14.87871|        -|        -|            -|            -|          -| power bisection max iter
+61   | 0.8800   | NUMERICAL_FAIL        |              -|   14.88295|        -|        -|            -|            -|          -| power bisection max iter
+62   | 0.8900   | NUMERICAL_FAIL        |              -|   14.88281|        -|        -|            -|            -|          -| power bisection max iter
+63   | 0.9000   | CONVERGED             |          10.62|     15.027|    2.815|    307.6|     2.62e+17|     8.55e+19|    1.1e-03| ok
+64   | 0.9100   | NUMERICAL_FAIL        |              -|   14.88620|        -|        -|            -|            -|          -| power bisection max iter
+65   | 0.9200   | CONVERGED             |          10.62|     14.953|    2.819|    307.5|     2.60e+17|     8.56e+19|    9.0e-03| ok
+66   | 0.9300   | CONVERGED             |          10.62|     14.951|    2.810|    307.7|     2.61e+17|     8.67e+19|    9.5e-03| ok
+67   | 0.9400   | CONVERGED             |          10.62|     14.963|    2.795|    308.0|     2.63e+17|     8.84e+19|    7.8e-03| ok
+68   | 0.9500   | CONVERGED             |          10.62|     14.965|    2.784|    308.3|     2.65e+17|     8.97e+19|    7.5e-03| ok
+69   | 0.9600   | CONVERGED             |          10.62|     14.957|    2.778|    308.4|     2.65e+17|     9.06e+19|    8.7e-03| ok
+70   | 0.9700   | NUMERICAL_FAIL        |              -|   15.12840|        -|        -|            -|            -|          -| power bisection max iter
+71   | 0.9800   | NUMERICAL_FAIL        |              -|   15.16743|        -|        -|            -|            -|          -| power bisection max iter
+72   | 0.9900   | NUMERICAL_FAIL        |              -|   15.17892|        -|        -|            -|            -|          -| power bisection max iter
+
+--------------------------------------------------
+EVENT DETAILS
+--------------------------------------------------
+
+[Q0 idx=6 | Q0_sccm=0.3300]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=8 | Q0_sccm=0.3500]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=12 | Q0_sccm=0.3900]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=13 | Q0_sccm=0.4000]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=14 | Q0_sccm=0.4100]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=16 | Q0_sccm=0.4300]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=17 | Q0_sccm=0.4400]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=18 | Q0_sccm=0.4500]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=19 | Q0_sccm=0.4600]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=29 | Q0_sccm=0.5600]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=30 | Q0_sccm=0.5700]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=53 | Q0_sccm=0.8000]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=54 | Q0_sccm=0.8100]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=55 | Q0_sccm=0.8200]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=56 | Q0_sccm=0.8300]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=57 | Q0_sccm=0.8400]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=58 | Q0_sccm=0.8500]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=59 | Q0_sccm=0.8600]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=60 | Q0_sccm=0.8700]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=61 | Q0_sccm=0.8800]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=62 | Q0_sccm=0.8900]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=64 | Q0_sccm=0.9100]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=70 | Q0_sccm=0.9700]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=71 | Q0_sccm=0.9800]
+  - NUMERICAL_FAIL: power bisection max iter
+
+[Q0 idx=72 | Q0_sccm=0.9900]
+  - NUMERICAL_FAIL: power bisection max iter
+
+--------------------------------------------------
+SUMMARY
+--------------------------------------------------
+total_points                  | 73
+converged                     | 48
+no_physical_solution          | 0
+numerical_fail                | 25
+runtime_seconds               | 6.921
+q0_first_success_sccm         | 0.2700
+q0_last_success_sccm          | 0.9600
+P_solution_range_W            | 10.62 .. 63.67
+Te_range_eV                   | 2.778 .. 6.789
+I_mA_range                    | 14.951 .. 15.036
+--------------------------------------------------

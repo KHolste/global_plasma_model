@@ -11,10 +11,10 @@ lc 0.04
 Vgrid 1500.0
 sgrid 0.001
 P_RFG 18.0
-P_RFG_max 500.0
+P_RFG_max 80.0
 Q0sccm 0.475
-Q0sccm_start 0.24
-Q0sccm_step 0.005
-jjmax 100.0
-I_soll 20.0
+Q0sccm_start 0.27
+Q0sccm_step 0.01
+jjmax 30.0
+I_soll 15.0
 method 4

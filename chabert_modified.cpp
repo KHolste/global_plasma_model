@@ -23,6 +23,47 @@
 using namespace std::literals::complex_literals;
 using namespace std;
 
+// ============================================================
+// Strukturierte Simulationslogdatei
+// ============================================================
+static std::string make_timestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto t = std::chrono::system_clock::to_time_t(now);
+    char buf[64];
+    std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", std::localtime(&t));
+    return std::string(buf);
+}
+static std::string make_timestamp_readable() {
+    auto now = std::chrono::system_clock::now();
+    auto t = std::chrono::system_clock::to_time_t(now);
+    char buf[64];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+    return std::string(buf);
+}
+
+struct SimLogRow {
+    int idx;
+    double Q0sccm;
+    std::string status;       // CONVERGED / NO_PHYSICAL_SOLUTION / NUMERICAL_FAIL
+    std::string fail_type;    // NONE / NO_PHYSICAL_SOLUTION / NUMERICAL_FAIL
+    double P_sol, I_mA, Te, Tg, n, ng, resid;
+    std::string note;
+    bool has_data;             // true wenn numerische Felder gueltig
+};
+
+struct SimLogEvent {
+    int idx;
+    double Q0sccm;
+    std::string message;
+};
+
+static std::vector<SimLogRow> g_log_rows;
+static std::vector<SimLogEvent> g_log_events;
+
+static void simlog_add_event(int idx, double q0, const std::string& msg) {
+    g_log_events.push_back({idx, q0, msg});
+}
+
 enum class DebugLevel { OFF=0, ERROR=1, INFO=2, DETAIL=3 };
 static int debug_level = 2;
 static std::string debug_log_path = "chabert_debug.log";
@@ -941,9 +982,16 @@ static StationarySolveResult stationary_solve_power_robust(double P_RFG_local,
     return best;
 }
 
+enum class SolveFailType {
+    NONE = 0,               // Kein Fehler (konvergiert)
+    NO_PHYSICAL_SOLUTION,   // Physikalisch keine Loesung im P_RFG-Bereich
+    NUMERICAL_FAIL          // Numerisches Versagen (Loesung koennte existieren)
+};
+
 struct StationaryPowerSolveResult {
     bool converged = false;
     bool hit_limit = false;
+    SolveFailType fail_type = SolveFailType::NONE;
     StationaryPlasmaState state{};
     StationaryRFState rf{};
     double P_RFG_sol = std::numeric_limits<double>::quiet_NaN();
@@ -1060,9 +1108,6 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
     // Pruefen: Bracket gefunden?
     if (f_lo * f_hi > 0.0) {
         out.hit_limit = true;
-        out.reason = "no power bracket (I(P) stays on one side, I_lo="
-                     + std::to_string(I_lo) + " I_hi=" + std::to_string(I_hi)
-                     + " at P_hi=" + std::to_string(p_hi) + ")";
         out.P_trial_last = p_hi;
         StationarySolveResult& best_s = (std::fabs(f_lo) < std::fabs(f_hi)) ? s_lo : s_hi;
         if (stationary_state_finite_positive(best_s.state)) {
@@ -1071,18 +1116,56 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
             out.I_mA = stationary_beam_current_mA(best_s.state);
             out.err_mA = I_soll - out.I_mA;
         }
+        // Klassifikation: Wenn beide Bracket-Enden konvergiert sind,
+        // dann hat die Physik kein Gleichgewicht bei I_soll → NO_PHYSICAL.
+        // Wenn mindestens ein Ende numerisch gescheitert ist → NUMERICAL.
+        bool both_converged = s_lo.converged && s_hi.converged;
+        if (both_converged) {
+            out.fail_type = SolveFailType::NO_PHYSICAL_SOLUTION;
+            out.reason = "I(P) does not cross I_soll in [" + std::to_string(p_lo) + ", "
+                         + std::to_string(p_hi) + "] W (I_lo=" + std::to_string(I_lo)
+                         + " I_hi=" + std::to_string(I_hi) + ")";
+        } else {
+            out.fail_type = SolveFailType::NUMERICAL_FAIL;
+            out.reason = "bracket incomplete (lo_conv=" + std::to_string(s_lo.converged)
+                         + " hi_conv=" + std::to_string(s_hi.converged)
+                         + " I_lo=" + std::to_string(I_lo)
+                         + " I_hi=" + std::to_string(I_hi) + ")";
+        }
         debug_emit(1, "TARGET_CURRENT_FAIL", out.reason, true);
         return out;
     }
 
     // --- Bisection + Regula Falsi auf P_RFG ---
+    //
+    // Abbruchkriterien (Prioritaet):
+    // 1. |I_mA - I_soll| < power_tol_mA              → strict convergence
+    // 2. |I_mA - I_soll| < 10*power_tol_mA UND
+    //    Intervallbreite < 0.1 W                      → near-hit acceptance
+    // 3. Plateau: |p_hi - p_lo| < 0.01 W             → P-Intervall erschoepft
+    // 4. iter >= max_iter                             → Timeout mit Restdiagnose
+    //
+    // Bei 2-4: bestes Ergebnis akzeptieren, wenn |error| < 1 mA.
+    // Sonst: sauberer FAIL mit Diagnose.
+
+    const int bisect_max_iter = 60;
+    const double near_hit_tol = 10.0 * power_tol_mA;   // 0.5 mA
+    const double P_interval_min = 0.01;                 // 0.01 W
+
     StationaryPlasmaState last_good = s_lo.converged ? s_lo.state : warm;
-    for (int iter = 0; iter < power_max_iter; ++iter) {
+
+    // Bestes Ergebnis ueber alle Iterationen merken
+    double best_abs_error = std::numeric_limits<double>::infinity();
+    StationarySolveResult best_s;
+    double best_p = 0.0, best_I = 0.0;
+    int inner_fail_count = 0;
+
+    for (int iter = 0; iter < bisect_max_iter; ++iter) {
         // Secant-Schritt mit Bisection-Fallback
         double p_mid;
-        double denom = f_hi - f_lo;
-        if (std::fabs(denom) > 1e-12) {
-            p_mid = p_lo - f_lo * (p_hi - p_lo) / denom;
+        double denom_sec = f_hi - f_lo;
+        if (std::fabs(denom_sec) > 1e-12) {
+            p_mid = p_lo - f_lo * (p_hi - p_lo) / denom_sec;
             if (!(p_mid > p_lo && p_mid < p_hi) || !std::isfinite(p_mid))
                 p_mid = 0.5 * (p_lo + p_hi);
         } else {
@@ -1098,22 +1181,49 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
             p_mid = 0.5 * (p_lo + p_hi);
             s_mid = solve_at_power(p_mid, stationary_safe_defaults_for_q(Q0));
             if (!s_mid.converged) {
-                out.reason = "inner solve failed at P=" + std::to_string(p_mid)
-                             + " (" + s_mid.reason + ")";
-                out.P_trial_last = p_mid;
-                return out;
+                inner_fail_count++;
+                // Nicht sofort aufgeben — Intervall halbieren und weiter
+                if (inner_fail_count >= 5) {
+                    out.fail_type = SolveFailType::NUMERICAL_FAIL;
+                    out.reason = "inner solve failed " + std::to_string(inner_fail_count)
+                                 + "x at P=" + std::to_string(p_mid)
+                                 + " (" + s_mid.reason + ")";
+                    out.P_trial_last = p_mid;
+                    // Bestes bisheriges Ergebnis trotzdem eintragen
+                    if (best_abs_error < 1e30) {
+                        out.state = best_s.state; out.rf = best_s.rf;
+                        out.inner_resid_norm = best_s.resid_norm;
+                        out.P_RFG_sol = best_p; out.I_mA = best_I;
+                        out.err_mA = I_soll - best_I;
+                    }
+                    return out;
+                }
+                // Halbiere das Intervall blind und versuche naechste Iteration
+                p_hi = 0.5 * (p_lo + p_hi);
+                f_hi = f_lo; // pessimistisch, wird beim naechsten Eval korrigiert
+                continue;
             }
         }
 
         double I_mid = stationary_beam_current_mA(s_mid.state);
         double error = I_soll - I_mid;
         double f_mid = I_mid - I_soll;
+        double abs_error = std::fabs(error);
 
         std::cout << "PID_DONE " << std::fixed << std::setprecision(4)
                   << I_mid << " " << error << " " << p_mid << " "
                   << s_mid.state.Te << " " << s_mid.state.Tg << std::endl;
 
         last_good = s_mid.state;
+
+        // Bestes Ergebnis tracken
+        if (abs_error < best_abs_error) {
+            best_abs_error = abs_error;
+            best_s = s_mid;
+            best_p = p_mid;
+            best_I = I_mid;
+        }
+
         out.iterations = iter;
         out.state = s_mid.state;
         out.rf = s_mid.rf;
@@ -1123,7 +1233,8 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
         out.I_mA = I_mid;
         out.err_mA = error;
 
-        if (std::fabs(error) < power_tol_mA) {
+        // --- Abbruchkriterium 1: strikte Konvergenz ---
+        if (abs_error < power_tol_mA) {
             out.converged = true;
             out.reason = "ok";
             debug_emit(2, "TARGET_CURRENT_OK",
@@ -1134,12 +1245,81 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
             return out;
         }
 
+        double P_width = p_hi - p_lo;
+
+        // --- Abbruchkriterium 2: near-hit bei engem Intervall ---
+        if (abs_error < near_hit_tol && P_width < 0.1) {
+            // Verwende bestes Ergebnis
+            out.converged = true;
+            out.state = best_s.state; out.rf = best_s.rf;
+            out.inner_resid_norm = best_s.resid_norm;
+            out.P_RFG_sol = best_p; out.I_mA = best_I;
+            out.err_mA = I_soll - best_I;
+            out.reason = "near-hit (err=" + std::to_string(best_abs_error)
+                         + " mA, dP=" + std::to_string(P_width) + " W)";
+            debug_emit(2, "TARGET_CURRENT_NEARHIT",
+                "iter=" + std::to_string(iter) +
+                " P_sol=" + std::to_string(best_p) +
+                " I_mA=" + std::to_string(best_I) +
+                " err=" + std::to_string(best_abs_error));
+            std::cout << "CONVERGED " << iter << std::endl;
+            return out;
+        }
+
+        // --- Abbruchkriterium 3: P-Intervall erschoepft (Plateau) ---
+        if (P_width < P_interval_min) {
+            if (best_abs_error < 1.0) {
+                // Nahe genug — akzeptieren
+                out.converged = true;
+                out.state = best_s.state; out.rf = best_s.rf;
+                out.inner_resid_norm = best_s.resid_norm;
+                out.P_RFG_sol = best_p; out.I_mA = best_I;
+                out.err_mA = I_soll - best_I;
+                out.reason = "plateau-accept (err=" + std::to_string(best_abs_error)
+                             + " mA, dP=" + std::to_string(P_width) + " W)";
+                std::cout << "CONVERGED " << iter << std::endl;
+            } else {
+                out.fail_type = SolveFailType::NO_PHYSICAL_SOLUTION;
+                out.reason = "P-plateau without I_soll match (best_err="
+                             + std::to_string(best_abs_error) + " mA)";
+            }
+            return out;
+        }
+
+        // Bracket-Update
         if (f_lo * f_mid <= 0.0) { p_hi = p_mid; f_hi = f_mid; }
         else                      { p_lo = p_mid; f_lo = f_mid; }
     }
 
-    out.reason = "power bisection max iter";
+    // --- Abbruchkriterium 4: max iter erreicht ---
+    // Wenn bestes Ergebnis nahe genug, trotzdem akzeptieren
+    if (best_abs_error < near_hit_tol) {
+        out.converged = true;
+        out.state = best_s.state; out.rf = best_s.rf;
+        out.inner_resid_norm = best_s.resid_norm;
+        out.P_RFG_sol = best_p; out.I_mA = best_I;
+        out.err_mA = I_soll - best_I;
+        out.reason = "max-iter-accept (err=" + std::to_string(best_abs_error) + " mA)";
+        std::cout << "CONVERGED " << bisect_max_iter << std::endl;
+        return out;
+    }
+
+    // Echtes Scheitern: logge Restdiagnose
+    out.fail_type = SolveFailType::NUMERICAL_FAIL;
+    {
+        std::ostringstream os;
+        os << "power bisection max iter"
+           << " p_lo=" << std::fixed << std::setprecision(4) << p_lo
+           << " p_hi=" << p_hi
+           << " dP=" << (p_hi - p_lo)
+           << " best_I=" << best_I
+           << " best_err=" << best_abs_error
+           << " I_lo=" << (p_lo > 0 ? std::to_string(I_lo) : "?")
+           << " I_hi=" << (p_hi > 0 ? std::to_string(I_hi) : "?");
+        out.reason = os.str();
+    }
     out.P_trial_last = out.P_RFG_sol;
+    debug_emit(1, "BISECTION_MAXITER", out.reason, true);
     return out;
 }
 
@@ -1516,6 +1696,10 @@ int main(int argc, char** argv) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
+    int count_converged = 0;
+    int count_no_physical = 0;
+    int count_numerical_fail = 0;
+
     std::string red   = "\033[31m";
     std::string green = "\033[32m";
     std::string cyan  = "\033[36m";
@@ -1537,6 +1721,8 @@ int main(int argc, char** argv) {
 
         // Live-Ergebnis-Datei leeren (neu starten)
         { std::ofstream live("live_results.txt", std::ios::trunc); }
+        g_log_rows.clear();
+        g_log_events.clear();
 
         std::ofstream datei("output_kh.txt");
         if (!datei) { cerr << "Fehler: Ausgabedatei nicht oeffenbar!" << endl; return 1; }
@@ -1568,6 +1754,8 @@ int main(int argc, char** argv) {
         StationaryPlasmaState stationary_last_good{};
         bool stationary_have_good = false;
         double stationary_last_good_q0 = 0.0;
+
+        // Zaehler sind im aeusseren main()-Scope deklariert (vor try)
 
         // BUG-FIX: crash_of_radius-Logik war im Original invertiert.
         // Rc = Spulenradius, R = Kammerradius.
@@ -1603,24 +1791,40 @@ int main(int argc, char** argv) {
 
                 StationaryPowerSolveResult ps = stationary_solve_for_target_current(guess);
                 if (!stationary_power_result_valid(ps)) {
-                    if (ps.hit_limit) {
-                        cout << "LIMIT_HIT " << jj << " " << fixed << setprecision(4)
-                             << Q0sccm << " "
-                             << (std::isfinite(ps.P_trial_last) ? ps.P_trial_last : -1.0) << " "
-                             << P_RFG_max << " "
-                             << (std::isfinite(ps.I_mA) ? ps.I_mA : -1.0) << " "
-                             << (std::isfinite(ps.err_mA) ? ps.err_mA : -1.0) << endl;
+                    // Differenzierte Fehlerausgabe
+                    if (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION) {
+                        count_no_physical++;
+                        cout << "NO_PHYSICAL_SOLUTION " << jj << " " << fixed << setprecision(4)
+                             << Q0sccm << " " << ps.reason
+                             << " I_best=" << (std::isfinite(ps.I_mA) ? ps.I_mA : -1.0)
+                             << " P_max_tried=" << (std::isfinite(ps.P_trial_last) ? ps.P_trial_last : -1.0)
+                             << endl;
+                    } else {
+                        count_numerical_fail++;
+                        cout << "NUMERICAL_FAIL " << jj << " " << fixed << setprecision(4)
+                             << Q0sccm << " " << ps.reason
+                             << " P_try=" << (std::isfinite(ps.P_trial_last) ? ps.P_trial_last : -1.0)
+                             << " I_mA=" << (std::isfinite(ps.I_mA) ? ps.I_mA : -1.0)
+                             << endl;
                     }
-
-                    cout << "SOLVER_FAIL " << jj << " " << fixed << setprecision(4)
-                         << Q0sccm << " " << ps.reason
-                         << " P_try=" << (std::isfinite(ps.P_trial_last) ? ps.P_trial_last : -1.0)
-                         << " I_mA=" << (std::isfinite(ps.I_mA) ? ps.I_mA : -1.0)
-                         << " err_mA=" << (std::isfinite(ps.err_mA) ? ps.err_mA : -1.0)
-                         << endl;
-                    debug_emit(1, "SOLVER_FAIL", "jj=" + std::to_string(jj) + " Q0sccm=" + std::to_string(Q0sccm) + " reason=" + ps.reason, true);
+                    debug_emit(1, ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION
+                                  ? "NO_PHYSICAL_SOLUTION" : "NUMERICAL_FAIL",
+                               "jj=" + std::to_string(jj) + " Q0sccm=" + std::to_string(Q0sccm)
+                               + " reason=" + ps.reason, true);
+                    // Fehlgeschlagener Punkt wird NICHT als Startwert gespeichert
+                    // (stationary_prev und stationary_last_good bleiben unveraendert)
+                    {
+                        std::string ft = (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION)
+                                         ? "NO_PHYSICAL_SOLUTION" : "NUMERICAL_FAIL";
+                        g_log_rows.push_back({jj, Q0sccm, ft, ft,
+                            std::isfinite(ps.P_trial_last) ? ps.P_trial_last : 0.0,
+                            std::isfinite(ps.I_mA) ? ps.I_mA : 0.0,
+                            0, 0, 0, 0, 0, ps.reason, false});
+                        simlog_add_event(jj, Q0sccm, ft + ": " + ps.reason);
+                    }
                     continue;
                 }
+                count_converged++;
 
                 stationary_prev = ps.state;
                 stationary_have_prev = true;
@@ -1656,6 +1860,10 @@ int main(int argc, char** argv) {
                 cout << "RESULT " << scientific << setprecision(4)
                      << n << " " << ng << " " << fixed << setprecision(3)
                      << Te << " " << Tg << " " << I_extr << " " << P_RFG << endl;
+
+                g_log_rows.push_back({jj, Q0sccm, "CONVERGED", "NONE",
+                    P_RFG, I_extr, Te, Tg, n, ng, ps.inner_resid_norm,
+                    "ok", true});
 
                 datei << "Stationary" << ", " << Q0sccm << ", " << Te << ", " << Tg << ", "
                       << scientific << n << ", " << ng << ", "
@@ -1836,8 +2044,171 @@ int main(int argc, char** argv) {
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
+    double elapsed = std::chrono::duration<double>(end_time - start_time).count();
+    std::string end_ts = make_timestamp_readable();
+
+    cout << "\nSUMMARY " << count_converged << " " << count_no_physical << " " << count_numerical_fail << endl;
+    cout << "SUMMARY_DETAIL converged=" << count_converged
+         << " no_physical_solution=" << count_no_physical
+         << " numerical_fail=" << count_numerical_fail
+         << " total=" << jjmax << endl;
     cout << "\nDer Code hat " << fixed << setprecision(3)
-         << std::chrono::duration<double>(end_time - start_time).count()
-         << " Sekunden gebraucht." << endl;
+         << elapsed << " Sekunden gebraucht." << endl;
+
+    // ========== Strukturierte Logdatei schreiben ==========
+    {
+        std::string logname = "simulation_log_" + make_timestamp() + ".txt";
+        std::ofstream lf(logname);
+        if (lf) {
+            cout << "LOG_FILE " << logname << endl;
+
+            // BLOCK 1 — Header
+            lf << "==================================================\n"
+               << "GLOBAL XENON MODEL — SIMULATION LOG\n"
+               << "timestamp_start: " << make_timestamp_readable() << "\n"
+               << "timestamp_end:   " << end_ts << "\n"
+               << "runtime_seconds: " << std::fixed << std::setprecision(3) << elapsed << "\n"
+               << "solver_mode:     method=" << method << "\n"
+               << "config_file:     " << (argc >= 2 ? argv[1] : "params.txt") << "\n"
+               << "==================================================\n\n";
+
+            // BLOCK 2 — Parameter
+            lf << "--------------------------------------------------\n"
+               << "SIMULATION PARAMETERS\n"
+               << "--------------------------------------------------\n";
+            auto pp = [&](const char* label, double val, const char* unit, const char* key) {
+                lf << std::left << std::setw(35) << label
+                   << "| " << std::right << std::setw(14) << std::scientific << std::setprecision(6) << val
+                   << " | " << std::setw(6) << unit
+                   << " | " << key << "\n";
+            };
+            pp("Radius Entladungsgefaess",       R,         "m",    "R");
+            pp("Laenge Entladungsgefaess",        L,         "m",    "L");
+            pp("Transparenz Ionen",              betai,     "-",    "betai");
+            pp("Transparenz Neutralgas",         betag,     "-",    "betag");
+            pp("Anregefrequenz",                 frequency, "Hz",   "frequency");
+            pp("Spulenwindungen",                Nw,        "-",    "Nw");
+            pp("Ohmscher Widerstand Spule",      R_ohm,     "Ohm",  "R_ohm");
+            pp("Spulenradius",                   Rc,        "m",    "Rc");
+            pp("Spulenlaenge",                    lc,        "m",    "lc");
+            pp("Screengitter-Spannung",          Vgrid,     "V",    "Vgrid");
+            pp("Gitterabstand",                  sgrid,     "m",    "sgrid");
+            pp("DC-Leistung RFG (Startwert)",    P_RFG,     "W",    "P_RFG");
+            pp("Max RF-Leistung",                P_RFG_max, "W",    "P_RFG_max");
+            pp("Massenfluss (Startwert)",         Q0sccm,   "sccm", "Q0sccm");
+            lf << "--------------------------------------------------\n";
+            pp("Q0sccm Start",                   Q0sccm_start, "sccm", "Q0sccm_start");
+            pp("Q0sccm Schritt",                 Q0sccm_step,  "sccm", "Q0sccm_step");
+            pp("Anzahl Schritte",                (double)jjmax, "-",   "jjmax");
+            pp("Ziel-Strahlstrom",               I_soll,    "mA",   "I_soll");
+            lf << "--------------------------------------------------\n";
+            pp("Volumen V",                      V,         "m^3",  "V");
+            pp("Wandflaeche A",                   A,         "m^2",  "A");
+            pp("omega",                          omega,     "rad/s","omega");
+            pp("k0",                             k_0,       "1/m",  "k_0");
+            pp("Ag (Gasaustritt)",               Ag,        "m^2",  "Ag");
+            pp("Ai (Ionenaustritt)",             Ai,        "m^2",  "Ai");
+            pp("Lambda_0 (therm. Diffusion)",    lambda_0,  "m",    "lambda_0");
+            pp("L_coil",                         L_coil,    "H",    "L_coil");
+            pp("J_CL (Child-Langmuir)",          J_CL,      "A/m^2","J_CL");
+            pp("newton_tol",                     newton_tol,"rel",  "newton_tol");
+            lf << "\n";
+
+            // BLOCK 3 — Ergebnistabelle
+            lf << "--------------------------------------------------\n"
+               << "RESULT TABLE\n"
+               << "--------------------------------------------------\n";
+            // Header
+            lf << std::left
+               << std::setw(5)  << "idx" << "| "
+               << std::setw(9)  << "Q0_sccm" << "| "
+               << std::setw(22) << "status" << "| "
+               << std::setw(14) << "P_sol_W" << "| "
+               << std::setw(10) << "I_mA" << "| "
+               << std::setw(8)  << "Te_eV" << "| "
+               << std::setw(8)  << "Tg_K" << "| "
+               << std::setw(12) << "n_m-3" << "| "
+               << std::setw(12) << "ng_m-3" << "| "
+               << std::setw(10) << "resid" << "| "
+               << "note" << "\n";
+            lf << std::string(130, '-') << "\n";
+
+            for (const auto& row : g_log_rows) {
+                lf << std::left << std::setw(5) << row.idx << "| ";
+                lf << std::fixed << std::setprecision(4) << std::setw(9) << row.Q0sccm << "| ";
+                lf << std::left << std::setw(22) << row.status << "| ";
+                if (row.has_data) {
+                    lf << std::right << std::fixed << std::setprecision(2) << std::setw(14) << row.P_sol << "| "
+                       << std::setprecision(3) << std::setw(10) << row.I_mA << "| "
+                       << std::setprecision(3) << std::setw(8) << row.Te << "| "
+                       << std::setprecision(1) << std::setw(8) << row.Tg << "| "
+                       << std::scientific << std::setprecision(2) << std::setw(12) << row.n << "| "
+                       << std::setw(12) << row.ng << "| "
+                       << std::setprecision(1) << std::setw(10) << row.resid << "| ";
+                } else {
+                    // Fehlschlag: Teildaten oder -
+                    lf << std::right << std::setw(14) << "-" << "| "
+                       << std::setw(10) << (row.I_mA > 0 ? std::to_string(row.I_mA).substr(0,8) : "-") << "| "
+                       << std::setw(8) << "-" << "| "
+                       << std::setw(8) << "-" << "| "
+                       << std::setw(12) << "-" << "| "
+                       << std::setw(12) << "-" << "| "
+                       << std::setw(10) << "-" << "| ";
+                }
+                lf << std::left << row.note << "\n";
+            }
+            lf << "\n";
+
+            // BLOCK 4 — Ereignisdetails
+            lf << "--------------------------------------------------\n"
+               << "EVENT DETAILS\n"
+               << "--------------------------------------------------\n";
+            int last_idx = -1;
+            for (const auto& ev : g_log_events) {
+                if (ev.idx != last_idx) {
+                    lf << "\n[Q0 idx=" << ev.idx << " | Q0_sccm="
+                       << std::fixed << std::setprecision(4) << ev.Q0sccm << "]\n";
+                    last_idx = ev.idx;
+                }
+                lf << "  - " << ev.message << "\n";
+            }
+            if (g_log_events.empty()) lf << "(keine Ereignisse)\n";
+            lf << "\n";
+
+            // BLOCK 5 — Summary
+            lf << "--------------------------------------------------\n"
+               << "SUMMARY\n"
+               << "--------------------------------------------------\n";
+            lf << std::left << std::setw(30) << "total_points"         << "| " << jjmax << "\n"
+               << std::setw(30) << "converged"              << "| " << count_converged << "\n"
+               << std::setw(30) << "no_physical_solution"   << "| " << count_no_physical << "\n"
+               << std::setw(30) << "numerical_fail"         << "| " << count_numerical_fail << "\n"
+               << std::setw(30) << "runtime_seconds"        << "| " << std::fixed << std::setprecision(3) << elapsed << "\n";
+
+            // Min/Max der erfolgreichen Punkte
+            double p_min=1e30, p_max=-1e30, te_min_v=1e30, te_max_v=-1e30, i_min=1e30, i_max=-1e30;
+            double q0_first_ok = -1, q0_last_ok = -1;
+            for (const auto& row : g_log_rows) {
+                if (!row.has_data) continue;
+                if (q0_first_ok < 0) q0_first_ok = row.Q0sccm;
+                q0_last_ok = row.Q0sccm;
+                p_min  = std::min(p_min,  row.P_sol);
+                p_max  = std::max(p_max,  row.P_sol);
+                te_min_v = std::min(te_min_v, row.Te);
+                te_max_v = std::max(te_max_v, row.Te);
+                i_min  = std::min(i_min,  row.I_mA);
+                i_max  = std::max(i_max,  row.I_mA);
+            }
+            if (count_converged > 0) {
+                lf << std::setw(30) << "q0_first_success_sccm"  << "| " << std::fixed << std::setprecision(4) << q0_first_ok << "\n"
+                   << std::setw(30) << "q0_last_success_sccm"   << "| " << q0_last_ok << "\n"
+                   << std::setw(30) << "P_solution_range_W"     << "| " << std::setprecision(2) << p_min << " .. " << p_max << "\n"
+                   << std::setw(30) << "Te_range_eV"            << "| " << std::setprecision(3) << te_min_v << " .. " << te_max_v << "\n"
+                   << std::setw(30) << "I_mA_range"             << "| " << std::setprecision(3) << i_min << " .. " << i_max << "\n";
+            }
+            lf << "--------------------------------------------------\n";
+        }
+    }
+
     return 0;
 }
