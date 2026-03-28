@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(xargs ls:*)",
+      "Bash(find '/c/Users/krist/Documents/GitHub/global xenon model' -not -path */.git/* -print)"
+    ]
+  }
+}

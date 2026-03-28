@@ -150,7 +150,7 @@ class LivePlotGrid(QGroupBox):
 
         for idx, (key, title) in enumerate(defs):
             w = pg.PlotWidget()
-            w.setMinimumHeight(220)
+            w.setMinimumHeight(150)
             w.showGrid(x=True, y=True, alpha=0.20)
             w.setTitle(title)
             w.setLabel("bottom", "Q₀ (sccm)")
@@ -233,7 +233,16 @@ class SimulatorWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Xenon Plasma Simulator – Realtime Streaming UI")
-        self.resize(1580, 980)
+        screen = QApplication.primaryScreen()
+        if screen:
+            avail = screen.availableGeometry()
+            w = min(1580, int(avail.width() * 0.92))
+            h = min(980, int(avail.height() * 0.90))
+            self.resize(w, h)
+            self.move(avail.x() + (avail.width() - w) // 2,
+                      avail.y() + (avail.height() - h) // 2)
+        else:
+            self.resize(1580, 980)
 
         self.entries: dict[str, QLineEdit] = {}
         self.sweep_entries: dict[str, QLineEdit] = {}
@@ -272,20 +281,27 @@ class SimulatorWindow(QMainWindow):
 
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
+        left_scroll.setFrameShape(QFrame.Shape.NoFrame)
         left_panel = QWidget()
         left_scroll.setWidget(left_panel)
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 8, 0)
         left_layout.setSpacing(12)
 
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
+        right_inner = QWidget()
+        right_layout = QVBoxLayout(right_inner)
         right_layout.setContentsMargins(8, 0, 0, 0)
         right_layout.setSpacing(12)
 
+        right_scroll = QScrollArea()
+        right_scroll.setWidgetResizable(True)
+        right_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        right_scroll.setWidget(right_inner)
+
         splitter.addWidget(left_scroll)
-        splitter.addWidget(right_panel)
-        splitter.setSizes([720, 860])
+        splitter.addWidget(right_scroll)
+        splitter.setStretchFactor(0, 4)
+        splitter.setStretchFactor(1, 6)
 
         left_layout.addWidget(self._build_params_group())
         left_layout.addWidget(self._build_solver_group())
@@ -295,9 +311,19 @@ class SimulatorWindow(QMainWindow):
 
         right_layout.addWidget(self._build_progress_group())
         right_layout.addWidget(self._build_metrics_group())
+
         self.plot_grid = LivePlotGrid()
-        right_layout.addWidget(self.plot_grid, 1)
-        right_layout.addWidget(self._build_log_group(), 1)
+        log_group = self._build_log_group()
+        log_group.setMinimumHeight(120)
+
+        right_vsplit = QSplitter(Qt.Orientation.Vertical)
+        right_vsplit.setChildrenCollapsible(False)
+        right_vsplit.addWidget(self.plot_grid)
+        right_vsplit.addWidget(log_group)
+        right_vsplit.setStretchFactor(0, 3)
+        right_vsplit.setStretchFactor(1, 2)
+
+        right_layout.addWidget(right_vsplit, 1)
 
         status = QStatusBar()
         self.setStatusBar(status)
@@ -363,11 +389,12 @@ class SimulatorWindow(QMainWindow):
         grid.setVerticalSpacing(8)
 
         for i, (key, (label, unit, default)) in enumerate(SWEEP_PARAMS.items()):
-            grid.addWidget(QLabel(label), 0, i * 3)
+            row, col = divmod(i, 2)
+            grid.addWidget(QLabel(label), row, col * 3)
             edit = QLineEdit(str(default))
             edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-            grid.addWidget(edit, 0, i * 3 + 1)
-            grid.addWidget(QLabel(unit), 0, i * 3 + 2)
+            grid.addWidget(edit, row, col * 3 + 1)
+            grid.addWidget(QLabel(unit), row, col * 3 + 2)
             self.sweep_entries[key] = edit
         return box
 
@@ -396,7 +423,7 @@ class SimulatorWindow(QMainWindow):
             self._make_button("📄 Output öffnen", self.open_output),
         ]
         for idx, button in enumerate(buttons):
-            layout.addWidget(button, 0, idx)
+            layout.addWidget(button, idx // 3, idx % 3)
         return row
 
     def _build_progress_group(self) -> QGroupBox:

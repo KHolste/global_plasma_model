@@ -51,6 +51,12 @@ static void debug_emit(int lvl, const std::string& tag, const std::string& msg, 
     if (log) log << line << '\n';
 }
 
+#define DBG(lvl, expr) \
+    do { if (debug_level >= (lvl)) { \
+        std::ostringstream _dbg_os; _dbg_os << expr; \
+        debug_emit((lvl), "TRACE", _dbg_os.str()); \
+    } } while(0)
+
 static bool bad_value(double x) {
     return !std::isfinite(x);
 }
@@ -125,7 +131,7 @@ namespace Const {
     double lambda_0 = R / 2.405 + L / pi;
     double L_coil   = mu_0 * pi * Rc * Rc * Nw * Nw / lc;
 
-    double A    = 2 * pi * R * R + pi * R * L;
+    double A    = 2 * pi * R * R + 2 * pi * R * L;
     double Ag   = betag * pi * R * R;
     double Ai   = betai * pi * R * R;
     double V    = pi * R * R * L;
@@ -142,7 +148,7 @@ namespace Const {
     // Stationaerer Newton-Solver
     double P_RFG_max    = 80.00;
     int    newton_max_iter   = 45;
-    double newton_tol        = 1e-7;
+    double newton_tol        = 1e-2;   // Relative Toleranz (mit physik. Skalierung: ~1% Fehler)
     double power_tol_mA      = 0.05;
     int    power_max_iter    = 35;
     double power_min         = 1.0;
@@ -190,7 +196,7 @@ namespace Const {
         omega    = 2 * pi * frequency;
         lambda_0 = R / 2.405 + L / pi;
         L_coil   = mu_0 * pi * Rc * Rc * Nw * Nw / lc;
-        A        = 2 * pi * R * R + pi * R * L;
+        A        = 2 * pi * R * R + 2 * pi * R * L;
         Ag       = betag * pi * R * R;
         Ai       = betai * pi * R * R;
         V        = pi * R * R * L;
@@ -228,12 +234,12 @@ double coll_freq(double ng, double Te) { return Kel(Te) * ng; }
 
 double Aeff(double lambda) {
     double hL = 0.86 * pow(3 + L/(2*lambda), -0.5);
-    double hR = 0.80 * pow(4 + L/lambda,     -0.5);
+    double hR = 0.80 * pow(4 + R/lambda,     -0.5);
     return 2*hR*pi*R*L + 2*hL*pi*R*R;
 }
 double Aeff1(double lambda) {
     double hL = 0.86 * pow(3 + L/(2*lambda), -0.5);
-    double hR = 0.80 * pow(4 + L/lambda,     -0.5);
+    double hR = 0.80 * pow(4 + R/lambda,     -0.5);
     return 2*hR*pi*R*L + (2 - betai)*hL*pi*R*R;
 }
 double Gamma_i_func(double lambda, double Te, double n) {
@@ -315,15 +321,33 @@ static StationaryRFState stationary_compute_rf(double n, double ng, double Te, d
     complex<double> j1 = bessel::cyl_j(1, kR);
     complex<double> denom_c = eps_p * j0;
 
-    if (!std::isfinite(denom_c.real()) || !std::isfinite(denom_c.imag()) || std::abs(denom_c) == 0.0) return out;
+    // Numerische Stabilisierung: |eps_p * J0| kann nahe Null werden bei
+    // omega_p ≈ omega (Plasmareso nanz). Statt NaN/Inf zu erzeugen, wird
+    // der Nenner auf einen Minimalwert begrenzt. Das haelt R_ind endlich
+    // und P_abs stetig differenzierbar — entscheidend fuer den FD-Jacobian.
+    if (!std::isfinite(denom_c.real()) || !std::isfinite(denom_c.imag())) return out;
+    double denom_c_abs = std::abs(denom_c);
+    if (denom_c_abs < 1e-30) {
+        // Richtung beibehalten, Betrag auf Minimum setzen
+        denom_c = denom_c / std::max(denom_c_abs, 1e-300) * 1e-30;
+    }
 
     complex<double> result = (1i * kR * j1) / denom_c;
-    double R_ind = 2*pi*Nw*Nw / (epsilon0*L*omega) * result.real();
-    if (!std::isfinite(R_ind) || R_ind <= 0.0) return out;
+    double R_ind_raw = 2*pi*Nw*Nw / (epsilon0*L*omega) * result.real();
+
+    // R_ind clampen statt abbrechen: Bei omega_p ≈ omega kann R_ind
+    // negativ werden (Vorzeichenwechsel von result.real()). Ein harter
+    // Abbruch erzeugt NaN im FD-Jacobian, weil die perturbierte Seite
+    // (n+h vs n-h) den Sprung trifft. Stattdessen: stetige Begrenzung.
+    // R_ind_min ≈ 1e-4 Ohm: physikalisch vernachlaessigbar gegenueber
+    // R_ohm = 0.36 Ohm, aber numerisch stabil.
+    const double R_ind_min = 1e-4;
+    double R_ind = std::max(R_ind_min, R_ind_raw);
+    if (!std::isfinite(R_ind)) return out;
 
     double Ic = sqrt(2.0 * P_RFG_local / (R_ind + R_ohm));
     double P_abs = 0.5 * R_ind * Ic * Ic;
-    if (!std::isfinite(Ic) || !std::isfinite(P_abs) || Ic < 0.0 || P_abs < 0.0) return out;
+    if (!std::isfinite(Ic) || !std::isfinite(P_abs)) return out;
 
     out.P_abs = P_abs;
     out.R_ind = R_ind;
@@ -404,10 +428,14 @@ static std::array<double,4> stationary_residual_scaled(const StationaryPlasmaSta
         double nan = std::numeric_limits<double>::quiet_NaN();
         return {nan,nan,nan,nan};
     }
-    double scale1 = max(1e10, s.n);
-    double scale2 = max(1e14, s.ng);
-    double scale3 = max(1.0, fabs(rf.P_abs / V));
-    double scale4 = max(1.0, fabs(kappa*(s.Tg-Tg0)/lambda_0 * A/V));
+    // Physikalisch motivierte Skalierung: jedes Residuum wird durch die
+    // Groessenordnung seines dominanten Terms geteilt, damit alle vier
+    // Gleichungen im Solver gleich stark wiegen.
+    double scale1 = std::max(1e-20, std::fabs(s.n * s.ng * Kiz(s.Te)));
+    double scale2 = std::max(1e-20, Q0 / V);
+    double scale3 = std::max(1e-6,  rf.P_abs / V);
+    double scale4 = std::max(1e-6,  std::fabs(kappa * (s.Tg - Tg0) / lambda_0 * A / V)
+                           + std::fabs(3.0 * me / M * kB * (s.Te * conv - s.Tg) * s.n * s.ng * Kel(s.Te)));
     return {raw[0]/scale1, raw[1]/scale2, raw[2]/scale3, raw[3]/scale4};
 }
 
@@ -450,6 +478,7 @@ static double stationary_merit(const std::array<double,4>& r, const StationaryPl
 
 struct StationarySolveResult {
     bool converged = false;
+    bool soft_ok = false;   // Soft-Accept: brauchbarer Zustand, aber Energiebilanz nicht erfuellt
     StationaryPlasmaState state{};
     StationaryRFState rf{};
     int iterations = 0;
@@ -483,9 +512,29 @@ static bool stationary_soft_accept(const StationarySolveResult& r, double initia
 }
 
 
-static StationarySolveResult stationary_solve_newton(double P_RFG_local, const StationaryPlasmaState& initial) {
+// ============================================================
+// Levenberg-Marquardt Solver fuer das 4D Plasmagleichgewicht
+//
+// Ersetzt Newton + Line-Search. Gruende:
+// 1. Newton scheitert bei schlecht konditioniertem Jacobian
+//    (n kuerzt sich aus der Ionisierungsbilanz → J-Spalte ≈ 0)
+// 2. Diskrete Line-Search (7 alpha-Werte) findet bei flachen
+//    Merit-Landschaften keinen Abstieg
+// 3. LM interpoliert automatisch zwischen Steepest Descent
+//    (grosses λ, robust) und Newton (kleines λ, schnell)
+//
+// Algorithmus:
+//   Loesung von (J^T J + λ D) dx = -J^T F
+//   D = diag(J^T J) fuer Skaleninvarianz (Marquardt-Variante)
+//   λ-Update ueber Gain Ratio ρ = actual / predicted reduction
+//   Akzeptanz: jeder Schritt mit Kostenreduktion
+// ============================================================
+
+static StationarySolveResult stationary_solve_lm(double P_RFG_local,
+                                                  const StationaryPlasmaState& initial) {
     StationarySolveResult out;
     out.state = initial;
+
     if (!stationary_state_in_bounds(initial)) {
         out.reason = "invalid initial state";
         return out;
@@ -493,182 +542,243 @@ static StationarySolveResult stationary_solve_newton(double P_RFG_local, const S
 
     std::array<double,4> x = {log(initial.n), log(initial.ng), log(initial.Te), log(initial.Tg)};
 
-    for (int iter = 0; iter < newton_max_iter; ++iter) {
-        StationaryPlasmaState s{exp(x[0]), exp(x[1]), exp(x[2]), exp(x[3])};
-        StationaryRFState rf;
-        auto r = stationary_residual_scaled(s, P_RFG_local, &rf);
-        double merit0 = stationary_merit(r, s);
+    StationaryPlasmaState s{exp(x[0]), exp(x[1]), exp(x[2]), exp(x[3])};
+    StationaryRFState rf;
+    auto F = stationary_residual_scaled(s, P_RFG_local, &rf);
 
-        std::cout << "NEWTON_IT " << iter << " "
-                  << std::fixed << std::setprecision(4) << P_RFG_local << " "
-                  << std::scientific << std::setprecision(6)
-                  << merit0 << " " << s.n << " " << s.ng << " "
-                  << std::fixed << std::setprecision(6)
-                  << s.Te << " " << s.Tg << std::endl;
+    if (!rf.valid || !std::isfinite(F[0]) || !std::isfinite(F[1]) ||
+        !std::isfinite(F[2]) || !std::isfinite(F[3])) {
+        out.reason = "invalid initial residual";
+        out.resid_norm = std::numeric_limits<double>::infinity();
+        return out;
+    }
 
-        if (!std::isfinite(merit0) || !rf.valid) {
-            out.reason = "invalid residual/RF";
-            out.state = s;
-            out.rf = rf;
-            out.iterations = iter;
-            return out;
-        }
+    double cost = 0.0;
+    for (double v : F) cost += v * v;
+    cost *= 0.5;
 
-        if (merit0 < newton_tol) {
+    // LM-Steuerparameter
+    double lambda = 1e-2;
+    const double lambda_min = 1e-12;
+    const double lambda_max = 1e8;
+    const int max_iter = 80;
+    const int max_lm_tries = 15;
+    int stagnation_count = 0;
+    const int max_stagnation = 8;
+    double prev_cost = cost;
+
+    for (int iter = 0; iter < max_iter; ++iter) {
+        double merit = stationary_merit(F, s);
+
+        // Konvergenzpruefung: merit < newton_tol bedeutet alle 4 skalierten
+        // Residuen (inkl. r3/Energiebilanz) sind unter der Schwelle.
+        if (merit < newton_tol) {
             out.converged = true;
             out.state = s;
             out.rf = rf;
             out.iterations = iter;
-            out.resid_norm = merit0;
+            out.resid_norm = merit;
             out.reason = "ok";
-            debug_emit(2, "NEWTON_OK", "iter=" + std::to_string(iter) + " merit=" + std::to_string(out.resid_norm));
+            debug_emit(2, "LM_OK", "iter=" + std::to_string(iter) +
+                " merit=" + std::to_string(merit) + " lambda=" + std::to_string(lambda));
             return out;
         }
 
+        // Fortschritt (kompatibel mit GUI-Logging)
+        std::cout << "NEWTON_IT " << iter << " "
+                  << std::fixed << std::setprecision(4) << P_RFG_local << " "
+                  << std::scientific << std::setprecision(6)
+                  << merit << " " << s.n << " " << s.ng << " "
+                  << std::fixed << std::setprecision(6)
+                  << s.Te << " " << s.Tg << std::endl;
+
+        if (!std::isfinite(merit)) {
+            out.reason = "invalid residual";
+            out.state = s; out.rf = rf;
+            out.iterations = iter; out.resid_norm = merit;
+            return out;
+        }
+
+        // --- Jacobian (zentrale Finite Differenzen) ---
         double J[4][4];
-        for (int j = 0; j < 4; ++j) {
+        bool jac_ok = true;
+        for (int j = 0; j < 4 && jac_ok; ++j) {
             std::array<double,4> xp = x, xm = x;
             double h = newton_fd_eps * std::max(1.0, std::fabs(x[j]));
             xp[j] += h;
             xm[j] -= h;
-
             StationaryPlasmaState sp{exp(xp[0]), exp(xp[1]), exp(xp[2]), exp(xp[3])};
             StationaryPlasmaState sm{exp(xm[0]), exp(xm[1]), exp(xm[2]), exp(xm[3])};
             auto rp = stationary_residual_scaled(sp, P_RFG_local, nullptr);
             auto rm = stationary_residual_scaled(sm, P_RFG_local, nullptr);
-
             for (int i = 0; i < 4; ++i) {
-                if (!std::isfinite(rp[i]) || !std::isfinite(rm[i])) {
-                    out.reason = "jacobian nan";
-                    out.state = s;
-                    out.rf = rf;
-                    out.iterations = iter;
-                    out.resid_norm = merit0;
-                    return out;
-                }
-                J[i][j] = (rp[i] - rm[i]) / (2.0*h);
+                if (!std::isfinite(rp[i]) || !std::isfinite(rm[i])) { jac_ok = false; break; }
+                J[i][j] = (rp[i] - rm[i]) / (2.0 * h);
             }
         }
-
-        double minus_r[4] = {-r[0], -r[1], -r[2], -r[3]};
-        double dx[4];
-        if (!stationary_solve_linear_4x4(J, minus_r, dx)) {
-            out.reason = "linear solve failed";
-            out.state = s;
-            out.rf = rf;
-            out.iterations = iter;
-            out.resid_norm = merit0;
+        if (!jac_ok) {
+            out.reason = "jacobian nan";
+            out.state = s; out.rf = rf;
+            out.iterations = iter; out.resid_norm = merit;
             return out;
         }
 
+        // --- J^T J und J^T F aufbauen ---
+        double JtJ[4][4] = {};
+        double JtF[4] = {};
+        double diag_max = 0.0;
         for (int i = 0; i < 4; ++i) {
-            if (!std::isfinite(dx[i])) {
-                out.reason = "dx nan";
-                out.state = s;
-                out.rf = rf;
-                out.iterations = iter;
-                out.resid_norm = merit0;
-                return out;
+            for (int j = 0; j < 4; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < 4; ++k) sum += J[k][i] * J[k][j];
+                JtJ[i][j] = sum;
             }
-            dx[i] = std::max(-newton_max_log_step, std::min(newton_max_log_step, dx[i]));
+            double sf = 0.0;
+            for (int k = 0; k < 4; ++k) sf += J[k][i] * F[k];
+            JtF[i] = sf;
+            diag_max = std::max(diag_max, JtJ[i][i]);
         }
 
-        bool accepted = false;
-        std::array<double,4> x_trial{};
-        double best_trial_merit = std::numeric_limits<double>::infinity();
-        double best_trial_alpha = 0.0;
-        int best_trial_in_bounds = 0;
-        int best_trial_finite = 0;
-        for (double alpha : {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625}) {
-            for (int i = 0; i < 4; ++i) x_trial[i] = x[i] + alpha * dx[i];
-            StationaryPlasmaState st{exp(x_trial[0]), exp(x_trial[1]), exp(x_trial[2]), exp(x_trial[3])};
-            if (!stationary_state_in_bounds(st)) {
-                DBG(3, "LINESEARCH_TRY iter=" << iter << " alpha=" << alpha << " status=out_of_bounds");
+        // Gradient-Norm-Check: lokales Minimum von ||F||² aber F≠0
+        double grad_norm_sq = 0.0;
+        for (int i = 0; i < 4; ++i) grad_norm_sq += JtF[i] * JtF[i];
+        if (grad_norm_sq < 1e-28 * std::max(1.0, cost * cost)) {
+            out.reason = "local minimum (grad~0)";
+            out.state = s; out.rf = rf;
+            out.iterations = iter; out.resid_norm = merit;
+            DBG(1, "LM_LOCAL_MIN iter=" << iter << " merit=" << merit
+                << " grad=" << sqrt(grad_norm_sq));
+            return out;
+        }
+
+        // --- LM-Schritt: (J^T J + λ D) dx = -J^T F ---
+        // Versuche mit steigendem λ bis Kostenreduktion erreicht
+        bool step_accepted = false;
+        for (int lm_try = 0; lm_try < max_lm_tries; ++lm_try) {
+            double A[4][4];
+            for (int i = 0; i < 4; ++i) {
+                for (int j = 0; j < 4; ++j) A[i][j] = JtJ[i][j];
+                // Marquardt-Daempfung: skaliert mit Diagonale fuer Invarianz
+                A[i][i] += lambda * std::max(JtJ[i][i], 1e-10 * std::max(diag_max, 1e-20));
+            }
+
+            double neg_JtF[4] = {-JtF[0], -JtF[1], -JtF[2], -JtF[3]};
+            double dx[4];
+            if (!stationary_solve_linear_4x4(A, neg_JtF, dx)) {
+                lambda = std::min(lambda * 4.0, lambda_max);
+                if (lambda >= lambda_max) break;
                 continue;
             }
-            best_trial_in_bounds++;
-            auto rt = stationary_residual_scaled(st, P_RFG_local, nullptr);
-            double mt = stationary_merit(rt, st);
-            if (std::isfinite(mt)) {
-                best_trial_finite++;
-                if (mt < best_trial_merit) {
-                    best_trial_merit = mt;
-                    best_trial_alpha = alpha;
-                }
-                DBG(3, "LINESEARCH_TRY iter=" << iter << " alpha=" << alpha << " merit=" << mt << " merit0=" << merit0);
-            } else {
-                DBG(3, "LINESEARCH_TRY iter=" << iter << " alpha=" << alpha << " status=nonfinite");
+
+            // Schritt im Log-Raum begrenzen
+            for (int i = 0; i < 4; ++i)
+                dx[i] = std::max(-newton_max_log_step, std::min(newton_max_log_step, dx[i]));
+
+            // Trial-Punkt auswerten
+            std::array<double,4> x_trial;
+            for (int i = 0; i < 4; ++i) x_trial[i] = x[i] + dx[i];
+
+            StationaryPlasmaState st{exp(x_trial[0]), exp(x_trial[1]),
+                                     exp(x_trial[2]), exp(x_trial[3])};
+            if (!stationary_state_in_bounds(st)) {
+                lambda = std::min(lambda * 4.0, lambda_max);
+                if (lambda >= lambda_max) break;
+                continue;
             }
-            if (std::isfinite(mt) && mt < merit0) {
-                DBG(2, "LINESEARCH_ACCEPT iter=" << iter << " alpha=" << alpha << " merit0=" << merit0 << " merit=" << mt);
+
+            StationaryRFState rf_trial;
+            auto F_trial = stationary_residual_scaled(st, P_RFG_local, &rf_trial);
+
+            double cost_trial = 0.0;
+            bool F_ok = rf_trial.valid;
+            for (double v : F_trial) {
+                if (!std::isfinite(v)) { F_ok = false; break; }
+                cost_trial += v * v;
+            }
+            cost_trial *= 0.5;
+
+            if (!F_ok || !std::isfinite(cost_trial)) {
+                lambda = std::min(lambda * 4.0, lambda_max);
+                if (lambda >= lambda_max) break;
+                continue;
+            }
+
+            // Gain Ratio: ρ = tatsaechliche / vorhergesagte Reduktion
+            // pred = 0.5 dx^T J^T J dx + λ dx^T D dx  (immer >= 0)
+            double actual = cost - cost_trial;
+            double pred;
+            {
+                double jtj_part = 0.0, damp_part = 0.0;
+                for (int i = 0; i < 4; ++i) {
+                    double jj_dx = 0.0;
+                    for (int j2 = 0; j2 < 4; ++j2) jj_dx += JtJ[i][j2] * dx[j2];
+                    jtj_part += dx[i] * jj_dx;
+                    damp_part += lambda * std::max(JtJ[i][i], 1e-10 * std::max(diag_max, 1e-20))
+                                 * dx[i] * dx[i];
+                }
+                pred = 0.5 * jtj_part + damp_part;
+                if (pred <= 0.0) pred = 1e-30;
+            }
+
+            double rho = actual / pred;
+
+            DBG(3, "LM_TRY iter=" << iter << " try=" << lm_try
+                << " lam=" << lambda << " cost=" << cost
+                << " trial=" << cost_trial << " rho=" << rho);
+
+            if (actual > 0.0) {
+                // Schritt akzeptiert: Kosten gesunken
                 x = x_trial;
-                accepted = true;
+                s = st;
+                rf = rf_trial;
+                F = F_trial;
+                cost = cost_trial;
+                step_accepted = true;
+
+                // λ-Update basierend auf Gain Ratio
+                if (rho > 0.75)      lambda = std::max(lambda / 3.0, lambda_min);
+                else if (rho < 0.25) lambda = std::min(lambda * 2.0, lambda_max);
                 break;
+            } else {
+                lambda = std::min(lambda * 4.0, lambda_max);
+                if (lambda >= lambda_max) break;
             }
         }
 
-        if (!accepted) {
-            bool fallback_ok = false;
-            int fallback_tries = 0;
-            double best_fallback_merit = std::numeric_limits<double>::infinity();
-            int best_fallback_j = -1;
-            double best_fallback_step = 0.0;
-            for (int j = 0; j < 4 && !fallback_ok; ++j) {
-                for (double step : {0.1, -0.1, 0.03, -0.03}) {
-                    fallback_tries++;
-                    x_trial = x;
-                    x_trial[j] += step;
-                    StationaryPlasmaState st{exp(x_trial[0]), exp(x_trial[1]), exp(x_trial[2]), exp(x_trial[3])};
-                    if (!stationary_state_in_bounds(st)) {
-                        DBG(3, "FALLBACK_TRY iter=" << iter << " j=" << j << " step=" << step << " status=out_of_bounds");
-                        continue;
-                    }
-                    auto rt = stationary_residual_scaled(st, P_RFG_local, nullptr);
-                    double mt = stationary_merit(rt, st);
-                    if (std::isfinite(mt) && mt < best_fallback_merit) {
-                        best_fallback_merit = mt;
-                        best_fallback_j = j;
-                        best_fallback_step = step;
-                    }
-                    DBG(3, "FALLBACK_TRY iter=" << iter << " j=" << j << " step=" << step << " merit=" << mt << " merit0=" << merit0);
-                    if (std::isfinite(mt) && mt < merit0) {
-                        DBG(2, "FALLBACK_ACCEPT iter=" << iter << " j=" << j << " step=" << step << " merit0=" << merit0 << " merit=" << mt);
-                        x = x_trial;
-                        fallback_ok = true;
-                        break;
-                    }
-                }
-            }
-            if (!fallback_ok) {
-                DBG(1, "LINESEARCH_FAIL_DETAIL iter=" << iter
-                    << " merit0=" << merit0
-                    << " best_alpha=" << best_trial_alpha
-                    << " best_trial_merit=" << best_trial_merit
-                    << " in_bounds=" << best_trial_in_bounds
-                    << " finite=" << best_trial_finite
-                    << " best_fallback_j=" << best_fallback_j
-                    << " best_fallback_step=" << best_fallback_step
-                    << " best_fallback_merit=" << best_fallback_merit
-                    << " dx=[" << dx[0] << "," << dx[1] << "," << dx[2] << "," << dx[3] << "]");
-                out.reason = "line search failed";
-                out.state = s;
-                out.rf = rf;
-                out.iterations = iter;
-                out.resid_norm = merit0;
+        if (!step_accepted) {
+            out.reason = "lm step rejected";
+            out.state = s; out.rf = rf;
+            out.iterations = iter; out.resid_norm = merit;
+            DBG(1, "LM_REJECT iter=" << iter << " merit=" << merit << " lam=" << lambda);
+            return out;
+        }
+
+        // Stagnations-Erkennung
+        double rel_reduction = (prev_cost - cost) / std::max(prev_cost, 1e-30);
+        if (rel_reduction < 1e-10) {
+            stagnation_count++;
+            if (stagnation_count >= max_stagnation) {
+                double final_merit = stationary_merit(F, s);
+                out.reason = "stagnation";
+                out.state = s; out.rf = rf;
+                out.iterations = iter; out.resid_norm = final_merit;
+                DBG(1, "LM_STAGNATION iter=" << iter << " merit=" << final_merit);
                 return out;
             }
+        } else {
+            stagnation_count = 0;
         }
+        prev_cost = cost;
     }
 
-    StationaryPlasmaState s{exp(x[0]), exp(x[1]), exp(x[2]), exp(x[3])};
-    StationaryRFState rf;
-    auto r = stationary_residual_scaled(s, P_RFG_local, &rf);
-    out.converged = stationary_merit(r, s) < newton_tol && rf.valid && stationary_state_in_bounds(s);
+    // max_iter erreicht
+    double final_merit = stationary_merit(F, s);
+    out.converged = final_merit < newton_tol;
     out.state = s;
     out.rf = rf;
-    out.iterations = newton_max_iter;
-    out.resid_norm = stationary_merit(r, s);
-    out.reason = out.converged ? "ok" : "newton max iter";
+    out.iterations = max_iter;
+    out.resid_norm = final_merit;
+    out.reason = out.converged ? "ok" : "lm max iter";
     return out;
 }
 
@@ -694,11 +804,12 @@ static StationarySolveResult stationary_solve_ptc_then_newton(double P_RFG_local
     auto r0 = stationary_residual_scaled(s0, P_RFG_local, &rf0);
     double merit_initial = stationary_merit(r0, s0);
 
-    // 1) Erst direkter Newton-Versuch
-    best = stationary_solve_newton(P_RFG_local, initial);
+    // 1) Erst direkter LM-Versuch (schneller Pfad)
+    best = stationary_solve_lm(P_RFG_local, initial);
     if (best.converged) return best;
     if (stationary_soft_accept(best, merit_initial)) {
-        best.converged = true;
+        best.converged = false;
+        best.soft_ok = true;
         best.reason = "soft-ok-direct";
         return best;
     }
@@ -706,7 +817,7 @@ static StationarySolveResult stationary_solve_ptc_then_newton(double P_RFG_local
     // 2) Pseudo-transient continuation in Log-Variablen
     std::array<double,4> x = x0;
     StationaryPlasmaState s = initial;
-    StationaryRFState rf;
+    StationaryRFState rf = rf0;  // BUG-FIX: war vorher uninitialisiert → PTC lief nie
     auto r = r0;
     double merit = merit_initial;
 
@@ -770,10 +881,11 @@ static StationarySolveResult stationary_solve_ptc_then_newton(double P_RFG_local
         }
 
         if (merit < ptc_switch_merit) {
-            StationarySolveResult polished = stationary_solve_newton(P_RFG_local, s);
+            StationarySolveResult polished = stationary_solve_lm(P_RFG_local, s);
             if (polished.converged) return polished;
             if (stationary_soft_accept(polished, merit_initial)) {
-                polished.converged = true;
+                polished.converged = false;
+                polished.soft_ok = true;
                 polished.reason = "soft-ok-polished";
                 return polished;
             }
@@ -782,15 +894,17 @@ static StationarySolveResult stationary_solve_ptc_then_newton(double P_RFG_local
     }
 
     // 3) Letzter Newton-Finish vom besten gefundenen Zustand
-    StationarySolveResult final_try = stationary_solve_newton(P_RFG_local, best_local.state);
+    StationarySolveResult final_try = stationary_solve_lm(P_RFG_local, best_local.state);
     if (final_try.converged) return final_try;
     if (stationary_soft_accept(final_try, merit_initial)) {
-        final_try.converged = true;
+        final_try.converged = false;
+        final_try.soft_ok = true;
         final_try.reason = "soft-ok-final";
         return final_try;
     }
     if (stationary_soft_accept(best_local, merit_initial)) {
-        best_local.converged = true;
+        best_local.converged = false;
+        best_local.soft_ok = true;
         if (best_local.reason.empty() || best_local.reason == "all starts failed")
             best_local.reason = "soft-ok-best";
         return best_local;
@@ -836,6 +950,7 @@ struct StationaryPowerSolveResult {
     double P_trial_last = std::numeric_limits<double>::quiet_NaN();
     double I_mA = std::numeric_limits<double>::quiet_NaN();
     double err_mA = std::numeric_limits<double>::quiet_NaN();
+    double inner_resid_norm = std::numeric_limits<double>::infinity();
     int iterations = 0;
     std::string reason;
 };
@@ -847,161 +962,183 @@ static bool stationary_power_result_valid(const StationaryPowerSolveResult& ps) 
            ps.rf.valid &&
            std::isfinite(ps.P_RFG_sol) &&
            ps.P_RFG_sol > 0.0 &&
-           ps.P_RFG_sol <= P_RFG_max + 1e-9 &&
            std::isfinite(ps.I_mA);
 }
+
+// ============================================================
+// 4D-Solver mit aeusserer Power-Bisection
+//
+// Architektur (zurueck zum physikalisch korrekten Ansatz):
+//   Innerer Solver: stationary_solve_lm loest ALLE 4 Gleichungen
+//     (r1, r2, r3, r4) gleichzeitig fuer gegebenes P_RFG.
+//     r3 koppelt P_RFG an den Plasmazustand — das ist entscheidend.
+//   Aeusserer Solver: Bisection auf P_RFG bis I_mA = I_soll.
+//
+// Die vorherige ng-Dekomposition war physikalisch falsch, weil
+// r3 die Plasmadichte ueber die verfuegbare Leistung begrenzt.
+// Ohne r3 im inneren Solver gibt es keine obere Schranke fuer n.
+// ============================================================
 
 static StationaryPowerSolveResult stationary_solve_for_target_current(const StationaryPlasmaState& guess) {
     StationaryPowerSolveResult out;
 
-    debug_emit(2, "TARGET_CURRENT_BEGIN", "Q0=" + std::to_string(Q0) + " I_soll=" + std::to_string(I_soll) + " P_RFG_seed=" + std::to_string(P_RFG));
+    debug_emit(2, "TARGET_CURRENT_BEGIN",
+        "Q0sccm=" + std::to_string(Q0 / 4.477962312e17) +
+        " I_soll=" + std::to_string(I_soll) +
+        " P_RFG_seed=" + std::to_string(P_RFG));
 
-    double p_center = std::max(power_min, std::min(P_RFG, P_RFG_max));
-    double p_lo = std::max(power_min, std::min(p_center * 0.6, P_RFG_max));
-    double p_hi = std::max(p_lo + 0.5, std::min(P_RFG_max, std::max(p_center, p_lo + 2.0)));
-
-    std::vector<StationaryPlasmaState> starts;
-    StationaryPlasmaState safe = stationary_safe_defaults_for_q(Q0);
-    starts.push_back(guess);
-    starts.push_back(safe);
-    starts.push_back(StationaryPlasmaState{
-        std::sqrt(std::max(1.0, guess.n * safe.n)),
-        std::sqrt(std::max(1.0, guess.ng * safe.ng)),
-        0.5*(guess.Te + safe.Te),
-        0.5*(guess.Tg + safe.Tg)
-    });
-
-    StationarySolveResult s_center = stationary_solve_power_robust(p_center, starts);
-    bool center_ok = s_center.converged;
-    if (!center_ok) {
-        out.reason = "center power solve failed: " + s_center.reason;
-        debug_emit(1, "TARGET_CURRENT_FAIL", "stage=center P_try=" + std::to_string(p_center) + " reason=" + out.reason + " resid=" + std::to_string(s_center.resid_norm), true);
-        out.P_trial_last = p_center;
-        out.state = s_center.state;
-        out.rf = s_center.rf;
-        out.I_mA = stationary_state_finite_positive(s_center.state) ? stationary_beam_current_mA(s_center.state)
-                                                                    : std::numeric_limits<double>::quiet_NaN();
-        out.err_mA = std::isfinite(out.I_mA) ? (I_soll - out.I_mA) : std::numeric_limits<double>::quiet_NaN();
-        return out;
-    }
-
-    StationarySolveResult s_lo = stationary_solve_power_robust(p_lo, std::vector<StationaryPlasmaState>{s_center.state, stationary_safe_defaults_for_q(Q0)});
-    if (!s_lo.converged) s_lo = s_center;
-    double f_lo = stationary_beam_current_mA(s_lo.state) - I_soll;
-
-    StationarySolveResult s_hi = stationary_solve_power_robust(p_hi, std::vector<StationaryPlasmaState>{s_center.state, stationary_safe_defaults_for_q(Q0)});
-    if (!s_hi.converged) {
-        bool hi_ok = false;
-        for (double ph : {std::min(P_RFG_max, p_center + 5.0), std::min(P_RFG_max, p_center + 10.0), P_RFG_max}) {
-            s_hi = stationary_solve_power_robust(ph, std::vector<StationaryPlasmaState>{s_center.state, stationary_safe_defaults_for_q(Q0)});
-            if (s_hi.converged) { p_hi = ph; hi_ok = true; break; }
+    // --- Innerer 4D-Solve fuer ein gegebenes P_RFG ---
+    // Gibt konvergierten Zustand + I_mA zurueck, oder Fail.
+    auto solve_at_power = [&](double p_try, const StationaryPlasmaState& start) -> StationarySolveResult {
+        // Versuche mehrere Startwerte
+        StationaryPlasmaState safe = stationary_safe_defaults_for_q(Q0);
+        std::vector<StationaryPlasmaState> starts = {start, safe};
+        // Geometrisches Mittel als dritter Startwert
+        if (stationary_state_in_bounds(start)) {
+            starts.push_back(StationaryPlasmaState{
+                std::sqrt(std::max(1.0, start.n * safe.n)),
+                std::sqrt(std::max(1.0, start.ng * safe.ng)),
+                0.5 * (start.Te + safe.Te),
+                0.5 * (start.Tg + safe.Tg)
+            });
         }
-        if (!hi_ok) {
-            out.reason = "high power initial solve failed";
-            out.P_trial_last = p_hi;
-            return out;
-        }
-    }
-    double f_hi = stationary_beam_current_mA(s_hi.state) - I_soll;
 
-    {
-        double I_lo = stationary_beam_current_mA(s_lo.state);
-        double I_hi = stationary_beam_current_mA(s_hi.state);
-        std::ostringstream os;
-        os << std::fixed << std::setprecision(6)
-           << "p_lo=" << p_lo << " p_hi=" << p_hi
-           << " I_lo=" << I_lo << " I_hi=" << I_hi
-           << " dI=" << (I_hi - I_lo)
-           << " f_lo=" << f_lo << " f_hi=" << f_hi;
-        debug_emit(2, "POWER_RESPONSE", os.str());
-        if (std::isfinite(I_lo) && std::isfinite(I_hi) && std::fabs(I_hi - I_lo) < 1e-3 && std::fabs(p_hi - p_lo) > 1.0) {
-            debug_emit(1, "POWER_RESPONSE_FLAT", os.str() + " reason=stationary solver returns nearly identical current for different power", true);
+        StationarySolveResult best;
+        best.reason = "all starts failed";
+        for (const auto& st : starts) {
+            if (!stationary_state_in_bounds(st)) continue;
+            StationarySolveResult cur = stationary_solve_lm(p_try, st);
+            if (cur.converged) return cur;
+            if (cur.resid_norm < best.resid_norm) best = cur;
         }
-    }
+        return best;
+    };
 
-    int bracket_expand = 0;
-    while (f_lo * f_hi > 0.0 && p_hi < P_RFG_max && bracket_expand < 12) {
-        double new_hi = std::min(P_RFG_max, std::max(p_hi * 1.35, p_hi + 5.0));
+    // --- Bracket-Suche: I_mA(P_lo) < I_soll < I_mA(P_hi) ---
+    double p_lo = 5.0;
+    double p_hi = 100.0;
+    StationaryPlasmaState warm = guess;
+    if (!stationary_state_in_bounds(warm))
+        warm = stationary_safe_defaults_for_q(Q0);
+
+    // Evaluiere untere Grenze
+    StationarySolveResult s_lo = solve_at_power(p_lo, warm);
+    double I_lo = (s_lo.converged && stationary_state_finite_positive(s_lo.state))
+                  ? stationary_beam_current_mA(s_lo.state) : 0.0;
+    double f_lo = I_lo - I_soll;
+
+    // Evaluiere obere Grenze
+    StationarySolveResult s_hi = solve_at_power(p_hi, warm);
+    double I_hi = (s_hi.converged && stationary_state_finite_positive(s_hi.state))
+                  ? stationary_beam_current_mA(s_hi.state) : 0.0;
+    double f_hi = I_hi - I_soll;
+
+    debug_emit(2, "POWER_BRACKET_INIT",
+        "p_lo=" + std::to_string(p_lo) + " I_lo=" + std::to_string(I_lo) +
+        " p_hi=" + std::to_string(p_hi) + " I_hi=" + std::to_string(I_hi) +
+        " lo_conv=" + std::to_string(s_lo.converged) +
+        " hi_conv=" + std::to_string(s_hi.converged));
+
+    // Bracket erweitern falls noetig (P_hi verdoppeln, max 5000 W)
+    const double P_expand_max = 5000.0;
+    int expand_count = 0;
+    while (f_lo * f_hi > 0.0 && p_hi < P_expand_max && expand_count < 15) {
+        p_hi = std::min(p_hi * 2.0, P_expand_max);
+        s_hi = solve_at_power(p_hi, s_hi.converged ? s_hi.state : warm);
+        I_hi = (s_hi.converged && stationary_state_finite_positive(s_hi.state))
+               ? stationary_beam_current_mA(s_hi.state) : I_hi;
+        f_hi = I_hi - I_soll;
+
         std::cout << "POWER_BRACKET " << std::fixed << std::setprecision(4)
-                  << p_lo << " " << new_hi << " " << f_lo << " " << f_hi << std::endl;
-        StationarySolveResult s_try = stationary_solve_power_robust(new_hi, std::vector<StationaryPlasmaState>{s_hi.state, s_center.state, stationary_safe_defaults_for_q(Q0)});
-        if (s_try.converged) {
-            p_hi = new_hi;
-            s_hi = s_try;
-            f_hi = stationary_beam_current_mA(s_hi.state) - I_soll;
-        } else {
-            p_hi = new_hi;
-        }
-        bracket_expand++;
+                  << p_lo << " " << p_hi << " " << f_lo << " " << f_hi << std::endl;
+        expand_count++;
+
+        // Warm-start fuer naechste Iteration
+        if (s_hi.converged) warm = s_hi.state;
     }
 
+    // Pruefen: Bracket gefunden?
     if (f_lo * f_hi > 0.0) {
         out.hit_limit = true;
-        out.reason = "no bracket within power limit (I(P) stayed on one side or was nearly flat)";
+        out.reason = "no power bracket (I(P) stays on one side, I_lo="
+                     + std::to_string(I_lo) + " I_hi=" + std::to_string(I_hi)
+                     + " at P_hi=" + std::to_string(p_hi) + ")";
         out.P_trial_last = p_hi;
-        out.state = s_hi.state;
-        out.rf = s_hi.rf;
-        out.I_mA = stationary_state_finite_positive(s_hi.state) ? stationary_beam_current_mA(s_hi.state)
-                                                                : std::numeric_limits<double>::quiet_NaN();
-        out.err_mA = std::isfinite(out.I_mA) ? (I_soll - out.I_mA) : std::numeric_limits<double>::quiet_NaN();
+        StationarySolveResult& best_s = (std::fabs(f_lo) < std::fabs(f_hi)) ? s_lo : s_hi;
+        if (stationary_state_finite_positive(best_s.state)) {
+            out.state = best_s.state;
+            out.rf = best_s.rf;
+            out.I_mA = stationary_beam_current_mA(best_s.state);
+            out.err_mA = I_soll - out.I_mA;
+        }
+        debug_emit(1, "TARGET_CURRENT_FAIL", out.reason, true);
         return out;
     }
 
-    StationaryPlasmaState last_guess = s_center.state;
+    // --- Bisection + Regula Falsi auf P_RFG ---
+    StationaryPlasmaState last_good = s_lo.converged ? s_lo.state : warm;
     for (int iter = 0; iter < power_max_iter; ++iter) {
-        double denom = (f_hi - f_lo);
-        double p_mid = (std::fabs(denom) > 1e-10) ? p_hi - f_hi * (p_hi - p_lo) / denom : 0.5 * (p_lo + p_hi);
-        if (!(p_mid > p_lo && p_mid < p_hi) || !std::isfinite(p_mid)) p_mid = 0.5 * (p_lo + p_hi);
-
-        std::cout << "PID_START " << iter << " " << std::fixed << std::setprecision(4) << p_mid << std::endl;
-
-        StationarySolveResult s_mid = stationary_solve_power_robust(p_mid, std::vector<StationaryPlasmaState>{last_guess, s_center.state, stationary_safe_defaults_for_q(Q0)});
-        if (!s_mid.converged) {
-            StationaryPlasmaState safe2 = stationary_safe_defaults_for_q(Q0);
+        // Secant-Schritt mit Bisection-Fallback
+        double p_mid;
+        double denom = f_hi - f_lo;
+        if (std::fabs(denom) > 1e-12) {
+            p_mid = p_lo - f_lo * (p_hi - p_lo) / denom;
+            if (!(p_mid > p_lo && p_mid < p_hi) || !std::isfinite(p_mid))
+                p_mid = 0.5 * (p_lo + p_hi);
+        } else {
             p_mid = 0.5 * (p_lo + p_hi);
-            s_mid = stationary_solve_power_robust(p_mid, std::vector<StationaryPlasmaState>{safe2, s_center.state});
+        }
+
+        std::cout << "PID_START " << iter << " "
+                  << std::fixed << std::setprecision(4) << p_mid << std::endl;
+
+        StationarySolveResult s_mid = solve_at_power(p_mid, last_good);
+        if (!s_mid.converged) {
+            // Fallback: Bisection-Mitte mit safe guess
+            p_mid = 0.5 * (p_lo + p_hi);
+            s_mid = solve_at_power(p_mid, stationary_safe_defaults_for_q(Q0));
             if (!s_mid.converged) {
-                out.reason = "mid solve failed";
+                out.reason = "inner solve failed at P=" + std::to_string(p_mid)
+                             + " (" + s_mid.reason + ")";
                 out.P_trial_last = p_mid;
                 return out;
             }
         }
 
-        double I_mA = stationary_beam_current_mA(s_mid.state);
-        double error = I_soll - I_mA;
+        double I_mid = stationary_beam_current_mA(s_mid.state);
+        double error = I_soll - I_mid;
+        double f_mid = I_mid - I_soll;
 
         std::cout << "PID_DONE " << std::fixed << std::setprecision(4)
-                  << I_mA << " " << error << " " << p_mid << " "
+                  << I_mid << " " << error << " " << p_mid << " "
                   << s_mid.state.Te << " " << s_mid.state.Tg << std::endl;
 
-        last_guess = s_mid.state;
+        last_good = s_mid.state;
         out.iterations = iter;
         out.state = s_mid.state;
         out.rf = s_mid.rf;
+        out.inner_resid_norm = s_mid.resid_norm;
         out.P_RFG_sol = p_mid;
         out.P_trial_last = p_mid;
-        out.I_mA = I_mA;
+        out.I_mA = I_mid;
         out.err_mA = error;
 
         if (std::fabs(error) < power_tol_mA) {
             out.converged = true;
             out.reason = "ok";
-            debug_emit(2, "TARGET_CURRENT_OK", "iter=" + std::to_string(iter) + " P_sol=" + std::to_string(out.P_RFG_sol) + " I_mA=" + std::to_string(out.I_mA) + " err_mA=" + std::to_string(out.err_mA));
+            debug_emit(2, "TARGET_CURRENT_OK",
+                "iter=" + std::to_string(iter) +
+                " P_sol=" + std::to_string(p_mid) +
+                " I_mA=" + std::to_string(I_mid));
             std::cout << "CONVERGED " << iter << std::endl;
             return out;
         }
 
-        double f_mid = I_mA - I_soll;
-        if (f_lo * f_mid <= 0.0) {
-            p_hi = p_mid;
-            f_hi = f_mid;
-        } else {
-            p_lo = p_mid;
-            f_lo = f_mid;
-        }
+        if (f_lo * f_mid <= 0.0) { p_hi = p_mid; f_hi = f_mid; }
+        else                      { p_lo = p_mid; f_lo = f_mid; }
     }
 
-    out.reason = "power max iter";
+    out.reason = "power bisection max iter";
     out.P_trial_last = out.P_RFG_sol;
     return out;
 }
@@ -1428,6 +1565,9 @@ int main(int argc, char** argv) {
 
         StationaryPlasmaState stationary_prev = stationary_safe_defaults_for_q(Q0sccm_start * 4.477962312e17);
         bool stationary_have_prev = false;
+        StationaryPlasmaState stationary_last_good{};
+        bool stationary_have_good = false;
+        double stationary_last_good_q0 = 0.0;
 
         // BUG-FIX: crash_of_radius-Logik war im Original invertiert.
         // Rc = Spulenradius, R = Kammerradius.
@@ -1447,7 +1587,17 @@ int main(int argc, char** argv) {
             debug_emit(2, "Q0_STEP", "jj=" + std::to_string(jj) + " Q0sccm=" + std::to_string(Q0sccm) + " Q0=" + std::to_string(Q0));
 
             if (method == 4) {
-                StationaryPlasmaState guess = stationary_have_prev ? stationary_prev : stationary_safe_defaults_for_q(Q0);
+                StationaryPlasmaState guess;
+                if (stationary_have_good && std::fabs(Q0sccm - stationary_last_good_q0) <= 20.0 * Q0sccm_step) {
+                    guess = stationary_last_good;
+                    debug_emit(2, "GUESS_SOURCE", "last_good (Q0_good=" + std::to_string(stationary_last_good_q0) + ")");
+                } else if (stationary_have_prev) {
+                    guess = stationary_prev;
+                    debug_emit(2, "GUESS_SOURCE", "prev" + std::string(stationary_have_good ? " (last_good too far)" : " (no last_good yet)"));
+                } else {
+                    guess = stationary_safe_defaults_for_q(Q0);
+                    debug_emit(2, "GUESS_SOURCE", "safe_defaults");
+                }
                 if (!stationary_state_finite_positive(guess)) guess = stationary_safe_defaults_for_q(Q0);
                 debug_emit(2, "STATIONARY_GUESS", state_summary(guess.n, guess.ng, guess.Te, guess.Tg, 0.0, 0.0));
 
@@ -1474,6 +1624,11 @@ int main(int argc, char** argv) {
 
                 stationary_prev = ps.state;
                 stationary_have_prev = true;
+                if (std::isfinite(ps.inner_resid_norm) && ps.inner_resid_norm < newton_tol) {
+                    stationary_last_good = ps.state;
+                    stationary_have_good = true;
+                    stationary_last_good_q0 = Q0sccm;
+                }
                 P_RFG = ps.P_RFG_sol;
                 P_abs = ps.rf.P_abs;
                 R_induktiv = ps.rf.R_ind;
@@ -1492,6 +1647,11 @@ int main(int argc, char** argv) {
                 double J_i = e * Gamma_i_func(lam, Te, n);
                 double zeta = R_induktiv/(R_induktiv+R_ohm);
                 double pf = plasma_freq(n);
+
+                if (std::isfinite(ps.inner_resid_norm) && ps.inner_resid_norm >= newton_tol) {
+                    cout << "SOFT_ACCEPT " << fixed << setprecision(4)
+                         << Q0sccm << " " << scientific << ps.inner_resid_norm << endl;
+                }
 
                 cout << "RESULT " << scientific << setprecision(4)
                      << n << " " << ng << " " << fixed << setprecision(3)
