@@ -1,0 +1,8 @@
+# Xenon excitation cross section (placeholder)
+# Source: Derived from Chabert Arrhenius fit: Kex = 1.2921e-13 * exp(-11.6eV / Te)
+# Note: This is a placeholder. No tabulated cross section data available.
+# The rate coefficient is computed directly from the Arrhenius formula.
+# Threshold: 11.6 eV (first excitation level of Xe)
+# Process: Xe + e -> Xe* + e
+energy_eV,cross_section_m2
+# NO TABULATED DATA - using Arrhenius fit instead

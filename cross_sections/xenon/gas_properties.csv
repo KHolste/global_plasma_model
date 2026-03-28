@@ -1,0 +1,9 @@
+# Xenon gas properties for the global plasma model
+property,value,unit,description
+name,Xenon,,Gas name
+symbol,Xe,,Chemical symbol
+mass_kg,2.1801711e-25,kg,Atomic mass
+mass_amu,131.293,u,Atomic mass in AMU
+ionization_energy_eV,12.127,eV,First ionization energy
+excitation_energy_eV,11.6,eV,First excitation energy
+sigma_i_m2,1e-18,m^2,Ion-neutral collision cross section

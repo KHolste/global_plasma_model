@@ -1,0 +1,40 @@
+# Build artifacts
+chabert
+chabert.exe
+*.o
+*.obj
+
+# Runtime output
+output_kh.txt
+live_results.txt
+chabert_debug.log
+simulation_log_*.txt
+params.txt
+
+# Result CSVs (generated, not source)
+dietz_validation_results.csv
+param_study_results.csv
+rate_model_comparison.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Documentation generators (keep .docx outputs, not the generator scripts)
+create_documentation.py
+create_final_validation.py
+create_validation_docx.py
+update_validation_docx.py
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json

@@ -4,21 +4,18 @@
 #include <array>
 #include <stdexcept>
 #include <chrono>
-#include <thread>
-#include <math.h>
-#include <random>
-#include <numeric>
+#include <cmath>
 #include <complex>
 #include <climits>
 #include <cstdlib>
 #include <algorithm>
-#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <map>
+#include <set>
 #include <string>
 #include <limits>
-#include "bessel-library.hpp"
+#include "bessel_wrapper.hpp"  // Schlanker Wrapper statt voller 11k-Zeilen Bessel-Library
 
 using namespace std::literals::complex_literals;
 using namespace std;
@@ -46,9 +43,16 @@ struct SimLogRow {
     double Q0sccm;
     std::string status;       // CONVERGED / NO_PHYSICAL_SOLUTION / NUMERICAL_FAIL
     std::string fail_type;    // NONE / NO_PHYSICAL_SOLUTION / NUMERICAL_FAIL
+    // Primaere Zustandsgroessen
     double P_sol, I_mA, Te, Tg, n, ng, resid;
+    // Abgeleitete Groessen (alle nur bei has_data=true gueltig)
+    double iondeg, P_abs, collision_freq, R_induktiv, I_coil;
+    double eps_p_real, eps_p_imag, u_Bohm, J_i, plasmafrequenz, P_RF;
+    // Performance-Groessen
+    double thrust_ions_mN, thrust_atoms_mN, thrust_total_mN;
+    double icp_eff, gamma_eff, xi_mN_kW, eta_mass;
     std::string note;
-    bool has_data;             // true wenn numerische Felder gueltig
+    bool has_data;
 };
 
 struct SimLogEvent {
@@ -98,10 +102,6 @@ static void debug_emit(int lvl, const std::string& tag, const std::string& msg, 
         debug_emit((lvl), "TRACE", _dbg_os.str()); \
     } } while(0)
 
-static bool bad_value(double x) {
-    return !std::isfinite(x);
-}
-
 static std::string state_summary(double n, double ng, double Te, double Tg, double Ug, double Ue) {
     std::ostringstream os;
     os << std::scientific << std::setprecision(6)
@@ -114,87 +114,249 @@ static std::string state_summary(double n, double ng, double Te, double Tg, doub
 // ============================================================
 // Config-Einlese-Funktion
 // ============================================================
-std::map<std::string, double> loadConfig(const std::string& filename) {
-    std::map<std::string, double> cfg;
+struct ConfigData {
+    std::map<std::string, double> numeric;
+    std::map<std::string, std::string> strings;
+};
+
+ConfigData loadConfig(const std::string& filename) {
+    ConfigData cd;
     std::ifstream f(filename);
     if (!f) {
         std::cerr << "[Config] Datei '" << filename << "' nicht gefunden – Standardwerte werden verwendet." << std::endl;
-        return cfg;
+        return cd;
     }
+    // String-Parameter, die nicht als double geparsed werden
+    static const std::set<std::string> STRING_KEYS = {"gas_species"};
     std::string line;
     while (std::getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
         std::istringstream ss(line);
-        std::string key; double val;
-        if (ss >> key >> val) cfg[key] = val;
+        std::string key, val_str;
+        if (!(ss >> key)) continue;
+        if (STRING_KEYS.count(key)) {
+            if (ss >> val_str) cd.strings[key] = val_str;
+        } else {
+            double val;
+            if (ss >> val) cd.numeric[key] = val;
+        }
     }
-    return cfg;
+    return cd;
 }
 #define CFG_LOAD(cfg, name) if ((cfg).count(#name)) (name) = (cfg).at(#name)
 
 // ============================================================
 // Physikalische Konstanten und Triebwerksparameter
 // ============================================================
+// ============================================================
+// Gruppe A: Physikalische Naturkonstanten (unveraenderlich)
+// ============================================================
+namespace PhysConst {
+    constexpr double me       = 9.10938215e-31;    // Elektronenmasse [kg]
+    constexpr double e        = 1.602176487e-19;    // Elementarladung [C]
+    constexpr double kB       = 1.3806504e-23;      // Boltzmann-Konstante [J/K]
+    constexpr double epsilon0 = 8.854187e-12;       // Vakuumpermittivitaet [F/m]
+    constexpr double pi       = 3.141592653589793;
+    constexpr double c        = 299792458.0;        // Lichtgeschwindigkeit [m/s]
+    constexpr double mu_0     = 1.256637061e-6;     // Vakuumpermeabilitaet [H/m]
+
+    constexpr double SCCM_TO_PPS = 4.477962312e17;  // sccm → particles/s
+
+    constexpr double Tg0    = 293.00;               // Wandtemperatur [K]
+    constexpr double conv   = 11604.5250061657;     // eV → K Umrechnung
+
+    // Gasspezifische Konstanten – Xenon-Defaults (werden bei anderem gas_species ueberschrieben)
+    double M        = 2.1801711e-25;      // Atommasse [kg] (Xe: 131.293 u)
+    double Eiz      = 1.943408035e-18;    // Ionisierungsenergie [J] (Xe: 12.127 eV)
+    double Eexc     = 1.858524725e-18;    // Anregungsenergie [J] (Xe: 11.6 eV)
+    double sigma_i  = 1.0e-18;            // Stossquerschnitt [m²]
+    double sigmae   = 1.0e-18;            // Elastischer Stossquerschnitt [m²]
+    double kappa    = 0.0057;             // Waermeleitfaehigkeit [W/(m·K)]
+
+    // Gasspezifische Lookup: (M_kg, Eiz_J, Eexc_J, kappa_W_mK)
+    // Eexc: niedrigste dominante Anregungsenergie fuer Legacy-Arrhenius-Fit
+    struct GasProperties {
+        double M_kg;
+        double Eiz_J;      // Ionisierungsenergie [J]
+        double Eexc_J;     // Anregungsenergie [J] (Legacy)
+        double kappa_WmK;  // Waermeleitfaehigkeit [W/(m·K)]
+    };
+
+    // Datenquelle: NIST, Lieberman & Lichtenberg
+    static const std::map<std::string, GasProperties> GAS_DB = {
+        {"xenon",   {2.1801711e-25, 1.943408035e-18, 1.858524725e-18, 0.0057}},  // 131.293 u, 12.127 eV, 11.6 eV
+        {"krypton", {1.3914984e-25, 2.24009e-18,     1.60218e-18,     0.0094}},  // 83.798 u, 13.9996 eV, 10.0 eV
+        {"argon",   {6.6335209e-26, 2.52473e-18,     1.85853e-18,     0.0177}},  // 39.948 u, 15.7596 eV, 11.6 eV
+    };
+
+    void set_gas(const std::string& gas_name) {
+        auto it = GAS_DB.find(gas_name);
+        if (it == GAS_DB.end()) {
+            std::cerr << "FEHLER: Unbekanntes Gas '" << gas_name << "', verwende Xenon-Defaults" << std::endl;
+            return;
+        }
+        const auto& gp = it->second;
+        M       = gp.M_kg;
+        Eiz     = gp.Eiz_J;
+        Eexc    = gp.Eexc_J;
+        kappa   = gp.kappa_WmK;
+    }
+}
+
+// ============================================================
+// Gruppe B+C: Triebwerksparameter + abgeleitete Groessen
+// ============================================================
+struct ThrusterParams {
+    // --- Primaere Eingabeparameter (Gruppe B) ---
+    double R        = 0.02;       // Kammerradius [m]
+    double L        = 0.04;       // Kammerlaenge [m]
+    double betai    = 0.5;        // Ionen-Gittertransparenz [-]
+    double betag    = 0.05145;    // Gas-Gittertransparenz [-]
+    double frequency= 2.5e6;     // RF-Anregefrequenz [Hz]
+    double Nw       = 6.00;       // Spulenwindungen [-]
+    double R_ohm    = 0.36;       // Ohmscher Spulenwiderstand [Ohm]
+    double Rc       = 0.02;       // Spulenradius [m]
+    double lc       = 0.04;       // Spulenlaenge [m]
+    double Vgrid    = 1500.00;    // Gitterspannung [V]
+    double sgrid    = 0.001;      // Gitterabstand [m]
+    double P_RFG    = 18.00;      // RF-Generatorleistung [W]
+    double Q0sccm   = 0.475;      // Massenfluss [sccm]
+
+    // --- Abgeleitete Groessen (Gruppe C, aus B berechnet) ---
+    double omega    = 0.0;        // Kreisfrequenz [rad/s]
+    double Q0       = 0.0;        // Teilchenfluss [s⁻¹]
+    double lambda_0 = 0.0;        // Thermische Diffusionslaenge [m]
+    double L_coil   = 0.0;        // Spuleninduktivitaet [H]
+    double A        = 0.0;        // Gesamte Wandflaeche [m²]
+    double Ag       = 0.0;        // Gasaustrittsflaeche [m²]
+    double Ai       = 0.0;        // Ionenaustrittsflaeche [m²]
+    double V        = 0.0;        // Kammervolumen [m³]
+    double k_0      = 0.0;        // Vakuum-Wellenzahl [1/m]
+    double J_CL     = 0.0;        // Child-Langmuir-Stromdichte [A/m²]
+
+    // Berechne alle abgeleiteten Groessen aus den Primaerparametern.
+    // Muss nach jeder Aenderung eines Primaerparameters aufgerufen werden.
+    void recompute_derived() {
+        using namespace PhysConst;
+        omega    = 2.0 * pi * frequency;
+        Q0       = Q0sccm * SCCM_TO_PPS;
+        lambda_0 = R / 2.405 + L / pi;
+        L_coil   = mu_0 * pi * Rc * Rc * Nw * Nw / lc;
+        A        = 2.0 * pi * R * R + 2.0 * pi * R * L;
+        Ag       = betag * pi * R * R;
+        Ai       = betai * pi * R * R;
+        V        = pi * R * R * L;
+        k_0      = omega / c;
+        J_CL     = (4.0/9.0) * epsilon0 * sqrt(2.0*e/M) * pow(Vgrid, 1.5) / (sgrid*sgrid);
+    }
+
+    // Lade Primaerparameter aus Config und berechne Abgeleitete
+    void load_from_config(const std::map<std::string, double>& cfg) {
+        CFG_LOAD(cfg, R);        CFG_LOAD(cfg, L);        CFG_LOAD(cfg, betai);
+        CFG_LOAD(cfg, betag);    CFG_LOAD(cfg, frequency); CFG_LOAD(cfg, Nw);
+        CFG_LOAD(cfg, R_ohm);    CFG_LOAD(cfg, Rc);       CFG_LOAD(cfg, lc);
+        CFG_LOAD(cfg, Vgrid);    CFG_LOAD(cfg, sgrid);    CFG_LOAD(cfg, P_RFG);
+        CFG_LOAD(cfg, Q0sccm);
+        recompute_derived();
+    }
+};
+
+// Globale Instanz (Rueckwaertskompatibilitaet: wird ueber Const-Namespace gespiegelt)
+static ThrusterParams g_thruster = [](){
+    ThrusterParams tp;
+    tp.recompute_derived();  // Abgeleitete Groessen aus Standardwerten berechnen
+    return tp;
+}();
+
+// ============================================================
+// Gruppe D: Solver-/Sweep-Parameter + Rueckwaertskompatibilitaet
+// ============================================================
 namespace Const {
-    double me       = 9.10938215e-31;
-    double e        = 1.602176487e-19;
-    double M        = 2.1801711e-25;
-    double kB       = 1.3806504e-23;
-    double epsilon0 = 8.854187e-12;
-    double pi       = 3.141592653589793;
-    double c        = 299792458.0;
-    double mu_0     = 1.256637061e-6;
+    // Physikalische Konstanten (Aliase fuer Rueckwaertskompatibilitaet)
+    using namespace PhysConst;
 
-    double Tg0    = 293.00;
-    double Eiz    = 1.943408035e-18;
-    double Eexc   = 1.858524725e-18;
-    double sigma_i= 1.0e-18;
-    double sigmae = 1.0e-18;
-    double kappa  = 0.0057;
-    double conv   = 11604.5250061657;
+    // Triebwerksparameter: Referenzen auf die globale ThrusterParams-Instanz.
+    // Bestehender Code kann weiterhin 'R', 'L', 'V' etc. ohne Qualifizierung nutzen.
+    // Langfristig sollten Funktionen const ThrusterParams& entgegennehmen.
+    double& R         = g_thruster.R;
+    double& L         = g_thruster.L;
+    double& betai     = g_thruster.betai;
+    double& betag     = g_thruster.betag;
+    double& frequency = g_thruster.frequency;
+    double& omega     = g_thruster.omega;
+    double& Nw        = g_thruster.Nw;
+    double& R_ohm     = g_thruster.R_ohm;
+    double& Rc        = g_thruster.Rc;
+    double& lc        = g_thruster.lc;
+    double& Vgrid     = g_thruster.Vgrid;
+    double& sgrid     = g_thruster.sgrid;
+    double& P_RFG     = g_thruster.P_RFG;
+    double& Q0sccm    = g_thruster.Q0sccm;
+    double& Q0        = g_thruster.Q0;
+    double& lambda_0  = g_thruster.lambda_0;
+    double& L_coil    = g_thruster.L_coil;
+    double& A         = g_thruster.A;
+    double& Ag        = g_thruster.Ag;
+    double& Ai        = g_thruster.Ai;
+    double& V         = g_thruster.V;
+    double& k_0       = g_thruster.k_0;
+    double& J_CL      = g_thruster.J_CL;
 
-    // Triebwerksparameter (Standardwerte KK)
-    double R        = 0.02;
-    double L        = 0.04;
-    double betai    = 0.5;
-    double betag    = 0.05145;
-    double frequency= 2.5e6;
-    double omega    = 2 * pi * frequency;
-    double Nw       = 6.00;
-    double R_ohm    = 0.36;
-    double Rc       = 0.02;
-    double lc       = 0.04;
-    double Vgrid    = 1500.00;
-    double sgrid    = 0.001;
-    double P_RFG    = 18.00;
-    double Q0sccm   = 0.475;
-    double Q0       = Q0sccm * 4.477962312e17;
-    double lambda_0 = R / 2.405 + L / pi;
-    double L_coil   = mu_0 * pi * Rc * Rc * Nw * Nw / lc;
-
-    double A    = 2 * pi * R * R + 2 * pi * R * L;
-    double Ag   = betag * pi * R * R;
-    double Ai   = betai * pi * R * R;
-    double V    = pi * R * R * L;
-    double k_0  = omega / c;
-    double J_CL = (4.0/9.0) * epsilon0 * sqrt(2*e/M) * pow(Vgrid, 1.5) / (sgrid*sgrid);
-
-    // Solver-Parameter
-    int    method       = 1;      // 1=Euler, 2=RK4, 3=RK45, 4=Newton (stationaer)
-    double I_soll       = 15.00;  // Ziel-Strahlstrom (mA)
+    // Solver-Parameter (bleiben vorerst direkt im Namespace)
+    int    solve_mode   = 1;
+    double I_soll       = 15.00;
     double Q0sccm_start = 0.27;
     double Q0sccm_step  = 0.01;
     int    jjmax        = 73;
+    int    use_paper_kel = 0;
+    double kel_constant  = 1.0e-13;  // Konstanter Kel-Wert [m^3/s] wenn use_paper_kel=1
 
-    // Stationaerer Newton-Solver
+    // Gasspezies fuer Cross-Section-Pfadaufloesung
+    // Bestimmt: cross_sections/<gas_species>/{kel,kiz,kex}_table.csv
+    // und die physikalischen Konstanten (M, Eiz, Eexc, kappa)
+    std::string gas_species = "xenon";
+
+    // Ratenmodell-Preset (bequeme Gesamtsteuerung):
+    // 0 = legacy (alle Raten aus Chabert-Fits, paper-kompatibel)
+    // 1 = conservative_tabulated (Kiz+Kex tabelliert, Kel legacy)
+    // 2 = full_tabulated (alle Raten aus Biagi/LXCat-Tabellen)
+    // Wird in applyConfig auf die Einzelschalter abgebildet.
+    // Einzelschalter koennen danach noch ueberschrieben werden.
+    int    rate_model = 0;
+
+    // Einzelschalter (werden von rate_model gesetzt, aber auch einzeln konfigurierbar)
+    int    ionization_model = 0;  // 0=legacy, 1=tabulated
+    int    elastic_model    = 0;  // 0=legacy, 1=tabulated
+    int    excitation_model = 0;  // 0=legacy, 1=tabulated
+
+    // Diagnostische Skalierungsfaktoren (1.0 = unveraendert).
+    double P_abs_scale = 1.0;
+    double Kex_scale   = 1.0;   // 0.0 = Anregung deaktiviert (wie Xenon_Code.py)
+
+    // Dichte-Profilkorrekturfaktor (Dietz et al. 2021, S.25):
+    // Das 0D-Modell ueberschaetzt die mittlere Elektronendichte, weil es ein
+    // homogenes Profil annimmt. Die effektive mittlere Dichte ist n_eff = factor * n.
+    // factor = 1.0: unveraendertes 0D-Verhalten (Standard)
+    // factor = 0.82: Korrektur nach Dietz (3D-Mittelwert / Zentralwert)
+    // Wirkt NUR auf Volumenverlustterme (Ionisation, Anregung, elastische Stoesse),
+    // NICHT auf Wandfluss (Bohm-Fluss) oder Randbedingungen.
+    double density_profile_factor = 1.0;
+
+    // Elektronen-Wandverlustfaktor in P5 (Eq. 13 im Paper):
+    //   P5 = alpha_e * kB * Te * n * uB * Aeff / V
+    // Der Faktor alpha_e fasst kinetische Energie (5/2 kBTe) + Sheath-Potenzial
+    // (typisch ~2 kBTe bei Xe) + Ionenenergie zusammen.
+    // Lieberman & Lichtenberg: alpha_e ≈ 5.2 (ohne Ionen) bis 7.2 (mit Ionen)
+    // Chabert 2012: alpha_e = 7 (Eq. 13)
+    double alpha_e_wall = 7.0;
+
     double P_RFG_max    = 80.00;
     int    newton_max_iter   = 45;
-    double newton_tol        = 1e-2;   // Relative Toleranz (mit physik. Skalierung: ~1% Fehler)
+    double newton_tol        = 1e-2;
     double power_tol_mA      = 0.05;
     int    power_max_iter    = 35;
     double power_min         = 1.0;
 
-    // physikalische Schranken / Daempfung
     double n_min   = 1e12, n_max   = 1e20;
     double ng_min  = 1e16, ng_max  = 1e22;
     double Te_min  = 0.3,  Te_max  = 20.0;
@@ -202,50 +364,173 @@ namespace Const {
     double newton_max_log_step = 0.35;
     double newton_fd_eps = 1e-5;
 
-    // Pseudo-transient continuation (robuster Warmstart vor Newton)
     int    ptc_max_iter       = 80;
     double ptc_start_gain     = 0.20;
     double ptc_min_gain       = 1e-4;
     double ptc_switch_merit   = 5e-3;
     double ptc_accept_ratio   = 0.98;
 
-    // "brauchbar genug"-Akzeptanz fuer stationaere Startloesungen:
-    // verhindert, dass der aeussere Power-Solver wegen eines zu strengen
-    // inneren Newton-Kriteriums sofort mit I_mA=-1 abbricht.
     double stationary_soft_abs_resid = 5.0;
     double stationary_soft_rel_improve = 0.80;
 
-    void applyConfig(const std::map<std::string, double>& cfg) {
-        CFG_LOAD(cfg, R);       CFG_LOAD(cfg, L);        CFG_LOAD(cfg, betai);
-        CFG_LOAD(cfg, betag);   CFG_LOAD(cfg, frequency);CFG_LOAD(cfg, Nw);
-        CFG_LOAD(cfg, R_ohm);   CFG_LOAD(cfg, Rc);       CFG_LOAD(cfg, lc);
-        CFG_LOAD(cfg, Vgrid);   CFG_LOAD(cfg, sgrid);    CFG_LOAD(cfg, P_RFG);
+    void applyConfig(const ConfigData& cd) {
+        const auto& cfg = cd.numeric;
+
+        // gas_species (String-Parameter) → physikalische Konstanten setzen
+        if (cd.strings.count("gas_species")) {
+            gas_species = cd.strings.at("gas_species");
+            PhysConst::set_gas(gas_species);
+            g_thruster.recompute_derived();  // M hat sich ggf. geaendert (J_CL)
+        }
+
+        // Triebwerksparameter → ThrusterParams-Struct
+        g_thruster.load_from_config(cfg);
+
+        // Solver-Parameter (bleiben im Namespace)
         CFG_LOAD(cfg, P_RFG_max);
-        CFG_LOAD(cfg, Q0sccm);  CFG_LOAD(cfg, I_soll);
+        CFG_LOAD(cfg, I_soll);
         CFG_LOAD(cfg, Q0sccm_start); CFG_LOAD(cfg, Q0sccm_step);
         CFG_LOAD(cfg, power_tol_mA); CFG_LOAD(cfg, power_min);
         CFG_LOAD(cfg, n_min); CFG_LOAD(cfg, n_max); CFG_LOAD(cfg, ng_min); CFG_LOAD(cfg, ng_max);
         CFG_LOAD(cfg, Te_min); CFG_LOAD(cfg, Te_max); CFG_LOAD(cfg, Tg_min); CFG_LOAD(cfg, Tg_max);
         CFG_LOAD(cfg, newton_max_log_step); CFG_LOAD(cfg, newton_fd_eps);
         if (cfg.count("jjmax"))  jjmax  = (int)cfg.at("jjmax");
-        if (cfg.count("method")) method = (int)cfg.at("method");
+        if (cfg.count("solve_mode")) solve_mode = std::max(1, std::min(2, (int)cfg.at("solve_mode")));
+        if (cfg.count("use_paper_kel")) use_paper_kel = ((int)cfg.at("use_paper_kel") != 0) ? 1 : 0;
+        CFG_LOAD(cfg, kel_constant);
+        CFG_LOAD(cfg, alpha_e_wall);
+        CFG_LOAD(cfg, P_abs_scale);
+        // rate_model Preset: setzt alle Einzelschalter auf einmal
+        if (cfg.count("rate_model")) {
+            rate_model = (int)cfg.at("rate_model");
+            if (rate_model == 1) { ionization_model = 1; excitation_model = 1; elastic_model = 0; }
+            else if (rate_model == 2) { ionization_model = 1; excitation_model = 1; elastic_model = 1; }
+            else { ionization_model = 0; excitation_model = 0; elastic_model = 0; }
+        }
+        // Einzelschalter koennen das Preset danach ueberschreiben
+        if (cfg.count("ionization_model")) ionization_model = (int)cfg.at("ionization_model");
+        if (cfg.count("elastic_model")) elastic_model = (int)cfg.at("elastic_model");
+        if (cfg.count("excitation_model")) excitation_model = (int)cfg.at("excitation_model");
+        CFG_LOAD(cfg, Kex_scale);
+        CFG_LOAD(cfg, density_profile_factor);
         if (cfg.count("newton_max_iter")) newton_max_iter = (int)cfg.at("newton_max_iter");
         if (cfg.count("power_max_iter"))  power_max_iter  = (int)cfg.at("power_max_iter");
         if (cfg.count("debug_level"))     debug_level = std::max(0, std::min(3, (int)cfg.at("debug_level")));
-
-        Q0       = Q0sccm * 4.477962312e17;
-        omega    = 2 * pi * frequency;
-        lambda_0 = R / 2.405 + L / pi;
-        L_coil   = mu_0 * pi * Rc * Rc * Nw * Nw / lc;
-        A        = 2 * pi * R * R + 2 * pi * R * L;
-        Ag       = betag * pi * R * R;
-        Ai       = betai * pi * R * R;
-        V        = pi * R * R * L;
-        k_0      = omega / c;
-        J_CL     = (4.0/9.0) * epsilon0 * sqrt(2*e/M) * pow(Vgrid, 1.5) / (sgrid*sgrid);
     }
 }
 using namespace Const;
+
+// ============================================================
+// Tabellierte Stossraten (Biagi/LXCat)
+// ============================================================
+
+// Kiz-Tabelle
+struct KizTableEntry { double Te_eV, Kiz; };
+static std::vector<KizTableEntry> g_kiz_table;
+
+static bool load_kiz_table(const std::string& path) {
+    std::ifstream f(path);
+    if (!f) return false;
+    g_kiz_table.clear();
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.empty() || line[0] == '#' || line[0] == 'T') continue;
+        std::istringstream ss(line);
+        KizTableEntry entry{};
+        char comma;
+        if (ss >> entry.Te_eV >> comma >> entry.Kiz) {
+            g_kiz_table.push_back(entry);
+        }
+    }
+    return !g_kiz_table.empty();
+}
+
+static double interpolate_kiz_table(double Te_eV) {
+    if (g_kiz_table.empty() || Te_eV <= 0.0) return 0.0;
+    if (Te_eV <= g_kiz_table.front().Te_eV) return g_kiz_table.front().Kiz;
+    if (Te_eV >= g_kiz_table.back().Te_eV)  return g_kiz_table.back().Kiz;
+    size_t lo = 0, hi = g_kiz_table.size() - 1;
+    while (hi - lo > 1) {
+        size_t mid = (lo + hi) / 2;
+        if (g_kiz_table[mid].Te_eV <= Te_eV) lo = mid; else hi = mid;
+    }
+    double t = (Te_eV - g_kiz_table[lo].Te_eV) / (g_kiz_table[hi].Te_eV - g_kiz_table[lo].Te_eV);
+    return g_kiz_table[lo].Kiz * (1.0 - t) + g_kiz_table[hi].Kiz * t;
+}
+
+// Kel-Tabelle
+struct KelTableEntry { double Te_eV, Kel; };
+static std::vector<KelTableEntry> g_kel_table;
+
+static bool load_kel_table(const std::string& path) {
+    std::ifstream f(path);
+    if (!f) return false;
+    g_kel_table.clear();
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.empty() || line[0] == '#' || line[0] == 'T') continue;
+        std::istringstream ss(line);
+        KelTableEntry entry{};
+        char comma;
+        if (ss >> entry.Te_eV >> comma >> entry.Kel) {
+            g_kel_table.push_back(entry);
+        }
+    }
+    return !g_kel_table.empty();
+}
+
+static double interpolate_kel_table(double Te_eV) {
+    if (g_kel_table.empty() || Te_eV <= 0.0) return 0.0;
+    if (Te_eV <= g_kel_table.front().Te_eV) return g_kel_table.front().Kel;
+    if (Te_eV >= g_kel_table.back().Te_eV)  return g_kel_table.back().Kel;
+    size_t lo = 0, hi = g_kel_table.size() - 1;
+    while (hi - lo > 1) {
+        size_t mid = (lo + hi) / 2;
+        if (g_kel_table[mid].Te_eV <= Te_eV) lo = mid; else hi = mid;
+    }
+    double t = (Te_eV - g_kel_table[lo].Te_eV) / (g_kel_table[hi].Te_eV - g_kel_table[lo].Te_eV);
+    return g_kel_table[lo].Kel * (1.0 - t) + g_kel_table[hi].Kel * t;
+}
+
+// Kex-Tabelle
+struct KexTableEntry { double Te_eV, Kex_total, Pexc_coeff; };
+static std::vector<KexTableEntry> g_kex_table;
+
+static bool load_kex_table(const std::string& path) {
+    std::ifstream f(path);
+    if (!f) return false;
+    g_kex_table.clear();
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.empty() || line[0] == '#' || line[0] == 'T') continue;
+        std::istringstream ss(line);
+        KexTableEntry entry{};
+        char comma;
+        if (ss >> entry.Te_eV >> comma >> entry.Kex_total >> comma >> entry.Pexc_coeff) {
+            g_kex_table.push_back(entry);
+        }
+    }
+    return !g_kex_table.empty();
+}
+
+// Lineare Interpolation in der Kex-Tabelle
+static double interpolate_kex_table(double Te_eV, bool use_pexc_coeff) {
+    if (g_kex_table.empty() || Te_eV <= 0.0) return 0.0;
+    if (Te_eV <= g_kex_table.front().Te_eV)
+        return use_pexc_coeff ? g_kex_table.front().Pexc_coeff : g_kex_table.front().Kex_total;
+    if (Te_eV >= g_kex_table.back().Te_eV)
+        return use_pexc_coeff ? g_kex_table.back().Pexc_coeff : g_kex_table.back().Kex_total;
+    // Binaere Suche
+    size_t lo = 0, hi = g_kex_table.size() - 1;
+    while (hi - lo > 1) {
+        size_t mid = (lo + hi) / 2;
+        if (g_kex_table[mid].Te_eV <= Te_eV) lo = mid; else hi = mid;
+    }
+    double t = (Te_eV - g_kex_table[lo].Te_eV) / (g_kex_table[hi].Te_eV - g_kex_table[lo].Te_eV);
+    if (use_pexc_coeff)
+        return g_kex_table[lo].Pexc_coeff * (1.0 - t) + g_kex_table[hi].Pexc_coeff * t;
+    return g_kex_table[lo].Kex_total * (1.0 - t) + g_kex_table[hi].Kex_total * t;
+}
 
 // ============================================================
 // Hilfsfunktionen
@@ -254,18 +539,51 @@ double vg(double Tg)       { return sqrt(8 * kB * Tg / (pi * M)); }
 double vi(double Ti)       { return sqrt(8 * kB * Ti / (pi * M)); }
 double Gamma_g(double ng, double vg_val) { return 0.25 * ng * vg_val; }
 
-double Kex(double Te) { return 1.2921e-13 * exp(-e * 11.6 / (kB * Te * conv)); }
+double Kex(double Te) { return Kex_scale * 1.2921e-13 * exp(-e * 11.6 / (kB * Te * conv)); }
 
 double Kiz(double Te) {
+    if (ionization_model == 1 && !g_kiz_table.empty()) {
+        return interpolate_kiz_table(Te);  // Te ist in eV
+    }
+    // Legacy: Chabert Polynomfit
     double TeV = kB * Te * conv / e;
     double K1 = 6.73e-15 * sqrt(TeV) * (3.97 + 0.643*TeV - 0.0368*TeV*TeV) * exp(-12.127/TeV);
     double K2 = 6.73e-15 * sqrt(TeV) * (-0.0001031*TeV*TeV + 6.386*exp(-12.127/TeV));
     return 0.5 * (K1 + K2);
 }
 
+// Elastischer Elektron-Neutral-Stosskoeffizient [m³/s]
+//
+// elastic_model == 1 (tabulated):
+//   Biagi/LXCat Momentum-Transfer-Querschnitt, Maxwell-Boltzmann-integriert.
+//   Kel(3eV) ≈ 2.3e-13, Kel(5eV) ≈ 2.7e-13 m³/s fuer Xenon.
+//   Physikalisch am genauesten (Audit 2026-03-28 bestaetigt).
+//
+// elastic_model == 0 (legacy):
+//   Kel = kel_constant (default 1e-13 m³/s), wie in Chabert et al.,
+//   Phys. Plasmas 19, 073512 (2012), S.2.
+//   Unterschaetzt Kel im Betriebsbereich um Faktor 2-3 (Audit-Ergebnis).
+//
+// Kel wirkt auf:
+//   - Kollisionsfrequenz nu_m = Kel * ng  (RF-Kopplung, eps_p)
+//   - Gasheizung (Pg1 in Eq.11)
+//   - Elektronenkuehlung (P4 in Eq.13)
 double Kel(double Te) {
-    return -1.45239e-13 + 2.92063e-13*Te - 7.59346e-14*Te*Te
-           + 9.78729e-15*pow(Te,3) - 6.3466e-16*pow(Te,4) + 1.64868e-19*pow(Te,5);
+    double val;
+    if (elastic_model == 1 && !g_kel_table.empty()) {
+        val = interpolate_kel_table(Te);  // Te ist in eV
+    } else {
+        // Legacy: konstanter Wert (Paper-kompatibel)
+        val = kel_constant;
+    }
+    // Sicherheitspruefung: Kel muss positiv sein
+    if (val <= 0.0) {
+        cerr << "FEHLER: Kel(" << Te << ") = " << val << " <= 0! "
+             << "elastic_model=" << elastic_model
+             << ", kel_constant=" << kel_constant << endl;
+        val = 1e-15;  // Minimaler Sicherheitswert, keine stille 0
+    }
+    return val;
 }
 
 double uB(double Te)         { return sqrt(kB * Te * conv / M); }
@@ -296,29 +614,6 @@ complex<double> my_calc_eps_p(double n, double ng, double Te) {
 }
 template <typename T>
 int signum(T val) { return (T(0) < val) - (val < T(0)); }
-
-// ============================================================
-// RF-Leistungskopplung
-// ============================================================
-void do_the_RF_magic(double& n, double& ng, double& Te,
-                     double* I_coil_ptr, double* P_abs_ptr, double* R_induktiv_ptr) {
-    double a = plasma_freq(n), b = omega, cf = coll_freq(ng, Te);
-    double it = a*a*cf / (b*(b*b+cf*cf));
-    double rt = 1 - a*a / (b*b+cf*cf);
-    double o_rt = sqrt((sqrt(it*it+rt*rt)+rt)/2.0);
-    double o_it = signum(it) * sqrt((sqrt(it*it+rt*rt)-rt)/2.0);
-
-    complex<double> k_1(o_rt*k_0, -o_it*k_0);
-    complex<double> kR = R * k_1;
-    complex<double> eps_p(rt, -it);
-    complex<double> result = (1i * kR * bessel::cyl_j(1,kR)) / (eps_p * bessel::cyl_j(0,kR));
-
-    double R_ind = 2*pi*Nw*Nw / (epsilon0*L*omega) * result.real();
-    double Ic    = sqrt(2*P_RFG / (R_ind + R_ohm));
-    *R_induktiv_ptr = R_ind;
-    *I_coil_ptr     = Ic;
-    *P_abs_ptr      = 0.5 * R_ind * Ic * Ic;
-}
 
 
 struct StationaryRFState {
@@ -358,8 +653,8 @@ static StationaryRFState stationary_compute_rf(double n, double ng, double Te, d
     complex<double> k_1(o_rt*k_0, -o_it*k_0);
     complex<double> kR = R * k_1;
     complex<double> eps_p(rt, -it);
-    complex<double> j0 = bessel::cyl_j(0, kR);
-    complex<double> j1 = bessel::cyl_j(1, kR);
+    complex<double> j0 = bessel_cyl_j(0, kR);
+    complex<double> j1 = bessel_cyl_j(1, kR);
     complex<double> denom_c = eps_p * j0;
 
     // Numerische Stabilisierung: |eps_p * J0| kann nahe Null werden bei
@@ -402,6 +697,18 @@ static bool stationary_state_finite_positive(const StationaryPlasmaState& s) {
         && s.n > 0.0 && s.ng > 0.0 && s.Te > 0.0 && s.Tg > 0.0;
 }
 
+// Maximaler Ionisierungsgrad n/ng fuer Zustandsgrenzen-Pruefung.
+// Numerische Schutzgrenze — verhindert, dass der LM-Solver in
+// Regionen mit n > ng gelangt (physikalisch unplausibel fuer
+// schwach ionisiertes Plasma). Wert 0.95 statt 0.5, weil:
+// - Typischer Betrieb: iondeg < 10% (Paper: ~7% am CL-Limit)
+// - Hohe Leistung / niedriger Fluss: bis ~30-50% denkbar
+// - 0.5 verwarf den Solver-Suchraum unnoetig bei Hochleistung
+// - 0.95 erlaubt den Solver, durch Hochionisierungs-Regionen
+//   zu iterieren, verhindert aber n ≈ ng (numerische Probleme
+//   in der Neutralgasbilanz, da Nenner → 0)
+constexpr double iondeg_max = 0.95;
+
 static bool stationary_state_in_bounds(const StationaryPlasmaState& s) {
     if (!stationary_state_finite_positive(s)) return false;
     if (s.n  < n_min  || s.n  > n_max)  return false;
@@ -409,7 +716,7 @@ static bool stationary_state_in_bounds(const StationaryPlasmaState& s) {
     if (s.Te < Te_min || s.Te > Te_max) return false;
     if (s.Tg < Tg_min || s.Tg > Tg_max) return false;
     double iondeg = s.n / std::max(1.0, s.ng);
-    if (!std::isfinite(iondeg) || iondeg < 0.0 || iondeg > 0.5) return false;
+    if (!std::isfinite(iondeg) || iondeg < 0.0 || iondeg > iondeg_max) return false;
     return true;
 }
 
@@ -423,6 +730,135 @@ static StationaryPlasmaState stationary_safe_defaults_for_q(double q0_particles)
     return s;
 }
 
+// ============================================================
+// Abgeleitete Groessen — einheitlich fuer alle Solver-Pfade
+//
+// Wird von compute_derived() aus dem konvergierten Plasmazustand
+// (n, ng, Te, Tg) und den RF-Groessen (R_ind, I_coil, P_abs)
+// berechnet. Wird vom stationaeren Solver und der Ausgabe verwendet.
+//
+// Referenz: Chabert et al., Phys. Plasmas 19, 073512 (2012)
+// ============================================================
+struct DerivedQuantities {
+    // --- Teilchenstroeme und Dichten ---
+    double I_extr_mA;    // [mA]         Strahlstrom: Ai * e * Gamma_i * 1000
+    double iondeg;       // [%]          Ionisierungsgrad: n / ng * 100
+    double J_i;          // [A/m²]       Ionenstromdichte: e * Gamma_i
+
+    // --- Plasmaparameter ---
+    double cf;           // [s⁻¹]        Elektron-Neutral-Kollisionsfrequenz: Kel(Te) * ng
+    double u_Bohm;       // [m/s]        Bohm-Geschwindigkeit: sqrt(kB * Te / M)
+    double pf;           // [rad/s]      Plasmafrequenz: sqrt(n * e² / (me * eps0))
+    double eps_p_real;   // [-]          Re(epsilon_p) = 1 - omega_pe² / (omega² + nu_m²)
+    double eps_p_imag;   // [-]          Im(epsilon_p) = -omega_pe² * nu_m / (omega * (omega² + nu_m²))
+
+    // --- RF-Kopplung ---
+    double zeta;         // [-]          ICP-Kopplungseffizienz: R_ind / (R_ind + R_coil)  [Eq.22]
+    double icp_eff;      // [-]          = zeta (Alias fuer Ausgabe-Kompatibilitaet)
+    double P_RF;         // [W]          Gesamt-RF-Leistung: 0.5 * (R_ind + R_coil) * I_coil²  [Eq.26]
+
+    // --- Schub ---
+    double T_i_N;        // [N]          Ionenschub: Gamma_i * M * v_beam * Ai  [Eq.17]
+    double T_n_N;        // [N]          Neutralteilchenschub: Gamma_g * M * vg * Ag  [Eq.20]
+    double T_total_N;    // [N]          Gesamtschub: T_i + T_n
+
+    // --- Effizienzen ---
+    double gamma_eff;    // [-]          Schubleistungseffizienz: (P_i + P_n) / (P_i + P_n + P_RF)  [Eq.23]
+    double xi_mN_kW;     // [mN/kW]      Schubeffizienz: 1000 * T_total / P_RF  [Eq.24]
+    double eta_mass;     // [-]          Massennutzungsgrad: Gamma_i * Ai / Q0  [Eq.25]
+};
+
+// Berechne alle abgeleiteten Groessen aus dem konvergierten Zustand.
+// Input:  n, ng [m⁻³], Te [eV], Tg [K], R_ind [Ohm], I_coil [A], P_abs [W]
+// Output: DerivedQuantities struct (siehe Felddokumentation oben)
+//
+// HINWEIS: Te wird intern ueber conv (=11604.5 K/eV) nach Kelvin umgerechnet,
+// wo noetig (uB, Energieterme). In der Ausgabe bleibt Te in eV.
+static DerivedQuantities compute_derived(double n, double ng, double Te, double Tg,
+                                         double R_ind, double I_coil_val, double P_abs_val) {
+    DerivedQuantities d{};
+
+    // Ionenfluss: Gamma_i = hL * n * uB  [m⁻² s⁻¹]
+    double lam  = lambda_i(ng);          // mittlere freie Weglaenge [m]
+    double Gi_f = Gamma_i_func(lam, Te, n);
+
+    // Strahlstrom: I = Ai * e * Gamma_i  [A], ausgegeben in [mA]
+    d.I_extr_mA   = Ai * e * Gi_f * 1000.0;
+
+    // Ionisierungsgrad: n / ng * 100  [%]
+    d.iondeg      = n / std::max(ng, 1.0) * 100.0;
+
+    // Kollisionsfrequenz: nu_m = Kel(Te) * ng  [s⁻¹]
+    d.cf          = coll_freq(ng, Te);
+
+    // Bohm-Geschwindigkeit: uB = sqrt(kB * Te / M)  [m/s]
+    d.u_Bohm      = uB(Te);
+
+    // Ionenstromdichte: J_i = e * Gamma_i  [A/m²]
+    d.J_i         = e * Gi_f;
+
+    // Plasmafrequenz: omega_pe = sqrt(n * e² / (me * eps0))  [rad/s]
+    d.pf          = plasma_freq(n);
+
+    // Komplexe Plasmapermittivitaet: eps_p = 1 - omega_pe² / (omega * (omega - i*nu_m))
+    complex<double> ep = my_calc_eps_p(n, ng, Te);
+    d.eps_p_real  = real(ep);
+    d.eps_p_imag  = imag(ep);
+
+    // ICP-Kopplungseffizienz: zeta = R_ind / (R_ind + R_coil)  [Eq.22]
+    d.zeta        = (R_ind > 1e-10) ? R_ind / (R_ind + R_ohm) : 0.0;
+    d.icp_eff     = d.zeta;
+
+    // Neutralteilchenfluss: Gamma_g = 0.25 * ng * vg  [m⁻² s⁻¹]
+    double vg_f   = vg(Tg);
+    double Gn_f   = 0.25 * ng * vg_f;
+
+    // Ionenschub: T_i = Gamma_i * M * v_beam * Ai  [N]  [Eq.17]
+    d.T_i_N       = Thrust(Gi_f);
+
+    // Neutralteilchenschub: T_n = Gamma_g * M * vg * Ag  [N]  [Eq.20]
+    d.T_n_N       = Gn_f * M * vg_f * Ag;
+    d.T_total_N   = d.T_i_N + d.T_n_N;
+
+    // Gesamt-RF-Leistung: P_RF = 0.5 * (R_ind + R_coil) * I_coil²  [W]  [Eq.26]
+    d.P_RF        = 0.5 * (R_ind + R_ohm) * I_coil_val * I_coil_val;
+
+    // Schubleistungseffizienz: gamma = (P_i + P_n) / (P_i + P_n + P_RF)  [Eq.23]
+    double v_extr = sqrt(2.0 * e * Vgrid / M);                // Extraktionsgeschw. [m/s]
+    double pow_i  = 0.5 * M * v_extr * v_extr * Gi_f * Ai;   // Ionenschubleistung [W]  [Eq.18]
+    double pow_n  = 0.5 * M * vg_f * vg_f * Gn_f * Ag;       // Neutralschubleistung [W] [Eq.21]
+    d.gamma_eff   = (d.P_RF > 1e-10) ? (pow_i + pow_n) / (pow_i + pow_n + d.P_RF) : 0.0;
+
+    // Schubeffizienz: xi = (T_i + T_n) / P_RF  [mN/kW]  [Eq.24]
+    d.xi_mN_kW    = (d.P_RF > 1e-10) ? 1000.0 * d.T_total_N / d.P_RF : 0.0;
+
+    // Massennutzungsgrad: eta = Gamma_i * Ai / Q0  [-]  [Eq.25]
+    d.eta_mass    = (Q0 > 0.0) ? Gi_f * Ai / Q0 : 0.0;
+
+    return d;
+}
+
+// Schreibt eine CSV-Datenzeile in die Ausgabedatei (fuer alle Solver-Pfade)
+static void emit_csv_row(std::ofstream& datei, const std::string& method_str,
+                         double Q0sccm_val, double n, double ng, double Te, double Tg,
+                         double P_RFG_val, double P_abs_val,
+                         double R_ind_val, double I_coil_val,
+                         const DerivedQuantities& d) {
+    datei << method_str  << ", " << Q0sccm_val << ", " << Te << ", " << Tg << ", "
+          << std::scientific << n << ", " << ng << ", "
+          << std::fixed << d.iondeg << ", " << P_RFG_val << ", "
+          << P_abs_val << ", " << d.I_extr_mA << ", "
+          << d.cf << ", " << R_ind_val << ", " << I_coil_val << ", "
+          << d.eps_p_real << ", " << d.eps_p_imag << ", "
+          << d.u_Bohm << ", " << d.J_i << ", "
+          << d.zeta << ", " << d.gamma_eff << ", "
+          << d.xi_mN_kW << ", " << d.eta_mass << ", "
+          << d.pf << ", " << frequency/1e6 << ", "
+          << d.T_i_N*1e3 << ", " << d.T_n_N*1e3 << ", " << d.T_total_N*1e3 << ", "
+          << d.icp_eff << ", " << d.P_RF << ", "
+          << density_profile_factor * n << ", " << density_profile_factor << "\n";
+}
+
 static std::array<double,4> stationary_residual_raw(const StationaryPlasmaState& s,
                                                     double P_RFG_local,
                                                     StationaryRFState* rf_out = nullptr) {
@@ -433,20 +869,39 @@ static std::array<double,4> stationary_residual_raw(const StationaryPlasmaState&
         return {nan,nan,nan,nan};
     }
 
-    double P_vol = rf.P_abs / V;
+    double P_vol = rf.P_abs * P_abs_scale / V;  // P_abs_scale: diagnostischer Faktor
 
-    double r1 = s.n*s.ng*Kiz(s.Te) - s.n*uB(s.Te)*Aeff(lambda_i(s.ng))/V;
+    // n_eff: effektive mittlere Dichte fuer Volumenverlustterme
+    // Bei density_profile_factor = 1.0 ist n_eff = n (unveraendertes 0D-Verhalten).
+    double n_eff = density_profile_factor * s.n;
+
+    // r1: Ionenbilanz — Produktion (Volumenterm) verwendet n_eff,
+    //     Wandverlust (Bohm-Fluss) verwendet n (Randdichte bleibt unveraendert)
+    double r1 = n_eff*s.ng*Kiz(s.Te) - s.n*uB(s.Te)*Aeff(lambda_i(s.ng))/V;
+
+    // r2: Neutralgasbilanz — unveraendert (kein Dichtekorrektur hier)
     double r2 = Q0/V + s.n*uB(s.Te)*Aeff1(lambda_i(s.ng))/V - s.n*s.ng*Kiz(s.Te) - Gamma_g(s.ng,vg(s.Tg))*Ag/V;
 
+    // r4: Gasenergiebilanz — unveraendert
     double Pg1 = 3.0*me/M * kB*(s.Te*conv-s.Tg) * s.n*s.ng*Kel(s.Te);
     double Pg2 = 0.25*M*uB(s.Te)*uB(s.Te) * s.n*s.ng*sigma_i*vi(s.Tg);
     double Pg3 = kappa*(s.Tg-Tg0)/lambda_0 * A/V;
     double r4 = Pg1 + Pg2 - Pg3;
 
-    double P2 = Eiz  * s.n*s.ng*Kiz(s.Te);
-    double P3 = Eexc * s.n*s.ng*Kex(s.Te);
-    double P4 = 3.0*me/M * kB*(s.Te*conv-s.Tg) * s.n*s.ng*Kel(s.Te);
-    double P5 = 7.0*kB*s.Te*conv * s.n*uB(s.Te)*Aeff(lambda_i(s.ng))/V;
+    // r3: Elektronenenergiebilanz — Volumenverlustterme verwenden n_eff,
+    //     Wandverlustterm P5 verwendet n (Bohm-Fluss = Randdichte)
+    double P2 = Eiz  * n_eff*s.ng*Kiz(s.Te);
+    // P3: Anregungsverluste — Legacy (Chabert) oder tabelliert (Biagi)
+    double P3;
+    if (excitation_model == 1 && !g_kex_table.empty()) {
+        // Tabelliert: Pexc_coeff = Summe_i [Kex_i * Eexc_i] (prozessaufgeloest)
+        P3 = interpolate_kex_table(s.Te, true) * n_eff * s.ng;
+    } else {
+        // Legacy: Eexc * Kex(Te) mit globaler Schwellenenergie
+        P3 = Eexc * n_eff*s.ng*Kex(s.Te);
+    }
+    double P4 = 3.0*me/M * kB*(s.Te*conv-s.Tg) * n_eff*s.ng*Kel(s.Te);
+    double P5 = alpha_e_wall*kB*s.Te*conv * s.n*uB(s.Te)*Aeff(lambda_i(s.ng))/V;
     double r3 = P_vol - (P2 + P3 + P4 + P5);
 
     return {r1, r2, r3, r4};
@@ -1014,24 +1469,94 @@ static bool stationary_power_result_valid(const StationaryPowerSolveResult& ps) 
 }
 
 // ============================================================
-// 4D-Solver mit aeusserer Power-Bisection
+// Selbstkonsistenter Modus (solve_mode == 2):
+// P_RFG ist fest vorgegeben. Der 4D-LM-Solver loest das
+// gekoppelte Gleichungssystem (r1-r4) bei diesem P_RFG.
+// Der Strahlstrom I_mA ergibt sich als Ausgabe, nicht als Ziel.
+// ============================================================
+
+static StationaryPowerSolveResult stationary_solve_at_fixed_power(
+    double P_RFG_fixed, const StationaryPlasmaState& guess) {
+
+    StationaryPowerSolveResult out;
+
+    debug_emit(2, "SELFCONSISTENT_BEGIN",
+        "Q0sccm=" + std::to_string(Q0 / SCCM_TO_PPS) +
+        " P_RFG=" + std::to_string(P_RFG_fixed));
+
+    // Versuche mehrere Startwerte
+    StationaryPlasmaState safe = stationary_safe_defaults_for_q(Q0);
+    std::vector<StationaryPlasmaState> starts = {guess, safe};
+    if (stationary_state_in_bounds(guess)) {
+        starts.push_back(StationaryPlasmaState{
+            std::sqrt(std::max(1.0, guess.n * safe.n)),
+            std::sqrt(std::max(1.0, guess.ng * safe.ng)),
+            0.5 * (guess.Te + safe.Te),
+            0.5 * (guess.Tg + safe.Tg)
+        });
+    }
+
+    StationarySolveResult best;
+    best.reason = "all starts failed";
+    for (const auto& st : starts) {
+        if (!stationary_state_in_bounds(st)) continue;
+        // PTC + LM: robuster als direkter LM-Aufruf bei schwierigen Startwerten
+        StationarySolveResult cur = stationary_solve_ptc_then_newton(P_RFG_fixed, st);
+        if (cur.converged) { best = cur; break; }
+        if (cur.resid_norm < best.resid_norm) best = cur;
+    }
+
+    out.iterations = best.iterations;
+    out.inner_resid_norm = best.resid_norm;
+    out.P_RFG_sol = P_RFG_fixed;
+    out.P_trial_last = P_RFG_fixed;
+
+    if (best.converged && stationary_state_finite_positive(best.state)) {
+        out.converged = true;
+        out.state = best.state;
+        out.rf = best.rf;
+        out.I_mA = stationary_beam_current_mA(best.state);
+        out.err_mA = 0.0;  // Kein Zielstrom im selbstkonsistenten Modus
+        out.reason = "ok";
+
+        std::cout << "PID_DONE " << std::fixed << std::setprecision(4)
+                  << out.I_mA << " 0.0000 " << P_RFG_fixed << " "
+                  << best.state.Te << " " << best.state.Tg << std::endl;
+        std::cout << "CONVERGED " << best.iterations << std::endl;
+
+        debug_emit(2, "SELFCONSISTENT_OK",
+            "P_RFG=" + std::to_string(P_RFG_fixed) +
+            " I_mA=" + std::to_string(out.I_mA) +
+            " resid=" + std::to_string(best.resid_norm));
+    } else {
+        out.converged = false;
+        out.fail_type = SolveFailType::NUMERICAL_FAIL;
+        out.state = best.state;
+        out.rf = best.rf;
+        out.I_mA = stationary_state_finite_positive(best.state)
+                   ? stationary_beam_current_mA(best.state)
+                   : std::numeric_limits<double>::quiet_NaN();
+        out.err_mA = std::numeric_limits<double>::quiet_NaN();
+        out.reason = "self-consistent solve failed: " + best.reason;
+        debug_emit(1, "SELFCONSISTENT_FAIL",
+            "P_RFG=" + std::to_string(P_RFG_fixed) +
+            " reason=" + best.reason, true);
+    }
+    return out;
+}
+
+// ============================================================
+// Modus 1: Fester Strahlstrom — 4D-Solver mit Power-Bisection
 //
-// Architektur (zurueck zum physikalisch korrekten Ansatz):
-//   Innerer Solver: stationary_solve_lm loest ALLE 4 Gleichungen
-//     (r1, r2, r3, r4) gleichzeitig fuer gegebenes P_RFG.
-//     r3 koppelt P_RFG an den Plasmazustand — das ist entscheidend.
-//   Aeusserer Solver: Bisection auf P_RFG bis I_mA = I_soll.
-//
-// Die vorherige ng-Dekomposition war physikalisch falsch, weil
-// r3 die Plasmadichte ueber die verfuegbare Leistung begrenzt.
-// Ohne r3 im inneren Solver gibt es keine obere Schranke fuer n.
+// Der LM-Solver loest alle 4 Gleichungen fuer gegebenes P_RFG.
+// Die aeussere Bisection variiert P_RFG bis I_mA = I_soll.
 // ============================================================
 
 static StationaryPowerSolveResult stationary_solve_for_target_current(const StationaryPlasmaState& guess) {
     StationaryPowerSolveResult out;
 
     debug_emit(2, "TARGET_CURRENT_BEGIN",
-        "Q0sccm=" + std::to_string(Q0 / 4.477962312e17) +
+        "Q0sccm=" + std::to_string(Q0 / SCCM_TO_PPS) +
         " I_soll=" + std::to_string(I_soll) +
         " P_RFG_seed=" + std::to_string(P_RFG));
 
@@ -1063,50 +1588,112 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
     };
 
     // --- Bracket-Suche: I_mA(P_lo) < I_soll < I_mA(P_hi) ---
-    double p_lo = 5.0;
-    double p_hi = 100.0;
+    //
+    // Strategie: Von unten aufbauen statt von oben herab.
+    // Grund: Bei tabellierten Ratenmodellen (v.a. full_tabulated) hat der
+    // innere Solver eine deutlich niedrigere Konvergenzgrenze in P_RFG
+    // (~60-70W bei Xe), weil der hoehere Kel zu steilerer Ionisierung fuehrt
+    // und der Zustandsraum bei hoher Leistung kollabiiert (ng->0, iondeg->max).
+    // Wenn p_hi direkt auf 100W gesetzt wird und dort der Solver scheitert,
+    // findet der alte Algorithmus nie ein Bracket und expandiert sinnlos.
+    //
+    // Neuer Ansatz:
+    // 1. Starte mit p_lo=2W, evaluiere
+    // 2. Verdopple p_hi schrittweise (4, 8, 16, 32, 64, ...) bis
+    //    entweder ein Bracket gefunden wird (f_lo*f_hi < 0)
+    //    oder p_hi nicht mehr konvergiert
+    // 3. Wenn p_hi nicht konvergiert: halbiere rueckwaerts bis konvergent
+    // 4. Fallback auf P_RFG_max als absolute Obergrenze
+
     StationaryPlasmaState warm = guess;
     if (!stationary_state_in_bounds(warm))
         warm = stationary_safe_defaults_for_q(Q0);
 
-    // Evaluiere untere Grenze
+    double p_lo = 5.0;
     StationarySolveResult s_lo = solve_at_power(p_lo, warm);
     double I_lo = (s_lo.converged && stationary_state_finite_positive(s_lo.state))
                   ? stationary_beam_current_mA(s_lo.state) : 0.0;
     double f_lo = I_lo - I_soll;
+    if (s_lo.converged) warm = s_lo.state;
 
-    // Evaluiere obere Grenze
-    StationarySolveResult s_hi = solve_at_power(p_hi, warm);
-    double I_hi = (s_hi.converged && stationary_state_finite_positive(s_hi.state))
-                  ? stationary_beam_current_mA(s_hi.state) : 0.0;
-    double f_hi = I_hi - I_soll;
+    // Aufwaerts-Suche: verdopple p_hi bis Bracket oder Konvergenzgrenze
+    double p_hi = 10.0;
+    StationarySolveResult s_hi;
+    double I_hi = 0.0, f_hi = -I_soll;
+    double p_last_good = p_lo;
+    StationaryPlasmaState state_last_good = warm;
+    double I_last_good = I_lo;
+
+    const double P_expand_max = std::max(P_RFG_max, 200.0);
+    int expand_count = 0;
+    bool bracket_found = false;
+
+    while (p_hi <= P_expand_max && expand_count < 20) {
+        s_hi = solve_at_power(p_hi, state_last_good);
+        bool hi_ok = s_hi.converged && stationary_state_finite_positive(s_hi.state);
+        I_hi = hi_ok ? stationary_beam_current_mA(s_hi.state) : 0.0;
+        f_hi = I_hi - I_soll;
+
+        std::cout << "POWER_BRACKET " << std::fixed << std::setprecision(4)
+                  << p_lo << " " << p_hi << " " << f_lo << " " << f_hi
+                  << " hi_conv=" << hi_ok << std::endl;
+
+        if (hi_ok) {
+            // Solver konvergiert bei p_hi
+            p_last_good = p_hi;
+            state_last_good = s_hi.state;
+            I_last_good = I_hi;
+
+            if (f_lo * f_hi < 0.0) {
+                // Bracket gefunden
+                bracket_found = true;
+                break;
+            }
+            // Noch kein Bracket → weiter verdoppeln
+            p_hi = std::min(p_hi * 2.0, P_expand_max + 1.0);
+        } else {
+            // Solver scheitert bei p_hi → Konvergenzgrenze erreicht.
+            // Der Bracket muss zwischen p_last_good und p_hi liegen
+            // (oder die Physik hat keine Loesung bei I_soll).
+            // Halbiere rueckwaerts um den hoechsten konvergenten Punkt zu finden.
+            double p_probe = 0.5 * (p_last_good + p_hi);
+            for (int refine = 0; refine < 8; ++refine) {
+                StationarySolveResult s_probe = solve_at_power(p_probe, state_last_good);
+                bool probe_ok = s_probe.converged && stationary_state_finite_positive(s_probe.state);
+                double I_probe = probe_ok ? stationary_beam_current_mA(s_probe.state) : 0.0;
+
+                if (probe_ok) {
+                    p_last_good = p_probe;
+                    state_last_good = s_probe.state;
+                    I_last_good = I_probe;
+                    p_probe = 0.5 * (p_probe + p_hi);  // Suche weiter oben
+                } else {
+                    p_hi = p_probe;
+                    p_probe = 0.5 * (p_last_good + p_probe);  // Suche weiter unten
+                }
+            }
+            // Setze p_hi auf den hoechsten konvergenten Punkt
+            p_hi = p_last_good;
+            s_hi = solve_at_power(p_hi, state_last_good);
+            I_hi = (s_hi.converged && stationary_state_finite_positive(s_hi.state))
+                   ? stationary_beam_current_mA(s_hi.state) : I_last_good;
+            f_hi = I_hi - I_soll;
+
+            if (f_lo * f_hi < 0.0) bracket_found = true;
+            break;
+        }
+        expand_count++;
+    }
 
     debug_emit(2, "POWER_BRACKET_INIT",
         "p_lo=" + std::to_string(p_lo) + " I_lo=" + std::to_string(I_lo) +
         " p_hi=" + std::to_string(p_hi) + " I_hi=" + std::to_string(I_hi) +
         " lo_conv=" + std::to_string(s_lo.converged) +
-        " hi_conv=" + std::to_string(s_hi.converged));
-
-    // Bracket erweitern falls noetig (P_hi verdoppeln, max 5000 W)
-    const double P_expand_max = 5000.0;
-    int expand_count = 0;
-    while (f_lo * f_hi > 0.0 && p_hi < P_expand_max && expand_count < 15) {
-        p_hi = std::min(p_hi * 2.0, P_expand_max);
-        s_hi = solve_at_power(p_hi, s_hi.converged ? s_hi.state : warm);
-        I_hi = (s_hi.converged && stationary_state_finite_positive(s_hi.state))
-               ? stationary_beam_current_mA(s_hi.state) : I_hi;
-        f_hi = I_hi - I_soll;
-
-        std::cout << "POWER_BRACKET " << std::fixed << std::setprecision(4)
-                  << p_lo << " " << p_hi << " " << f_lo << " " << f_hi << std::endl;
-        expand_count++;
-
-        // Warm-start fuer naechste Iteration
-        if (s_hi.converged) warm = s_hi.state;
-    }
+        " hi_conv=" + std::to_string((int)bracket_found) +
+        " p_last_good=" + std::to_string(p_last_good));
 
     // Pruefen: Bracket gefunden?
-    if (f_lo * f_hi > 0.0) {
+    if (!bracket_found) {
         out.hit_limit = true;
         out.P_trial_last = p_hi;
         StationarySolveResult& best_s = (std::fabs(f_lo) < std::fabs(f_hi)) ? s_lo : s_hi;
@@ -1323,365 +1910,6 @@ static StationaryPowerSolveResult stationary_solve_for_target_current(const Stat
     return out;
 }
 
-// ============================================================
-// Ableitungen (auf Energiedichte-Basis)
-// ============================================================
-double d_n(double n, double ng, double Te) {
-    return n*ng*Kiz(Te) - n*uB(Te)*Aeff(lambda_i(ng))/V;
-}
-double d_ng(double n, double ng, double Te, double Tg) {
-    return Q0/V + n*uB(Te)*Aeff1(lambda_i(ng))/V - n*ng*Kiz(Te) - Gamma_g(ng,vg(Tg))*Ag/V;
-}
-// Gibt dU_g/dt in J/(m^3 s) zurueck
-double d_energy_gas(double Te, double Tg, double ng, double n) {
-    double Pg1 = 3.0*me/M * kB*(Te*conv-Tg) * n*ng*Kel(Te);
-    double Pg2 = 0.25*M*uB(Te)*uB(Te) * n*ng*sigma_i*vi(Tg);
-    double Pg3 = kappa*(Tg-Tg0)/lambda_0 * A/V;
-    return Pg1 + Pg2 - Pg3;
-}
-// Gibt dU_e/dt in J/(m^3 s) zurueck
-double d_energy_elec(double Te, double Tg, double ng, double n, double P_vol) {
-    double P2 = Eiz * n*ng*Kiz(Te);
-    double P3 = Eexc * n*ng*Kex(Te);
-    double P4 = 3.0*me/M * kB*(Te*conv-Tg) * n*ng*Kel(Te);
-    double P5 = 7.0*kB*Te*conv * n*uB(Te)*Aeff(lambda_i(ng))/V;
-    return P_vol - (P2+P3+P4+P5);
-}
-
-// ============================================================
-// Zustandsvektor-Hilfsstruct fuer RK-Verfahren
-// ============================================================
-struct State {
-    double n, ng, Ug, Ue; // Ug=energy_gas, Ue=energy_elec
-};
-
-State operator+(const State& a, const State& b) { return {a.n+b.n, a.ng+b.ng, a.Ug+b.Ug, a.Ue+b.Ue}; }
-State operator-(const State& a, const State& b) { return {a.n-b.n, a.ng-b.ng, a.Ug-b.Ug, a.Ue-b.Ue}; }
-State operator*(double s, const State& a)        { return {s*a.n,   s*a.ng,   s*a.Ug,   s*a.Ue}; }
-State operator*(const State& a, double s)        { return s*a; }
-State operator-(const State& a)                  { return {-a.n, -a.ng, -a.Ug, -a.Ue}; }
-
-// Rechte Seite des DGL-Systems als Funktion des Zustandsvektors
-State rhs(const State& s, double P_vol) {
-    double Tg_ = (2.0/3.0)*s.Ug/(s.ng*kB);
-    double Te_ = (2.0/3.0)*s.Ue/(s.n *kB*conv);
-    return {
-        d_n (s.n, s.ng, Te_),
-        d_ng(s.n, s.ng, Te_, Tg_),
-        d_energy_gas (Te_, Tg_, s.ng, s.n),
-        d_energy_elec(Te_, Tg_, s.ng, s.n, P_vol)
-    };
-}
-
-static bool invalid_updated_state(double new_n, double new_ng, double new_energy_gas, double new_energy_elec,
-                                  double new_Te, double new_Tg) {
-    return bad_value(new_n) || bad_value(new_ng) || bad_value(new_energy_gas) || bad_value(new_energy_elec) ||
-           bad_value(new_Te) || bad_value(new_Tg) ||
-           new_n <= 0.0 || new_ng <= 0.0 || new_energy_gas <= 0.0 || new_energy_elec <= 0.0 ||
-           new_Te <= 0.0 || new_Tg <= 0.0;
-}
-
-static std::string diagnose_updated_state(double new_n, double new_ng, double new_energy_gas, double new_energy_elec,
-                                          double new_Te, double new_Tg, double P_vol, int step, int meth,
-                                          double old_n, double old_ng, double old_Te, double old_Tg,
-                                          double old_Ug, double old_Ue) {
-    std::ostringstream os;
-    os << "method=" << meth << " step=" << step << " P_vol=" << std::scientific << std::setprecision(6) << P_vol << " ";
-    if (bad_value(new_n)) os << "bad=new_n ";
-    if (bad_value(new_ng)) os << "bad=new_ng ";
-    if (bad_value(new_energy_gas)) os << "bad=new_Ug ";
-    if (bad_value(new_energy_elec)) os << "bad=new_Ue ";
-    if (bad_value(new_Te)) os << "bad=new_Te ";
-    if (bad_value(new_Tg)) os << "bad=new_Tg ";
-    if (new_n <= 0.0) os << "bad=new_n<=0 ";
-    if (new_ng <= 0.0) os << "bad=new_ng<=0 ";
-    if (new_energy_gas <= 0.0) os << "bad=new_Ug<=0 ";
-    if (new_energy_elec <= 0.0) os << "bad=new_Ue<=0 ";
-    if (new_Te <= 0.0) os << "bad=new_Te<=0 ";
-    if (new_Tg <= 0.0) os << "bad=new_Tg<=0 ";
-    os << "old{" << state_summary(old_n, old_ng, old_Te, old_Tg, old_Ug, old_Ue) << "} ";
-    os << "new{" << state_summary(new_n, new_ng, new_Te, new_Tg, new_energy_gas, new_energy_elec) << "}";
-    return os.str();
-}
-
-// ============================================================
-// Integrator: Euler(1), RK4(2), RK45 Dormand-Prince(3)
-// ============================================================
-void runGM(double& n, double& ng, double& Te, double& Tg,
-           double& energy_gas, double& energy_elec,
-           double* n_ptr, double* ng_ptr, double* Tg_ptr, double* Te_ptr,
-           int* it_ptr, double* tol_ptr,
-           double* P_abs_ptr, double* R_induktiv_ptr, double* I_coil_ptr,
-           int meth) {
-
-    debug_emit(2, "RUNGM_BEGIN", "method=" + std::to_string(meth) + " P_RFG=" + std::to_string(P_RFG) + " " + state_summary(n, ng, Te, Tg, energy_gas, energy_elec));
-
-    const int    Nmax = 600000000;
-    // Euler stabil bis ~dt=5e-8, RK4 erlaubt ~10x groesseres dt
-    const double dt   = (meth == 1) ? 1e-8 : 1e-7;
-    const double tol  = 1e-10;
-    const int    check_interval = (meth == 1) ? 10000 : 2000;
-    const int    print_interval = (meth == 1) ? 5000000 : 1000000;
-
-    if (meth == 1) {
-        // ── Euler ──────────────────────────────────────────────────────────
-        // Erste Konvergenzprüfung erst nach check_interval Schritten
-        // (verhindert Sofort-Konvergenz bei Warmstart)
-        for (int i = 0; i < Nmax; ++i) {
-            double n_help=n, ng_help=ng, Tg_help=Tg, Te_help=Te;
-
-            do_the_RF_magic(n, ng, Te, I_coil_ptr, P_abs_ptr, R_induktiv_ptr);
-            double P_vol = *P_abs_ptr / V;
-
-            double new_n           = n  + d_n(n,ng,Te)          * dt;
-            double new_ng          = ng + d_ng(n,ng,Te,Tg)       * dt;
-            double new_energy_gas  = energy_gas  + d_energy_gas(Te,Tg,ng,n)       * dt;
-            double new_energy_elec = energy_elec + d_energy_elec(Te,Tg,ng,n,P_vol)* dt;
-            double new_Tg = (2.0/3.0) * new_energy_gas  / (ng  * kB);
-            double new_Te = (2.0/3.0) * new_energy_elec / (n   * kB * conv);
-
-            n=new_n; ng=new_ng; Tg=new_Tg; Te=new_Te;
-            energy_gas=new_energy_gas; energy_elec=new_energy_elec;
-
-            if (invalid_updated_state(new_n, new_ng, new_energy_gas, new_energy_elec, new_Te, new_Tg)) {
-                std::string diag = diagnose_updated_state(new_n, new_ng, new_energy_gas, new_energy_elec, new_Te, new_Tg, P_vol, i, meth,
-                                                          n_help, ng_help, Te_help, Tg_help, energy_gas, energy_elec);
-                debug_emit(1, "RUNGM_FAIL", diag, true);
-                *it_ptr = -1;
-                break;
-            }
-
-            if (i % check_interval == 0) {
-                double R_ng = abs((new_ng-ng_help)/new_ng);
-                double R_n  = abs((new_n -n_help) /new_n);
-                double R_Tg = abs((new_Tg-Tg_help)/new_Tg);
-                double R_Te = abs((new_Te-Te_help) /new_Te);
-                double mean_tol = 0.25*(R_ng+R_n+R_Tg+R_Te);
-                if (i % print_interval == 0) {
-                    // Strukturierte Zeile fuer GUI-Parser
-                    std::cout << "STEP "
-                              << std::fixed << std::setprecision(3) << Te << " "
-                              << std::scientific << std::setprecision(3) << n << " "
-                              << ng << " " << dt << std::endl;
-                    std::cout.flush();
-                }
-                if (R_ng<=tol && R_n<=tol && R_Tg<=tol && R_Te<=tol) {
-                    *it_ptr=i; *tol_ptr=mean_tol; break;
-                }
-            }
-        }
-        std::cout << endl;
-        *n_ptr=n; *ng_ptr=ng; *Tg_ptr=Tg; *Te_ptr=Te;
-        debug_emit((*it_ptr == -1) ? 1 : 2, (*it_ptr == -1) ? "RUNGM_END_FAIL" : "RUNGM_END_OK", "method=1 it=" + std::to_string(*it_ptr) + " tol=" + std::to_string(*tol_ptr) + " " + state_summary(n, ng, Te, Tg, energy_gas, energy_elec), *it_ptr == -1);
-    }
-
-    if (meth == 2) {
-        // ── Vollstaendig gekoppeltes RK4 ────────────────────────────────────
-        // Ersten check_interval Schritte immer durchlaufen (kein Sofort-Konvergenz)
-        double n_help0=n*0.5, ng_help0=ng*0.5, Tg_help0=Tg*0.5, Te_help0=Te*0.5;
-        for (int i = 0; i < Nmax; ++i) {
-            double n_help  = (i==0) ? n_help0  : n;
-            double ng_help = (i==0) ? ng_help0 : ng;
-            double Tg_help = (i==0) ? Tg_help0 : Tg;
-            double Te_help = (i==0) ? Te_help0 : Te;
-
-            do_the_RF_magic(n, ng, Te, I_coil_ptr, P_abs_ptr, R_induktiv_ptr);
-            double P_vol = *P_abs_ptr / V;
-
-            // Hilfslambdas: Temperatur aus Energiedichte
-            auto get_Tg = [&](double ng_, double Ug_) { return (2.0/3.0)*Ug_/(ng_*kB); };
-            auto get_Te = [&](double n_,  double Ue_) { return (2.0/3.0)*Ue_/(n_*kB*conv); };
-
-            // k1: Ableitungen am aktuellen Punkt
-            double k1_n  = d_n (n,  ng, Te)*dt;
-            double k1_ng = d_ng(n,  ng, Te, Tg)*dt;
-            double k1_Ug = d_energy_gas (Te, Tg, ng, n)*dt;
-            double k1_Ue = d_energy_elec(Te, Tg, ng, n, P_vol)*dt;
-
-            // k2: Ableitungen am Halbschritt (alle Variablen gleichzeitig)
-            double n2  = n  + k1_n /2.0,  ng2 = ng + k1_ng/2.0;
-            double Ug2 = energy_gas  + k1_Ug/2.0;
-            double Ue2 = energy_elec + k1_Ue/2.0;
-            double Tg2 = get_Tg(ng2, Ug2), Te2 = get_Te(n2, Ue2);
-            double k2_n  = d_n (n2,  ng2, Te2)*dt;
-            double k2_ng = d_ng(n2,  ng2, Te2, Tg2)*dt;
-            double k2_Ug = d_energy_gas (Te2, Tg2, ng2, n2)*dt;
-            double k2_Ue = d_energy_elec(Te2, Tg2, ng2, n2, P_vol)*dt;
-
-            // k3: Ableitungen am zweiten Halbschritt
-            double n3  = n  + k2_n /2.0,  ng3 = ng + k2_ng/2.0;
-            double Ug3 = energy_gas  + k2_Ug/2.0;
-            double Ue3 = energy_elec + k2_Ue/2.0;
-            double Tg3 = get_Tg(ng3, Ug3), Te3 = get_Te(n3, Ue3);
-            double k3_n  = d_n (n3,  ng3, Te3)*dt;
-            double k3_ng = d_ng(n3,  ng3, Te3, Tg3)*dt;
-            double k3_Ug = d_energy_gas (Te3, Tg3, ng3, n3)*dt;
-            double k3_Ue = d_energy_elec(Te3, Tg3, ng3, n3, P_vol)*dt;
-
-            // k4: Ableitungen am vollen Schritt
-            double n4  = n  + k3_n,   ng4 = ng + k3_ng;
-            double Ug4 = energy_gas  + k3_Ug;
-            double Ue4 = energy_elec + k3_Ue;
-            double Tg4 = get_Tg(ng4, Ug4), Te4 = get_Te(n4, Ue4);
-            double k4_n  = d_n (n4,  ng4, Te4)*dt;
-            double k4_ng = d_ng(n4,  ng4, Te4, Tg4)*dt;
-            double k4_Ug = d_energy_gas (Te4, Tg4, ng4, n4)*dt;
-            double k4_Ue = d_energy_elec(Te4, Tg4, ng4, n4, P_vol)*dt;
-
-            // Gewichtete Summe
-            double new_n           = n           + (k1_n  + 2*k2_n  + 2*k3_n  + k4_n )/6.0;
-            double new_ng          = ng          + (k1_ng + 2*k2_ng + 2*k3_ng + k4_ng)/6.0;
-            double new_energy_gas  = energy_gas  + (k1_Ug + 2*k2_Ug + 2*k3_Ug + k4_Ug)/6.0;
-            double new_energy_elec = energy_elec + (k1_Ue + 2*k2_Ue + 2*k3_Ue + k4_Ue)/6.0;
-            double new_Tg = get_Tg(new_ng, new_energy_gas);
-            double new_Te = get_Te(new_n,  new_energy_elec);
-
-            n=new_n; ng=new_ng; Tg=new_Tg; Te=new_Te;
-            energy_gas=new_energy_gas; energy_elec=new_energy_elec;
-
-            if (invalid_updated_state(new_n, new_ng, new_energy_gas, new_energy_elec, new_Te, new_Tg)) {
-                std::string diag = diagnose_updated_state(new_n, new_ng, new_energy_gas, new_energy_elec, new_Te, new_Tg, P_vol, i, meth,
-                                                          n_help, ng_help, Te_help, Tg_help, energy_gas, energy_elec);
-                debug_emit(1, "RUNGM_FAIL", diag, true);
-                *it_ptr = -1;
-                break;
-            }
-
-            if (i % check_interval == 0) {
-                double R_ng = abs((new_ng-ng_help)/new_ng);
-                double R_n  = abs((new_n -n_help) /new_n);
-                double R_Tg = abs((new_Tg-Tg_help)/new_Tg);
-                double R_Te = abs((new_Te-Te_help) /new_Te);
-                double mean_tol = 0.25*(R_ng+R_n+R_Tg+R_Te);
-                if (i % print_interval == 0) {
-                    // Strukturierte Zeile fuer GUI-Parser
-                    std::cout << "STEP "
-                              << std::fixed << std::setprecision(3) << Te << " "
-                              << std::scientific << std::setprecision(3) << n << " "
-                              << ng << " " << dt << std::endl;
-                    std::cout.flush();
-                }
-                if (R_ng<=tol && R_n<=tol && R_Tg<=tol && R_Te<=tol) {
-                    *it_ptr=i; *tol_ptr=mean_tol; break;
-                }
-            }
-        }
-        std::cout << endl;
-        *n_ptr=n; *ng_ptr=ng; *Tg_ptr=Tg; *Te_ptr=Te;
-        debug_emit((*it_ptr == -1) ? 1 : 2, (*it_ptr == -1) ? "RUNGM_END_FAIL" : "RUNGM_END_OK", "method=2 it=" + std::to_string(*it_ptr) + " tol=" + std::to_string(*tol_ptr) + " " + state_summary(n, ng, Te, Tg, energy_gas, energy_elec), *it_ptr == -1);
-    }
-
-    if (meth == 3) {
-        // ── RK45 Dormand-Prince mit adaptiver Schrittweite ──────────────────
-        const double atol      = 1e-8;
-        const double rtol      = 1e-6;
-        const double dt_min    = 1e-12;
-        const double dt_max    = 1e-5;
-        // Konvergenzkriterium: relative Aenderung ueber ein Zeitfenster.
-        // Fenstergroesse = check_int * dt_avg ~ 1000 * 2e-6 = 2ms
-        const double tol       = 1e-6;   // lockerer als Euler/RK4: passt zu adaptivem dt
-        const int    check_int = 1000;   // alle 1000 akzeptierten Schritte pruefen
-        const int    print_int = 5000;   // alle 5000 Schritte ausgeben
-
-        do_the_RF_magic(n, ng, Te, I_coil_ptr, P_abs_ptr, R_induktiv_ptr);
-        double P_vol = *P_abs_ptr / V;
-
-        State s = {n, ng, energy_gas, energy_elec};
-        double dt_rk45 = 1e-9;
-        int accepted = 0;
-        const int Nmax_rk45 = 5000000; // 5M akzeptierte Schritte max
-
-        // Absichtlich schlechte Vorwerte setzen damit mindestens ein volles
-        // check_int-Fenster integriert wird (verhindert Sofort-Konvergenz nach Warmstart)
-        double n_prev  = n  * 0.5;
-        double ng_prev = ng * 0.5;
-        double Tg_prev = Tg * 0.5;
-        double Te_prev = Te * 0.5;
-
-        for (int i = 0; i < Nmax_rk45; ++i) {
-            // k1-k6 (Dormand-Prince)
-            State k1 = rhs(s,                                                          P_vol);
-            State k2 = rhs(s + (dt_rk45*1.0/5.0)*k1,                                 P_vol);
-            State k3 = rhs(s + dt_rk45*(3.0/40.0*k1  + 9.0/40.0*k2),                 P_vol);
-            State k4 = rhs(s + dt_rk45*(44.0/45.0*k1 - 56.0/15.0*k2 + 32.0/9.0*k3), P_vol);
-            State k5 = rhs(s + dt_rk45*(19372.0/6561.0*k1 - 25360.0/2187.0*k2
-                                       + 64448.0/6561.0*k3 - 212.0/729.0*k4),         P_vol);
-            State k6 = rhs(s + dt_rk45*(9017.0/3168.0*k1  - 355.0/33.0*k2
-                                       + 46732.0/5247.0*k3 + 49.0/176.0*k4
-                                       - 5103.0/18656.0*k5),                           P_vol);
-
-            // RK4-Loesung (Ordnung 4)
-            State s4 = s + dt_rk45*(35.0/384.0*k1 + 500.0/1113.0*k3
-                                   + 125.0/192.0*k4 - 2187.0/6784.0*k5
-                                   + 11.0/84.0*k6);
-            // k7 fuer Fehlerschaetzer
-            State k7 = rhs(s4, P_vol);
-            // Fehlerschaetzer (Differenz RK4-RK5)
-            State err = dt_rk45*(71.0/57600.0*k1 - 71.0/16695.0*k3
-                                + 71.0/1920.0*k4  - 17253.0/339200.0*k5
-                                + 22.0/525.0*k6   - 1.0/40.0*k7);
-
-            // Normierter Fehler
-            double sc_n  = atol + rtol*std::max(std::abs(s.n),  std::abs(s4.n));
-            double sc_ng = atol + rtol*std::max(std::abs(s.ng), std::abs(s4.ng));
-            double sc_Ug = atol + rtol*std::max(std::abs(s.Ug), std::abs(s4.Ug));
-            double sc_Ue = atol + rtol*std::max(std::abs(s.Ue), std::abs(s4.Ue));
-            double err_norm = sqrt(0.25*(
-                pow(err.n /sc_n, 2) + pow(err.ng/sc_ng, 2) +
-                pow(err.Ug/sc_Ug,2) + pow(err.Ue/sc_Ue, 2)));
-
-            if (err_norm <= 1.0) {
-                // Schritt akzeptieren
-                s = s4;
-                accepted++;
-
-                double new_Tg = (2.0/3.0)*s.Ug/(s.ng*kB);
-                double new_Te = (2.0/3.0)*s.Ue/(s.n *kB*conv);
-
-                if (std::isnan(new_Te)||std::isnan(s.n)||s.n<=0||s.ng<=0) {
-                    std::cerr << "\n[RK45] NaN bei Schritt " << accepted << std::endl;
-                    *it_ptr = -1; break;
-                }
-
-                if (accepted % check_int == 0) {
-                    double R_ng = std::abs((s.ng-ng_prev)/s.ng);
-                    double R_n  = std::abs((s.n -n_prev) /s.n);
-                    double R_Tg = std::abs((new_Tg-Tg_prev)/new_Tg);
-                    double R_Te = std::abs((new_Te-Te_prev) /new_Te);
-                    if (accepted % print_int == 0) {
-                        std::cout << "  [" << accepted << " steps, dt="
-                                  << std::scientific << std::setprecision(1) << dt_rk45
-                                  << ", Te=" << std::fixed << std::setprecision(2) << new_Te << "eV"
-                                  << ", n=" << std::scientific << std::setprecision(2) << s.n << "]"
-                                  << std::endl;
-                        std::cout.flush();
-                    }
-                    if (R_ng<=tol && R_n<=tol && R_Tg<=tol && R_Te<=tol) {
-                        n=s.n; ng=s.ng; Tg=new_Tg; Te=new_Te;
-                        energy_gas=s.Ug; energy_elec=s.Ue;
-                        *it_ptr=accepted; *tol_ptr=0.25*(R_ng+R_n+R_Tg+R_Te);
-                        break;
-                    }
-                    n_prev=s.n; ng_prev=s.ng; Tg_prev=new_Tg; Te_prev=new_Te;
-                }
-            }
-
-            // Schrittweite anpassen (PI-Regler)
-            double factor = 0.9 * pow(err_norm, -0.2);
-            factor = std::min(std::max(factor, 0.1), 5.0);
-            dt_rk45 = std::min(std::max(dt_rk45 * factor, dt_min), dt_max);
-        }
-
-        if (accepted >= Nmax_rk45)
-            std::cerr << "[RK45] Nmax erreicht ohne Konvergenz!" << std::endl;
-        n=s.n; ng=s.ng;
-        Tg=(2.0/3.0)*s.Ug/(s.ng*kB);
-        Te=(2.0/3.0)*s.Ue/(s.n *kB*conv);
-        energy_gas=s.Ug; energy_elec=s.Ue;
-        std::cout << endl;
-        *n_ptr=n; *ng_ptr=ng; *Tg_ptr=Tg; *Te_ptr=Te;
-    }
-}
 
 
 // ============================================================
@@ -1709,18 +1937,67 @@ int main(int argc, char** argv) {
     try {
         cout << green
              << "####################################################\n"
-             << "#              Global Xenon Model                  #\n"
-             << "#   Solver: "
-             << (method==1 ? "Euler (RK1)          "
-                 : method==2 ? "RK4                  "
-                 : method==3 ? "RK45 (Dormand-Prince)"
-                             : "Newton (stationaer) ")
-             << "         #\n"
+             << "#          Global Plasma Model – " << gas_species << "\n"
+             << "#   Solver: Newton (stationaer)                    #\n"
              << "####################################################\n"
              << reset << endl;
 
-        // Live-Ergebnis-Datei leeren (neu starten)
-        { std::ofstream live("live_results.txt", std::ios::trunc); }
+        cout << "GAS_SPECIES " << gas_species << endl;
+        cout << "GAS_MASS " << std::scientific << std::setprecision(6) << M << " kg" << endl;
+        cout << "SOLVE_MODE " << solve_mode << " "
+             << (solve_mode == 2 ? "selbstkonsistent" : "fester_strahlstrom") << endl;
+
+        // Rate model preset name
+        const char* rate_model_name = (rate_model == 2) ? "Full tabulated (Biagi/LXCat)"
+                                    : (rate_model == 1) ? "Conservative tabulated (Kiz+Kex tab, Kel legacy)"
+                                    :                     "Legacy (paper-compatible)";
+        cout << "RATE_MODEL " << rate_model << " " << rate_model_name << endl;
+
+        // Cross-section Basispfad fuer das gewaehlte Gas
+        std::string cs_base = "cross_sections/" + gas_species + "/";
+
+        // Kel-Tabelle laden falls tabellierter Modus aktiv
+        if (elastic_model == 1) {
+            std::string kel_path = cs_base + "kel_table.csv";
+            if (load_kel_table(kel_path)) {
+                cout << "ELASTIC_MODEL tabulated (" << g_kel_table.size() << " Te-Punkte)" << endl;
+            } else {
+                cerr << "WARNUNG: " << kel_path << " nicht gefunden, verwende Legacy-Modus" << endl;
+                elastic_model = 0;
+            }
+        }
+        if (elastic_model == 0) {
+            cout << "ELASTIC_MODEL legacy (constant Kel=" << kel_constant << " m^3/s)" << endl;
+        }
+
+        // Kiz-Tabelle laden falls tabellierter Modus aktiv
+        if (ionization_model == 1) {
+            std::string kiz_path = cs_base + "kiz_table.csv";
+            if (load_kiz_table(kiz_path)) {
+                cout << "IONIZATION_MODEL tabulated (" << g_kiz_table.size() << " Te-Punkte)" << endl;
+            } else {
+                cerr << "WARNUNG: " << kiz_path << " nicht gefunden, verwende Legacy-Modus" << endl;
+                ionization_model = 0;
+            }
+        }
+        if (ionization_model == 0) {
+            cout << "IONIZATION_MODEL legacy (Chabert Polynomfit)" << endl;
+        }
+
+        // Kex-Tabelle laden falls tabellierter Modus aktiv
+        if (excitation_model == 1) {
+            std::string kex_path = cs_base + "kex_table.csv";
+            if (load_kex_table(kex_path)) {
+                cout << "EXCITATION_MODEL tabulated (" << g_kex_table.size() << " Te-Punkte)" << endl;
+            } else {
+                cerr << "WARNUNG: " << kex_path << " nicht gefunden, verwende Legacy-Modus" << endl;
+                excitation_model = 0;
+            }
+        }
+        if (excitation_model == 0) {
+            cout << "EXCITATION_MODEL legacy (Chabert Arrhenius)" << endl;
+        }
+
         g_log_rows.clear();
         g_log_events.clear();
 
@@ -1729,27 +2006,16 @@ int main(int argc, char** argv) {
 
         datei << "Method, Q0sccm, Te, Tg, n, ng, iondeg, P_RFG, P_abs, I_extr_mA, "
               << "collision_freq, R_induktiv, I_coil, epsilon_p_real, epsilon_p_imag, "
-              << "u_Bohm, J_i, zeta, gamma, xi, eta, plasmafrequenz, frequency_MHz\n";
+              << "u_Bohm, J_i, zeta, gamma, xi, eta, plasmafrequenz, frequency_MHz, "
+              << "thrust_ions_mN, thrust_atoms_mN, thrust_total_mN, icp_power_efficiency, P_RF_W, "
+              << "n_eff, density_profile_factor\n";
 
-        // Startwerte (Warmstart: n, Te, Tg werden zwischen jj-Iterationen beibehalten)
+        // Zustandsvariablen fuer den Q0-Sweep
         double Te = 3.75, Tg = 300.0, n = 1.0e17, ng = 1.0e19;
-        double P_abs = 0.95*P_RFG, R_induktiv = 0.0, I_coil = 0.0;
-        double tolerance = 0.0;
-        int    it = 0;
+        double P_abs = 0.0, R_induktiv = 0.0, I_coil = 0.0;
         double P_RFG_start = P_RFG;
-        bool   first_run = true;  // erstes jj: feste Startwerte, danach Warmstart
 
-        double* n_ptr          = &n;
-        double* ng_ptr         = &ng;
-        double* Tg_ptr         = &Tg;
-        double* Te_ptr         = &Te;
-        int*    it_ptr         = &it;
-        double* tol_ptr        = &tolerance;
-        double* P_abs_ptr      = &P_abs;
-        double* R_induktiv_ptr = &R_induktiv;
-        double* I_coil_ptr     = &I_coil;
-
-        StationaryPlasmaState stationary_prev = stationary_safe_defaults_for_q(Q0sccm_start * 4.477962312e17);
+        StationaryPlasmaState stationary_prev = stationary_safe_defaults_for_q(Q0sccm_start * SCCM_TO_PPS);
         bool stationary_have_prev = false;
         StationaryPlasmaState stationary_last_good{};
         bool stationary_have_good = false;
@@ -1766,15 +2032,25 @@ int main(int argc, char** argv) {
             return 1;
         }
 
+        // Child-Langmuir-Limit: Stromdichte und zugehoerige RF-Leistung
+        // J_CL ist bereits berechnet in Const::applyConfig().
+        // Die CL-Leistung ist der Punkt, an dem J_i = J_CL, also Gamma_i = J_CL/e.
+        // Bei CL-Limit: I_beam = J_CL * Ai → P_RF_CL haengt vom Zustand ab.
+        // Wir geben J_CL als Referenzwert aus; P_RF_CL wird aus konvergierten
+        // Punkten interpoliert (wenn J_i den Wert ueberschreitet).
+        cout << "CL_LIMIT " << scientific << setprecision(6)
+             << J_CL << " " << J_CL * Ai * 1000.0 << endl;
+        // CL_LIMIT <J_CL_A_per_m2> <I_CL_mA>
+
         // Aeussere Schleife: Q0sccm variieren
         for (int jj = 0; jj < jjmax; ++jj) {
             Q0sccm = Q0sccm_start + jj * Q0sccm_step;
-            Q0     = Q0sccm * 4.477962312e17;
+            Q0     = Q0sccm * SCCM_TO_PPS;
             cout << "Q0_STEP " << fixed << setprecision(4) << Q0sccm
                  << " " << (jj+1) << " " << jjmax << endl;
             debug_emit(2, "Q0_STEP", "jj=" + std::to_string(jj) + " Q0sccm=" + std::to_string(Q0sccm) + " Q0=" + std::to_string(Q0));
 
-            if (method == 4) {
+            {
                 StationaryPlasmaState guess;
                 if (stationary_have_good && std::fabs(Q0sccm - stationary_last_good_q0) <= 20.0 * Q0sccm_step) {
                     guess = stationary_last_good;
@@ -1789,7 +2065,14 @@ int main(int argc, char** argv) {
                 if (!stationary_state_finite_positive(guess)) guess = stationary_safe_defaults_for_q(Q0);
                 debug_emit(2, "STATIONARY_GUESS", state_summary(guess.n, guess.ng, guess.Te, guess.Tg, 0.0, 0.0));
 
-                StationaryPowerSolveResult ps = stationary_solve_for_target_current(guess);
+                StationaryPowerSolveResult ps;
+                if (solve_mode == 2) {
+                    // Selbstkonsistenter Modus: P_RFG fest, I ergibt sich
+                    ps = stationary_solve_at_fixed_power(P_RFG, guess);
+                } else {
+                    // Standardmodus: I_soll fest, P_RFG wird gesucht
+                    ps = stationary_solve_for_target_current(guess);
+                }
                 if (!stationary_power_result_valid(ps)) {
                     // Differenzierte Fehlerausgabe
                     if (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION) {
@@ -1819,7 +2102,12 @@ int main(int argc, char** argv) {
                         g_log_rows.push_back({jj, Q0sccm, ft, ft,
                             std::isfinite(ps.P_trial_last) ? ps.P_trial_last : 0.0,
                             std::isfinite(ps.I_mA) ? ps.I_mA : 0.0,
-                            0, 0, 0, 0, 0, ps.reason, false});
+                            0, 0, 0, 0, 0,  // Te, Tg, n, ng, resid
+                            0, 0, 0, 0, 0,  // iondeg, P_abs, cf, R_ind, I_coil
+                            0, 0, 0, 0, 0, 0,  // eps_r, eps_i, uB, Ji, pf, P_RF
+                            0, 0, 0,  // thrust_ions, atoms, total
+                            0, 0, 0, 0,  // icp_eff, gamma, xi, eta
+                            ps.reason, false});
                         simlog_add_event(jj, Q0sccm, ft + ": " + ps.reason);
                     }
                     continue;
@@ -1842,15 +2130,7 @@ int main(int argc, char** argv) {
                 Te = ps.state.Te;
                 Tg = ps.state.Tg;
 
-                double lam = lambda_i(ng);
-                double I_extr = stationary_beam_current_mA(ps.state);
-                double iondeg = n/ng*100.0;
-                complex<double> eps_p = my_calc_eps_p(n, ng, Te);
-                double cf = coll_freq(ng, Te);
-                double u_Bohm = uB(Te);
-                double J_i = e * Gamma_i_func(lam, Te, n);
-                double zeta = R_induktiv/(R_induktiv+R_ohm);
-                double pf = plasma_freq(n);
+                DerivedQuantities dq = compute_derived(n, ng, Te, Tg, R_induktiv, I_coil, P_abs);
 
                 if (std::isfinite(ps.inner_resid_norm) && ps.inner_resid_norm >= newton_tol) {
                     cout << "SOFT_ACCEPT " << fixed << setprecision(4)
@@ -1859,185 +2139,31 @@ int main(int argc, char** argv) {
 
                 cout << "RESULT " << scientific << setprecision(4)
                      << n << " " << ng << " " << fixed << setprecision(3)
-                     << Te << " " << Tg << " " << I_extr << " " << P_RFG << endl;
+                     << Te << " " << Tg << " " << dq.I_extr_mA << " " << P_RFG << endl;
+
+                cout << "RESULT_EXT " << fixed << setprecision(6)
+                     << Q0sccm << " " << P_RFG << " "
+                     << scientific << setprecision(4)
+                     << n << " " << ng << " " << n << " "
+                     << fixed << setprecision(4)
+                     << dq.T_i_N*1e3 << " " << dq.T_n_N*1e3 << " " << dq.T_total_N*1e3 << " "
+                     << dq.icp_eff << " " << dq.gamma_eff << " " << dq.xi_mN_kW << " " << dq.eta_mass
+                     << endl;
 
                 g_log_rows.push_back({jj, Q0sccm, "CONVERGED", "NONE",
-                    P_RFG, I_extr, Te, Tg, n, ng, ps.inner_resid_norm,
+                    P_RFG, dq.I_extr_mA, Te, Tg, n, ng, ps.inner_resid_norm,
+                    dq.iondeg, P_abs, dq.cf, R_induktiv, I_coil,
+                    dq.eps_p_real, dq.eps_p_imag, dq.u_Bohm, dq.J_i, dq.pf, dq.P_RF,
+                    dq.T_i_N*1e3, dq.T_n_N*1e3, dq.T_total_N*1e3,
+                    dq.icp_eff, dq.gamma_eff, dq.xi_mN_kW, dq.eta_mass,
                     "ok", true});
 
-                datei << "Stationary" << ", " << Q0sccm << ", " << Te << ", " << Tg << ", "
-                      << scientific << n << ", " << ng << ", "
-                      << fixed << iondeg << ", " << P_RFG << ", "
-                      << P_abs << ", " << I_extr << ", "
-                      << cf << ", " << R_induktiv << ", " << I_coil << ", "
-                      << real(eps_p) << ", " << imag(eps_p) << ", "
-                      << u_Bohm << ", " << J_i << ", "
-                      << zeta << ", " << 0.0 << ", "
-                      << 0.0 << ", " << 0.0 << ", "
-                      << pf << ", " << frequency/1e6 << "\n";
-
-                {
-                    std::ofstream live("live_results.txt", std::ios::app);
-                    live << std::fixed << std::setprecision(6)
-                         << Q0sccm << " " << P_RFG << " " << Te << " " << Tg << " "
-                         << n << " " << ng << " " << I_extr << "\n";
-                    live.flush();
-                }
+                emit_csv_row(datei, "Stationary", Q0sccm, n, ng, Te, Tg,
+                             P_RFG, P_abs, R_induktiv, I_coil, dq);
 
                 P_RFG = P_RFG_start;
-                continue;
             }
-
-            // ng aus stationaerem Gleichgewicht ohne Plasma
-            double p_null = 4 * kB * Tg0 * Q0 / (vg(Tg0) * Ag);
-            ng = p_null / kB / Tg0;
-
-            // Warmstart: ab 2. Iteration werden n, Te, Tg der vorigen Loesung wiederverwendet
-            if (first_run) {
-                n  = 1.0e17;
-                Te = 3.75;
-                Tg = 300.0;
-                first_run = false;
-            }
-            // Energiedichten aus aktuellen Werten (konsistent initialisieren)
-            double energy_gas  = 1.5 * ng * kB * Tg;
-            double energy_elec = 1.5 * n  * kB * Te * conv;
-            Tg = (2.0/3.0) * energy_gas  / (ng * kB);
-            Te = (2.0/3.0) * energy_elec / (n  * kB * conv);
-
-            // PID-Regler: P_RFG -> I_beam = I_soll
-            P_RFG = P_RFG_start;
-
-            // Feste Startwerte fuer jeden PID-Durchlauf speichern.
-            // WICHTIG: Kein Warmstart zwischen PID-Iterationen!
-            // Grund: Das System hat bei manchen P_RFG-Werten zwei stabile Zustaende
-            // (Bifurkation: hoher Te-Modus ~8eV und niederer ~5eV). Ein Warmstart
-            // springt zwischen diesen hin und her. Feste Startbedingungen erzwingen
-            // immer denselben Ast der Loesung.
-            const double n_pid0          = n;
-            const double ng_pid0         = ng;
-            const double Te_pid0         = Te;
-            const double Tg_pid0         = Tg;
-            const double energy_gas_pid0  = energy_gas;
-            const double energy_elec_pid0 = energy_elec;
-
-            // Einfacher P-Regler (kein I/D): stabiler bei nichtlinearen Systemen
-            double K_p = 0.3;
-
-            for (int iter = 0; iter < 2000; ++iter) {
-                // Zustand vor jeder PID-Iteration auf feste Startwerte zuruecksetzen
-                n           = n_pid0;
-                ng          = ng_pid0;
-                Te          = Te_pid0;
-                Tg          = Tg_pid0;
-                energy_gas  = energy_gas_pid0;
-                energy_elec = energy_elec_pid0;
-
-                cout << "PID_START " << iter << " " << fixed << setprecision(4) << P_RFG << endl;
-                cout.flush();
-                debug_emit(3, "PID_START", "iter=" + std::to_string(iter) + " P_RFG=" + std::to_string(P_RFG));
-
-                runGM(n,ng,Te,Tg,energy_gas,energy_elec,
-                      n_ptr,ng_ptr,Tg_ptr,Te_ptr,
-                      it_ptr,tol_ptr,P_abs_ptr,R_induktiv_ptr,I_coil_ptr,
-                      method);
-
-                double lam    = lambda_i(ng);
-                double I_extr = Ai * e * Gamma_i_func(lam,Te,n) * 1000.0;
-                double error  = I_soll - I_extr;
-
-                // Einfacher P-Schritt: P_RFG proportional zum Fehler anpassen
-                P_RFG += K_p * error;
-                P_RFG  = max(1.0, min(P_RFG, 200.0));
-
-                cout << "PID_DONE " << fixed << setprecision(4) << I_extr
-                     << " " << error << " " << P_RFG << " " << Te << " " << Tg << endl;
-                debug_emit((it < 0) ? 1 : 3, (it < 0) ? "PID_FAIL" : "PID_DONE", "iter=" + std::to_string(iter) + " I_extr=" + std::to_string(I_extr) + " error=" + std::to_string(error) + " P_RFG=" + std::to_string(P_RFG) + " runGM_it=" + std::to_string(it), it < 0);
-
-                if (it < 0) {
-                    debug_emit(1, "PID_ABORT", "iter=" + std::to_string(iter) + " reason=runGM_failed", true);
-                    break;
-                }
-                if (abs(error) < 0.005) {
-                    cout << "CONVERGED " << iter << endl;
-                    debug_emit(2, "PID_CONVERGED", "iter=" + std::to_string(iter) + " I_extr=" + std::to_string(I_extr) + " P_RFG=" + std::to_string(P_RFG));
-                    break;
-                }
-                if (iter == 1999)
-                    cout << "PID_MAXITER" << endl;
-            }
-
-            // Abgeleitete Groessen
-            double lam_f     = lambda_i(ng);
-            double Gi_f      = Gamma_i_func(lam_f,Te,n);
-            double vg_f      = vg(Tg);
-            double Gn_f      = 0.25*ng*vg_f;
-            double T_i       = Thrust(Gi_f);
-            double T_n       = Gn_f * M * vg_f * Ag;
-            double u_Bohm    = uB(Te);
-            double J_i       = e * Gi_f;
-            double I_extr    = Ai * J_i;
-            double iondeg    = n/ng*100.0;
-            double zeta      = R_induktiv/(R_induktiv+R_ohm);
-            double v_extr    = sqrt(2*e*Vgrid/M);
-            double pow_i     = 0.5*M*v_extr*v_extr*Gi_f*Ai;
-            double pow_n     = 0.5*M*vg_f*vg_f*0.25*ng*vg_f*Ag;
-            double gamma_eff = (pow_i+pow_n)/(pow_i+pow_n+P_RFG);
-            double xi        = 1000.0*(T_i+T_n)/P_RFG;
-            double eta       = Gi_f*Ai/Q0;
-            complex<double> eps_p = my_calc_eps_p(n,ng,Te);
-            double pf        = plasma_freq(n);
-            double cf        = coll_freq(ng,Te);
-
-            cout << "RESULT " << scientific << setprecision(4)
-                 << n << " " << ng << " " << fixed << setprecision(3)
-                 << Te << " " << Tg << " " << I_extr*1000 << " " << P_RFG << endl;
-
-            string meth_str = (method==1) ? "Euler" : (method==2 ? "RK4" : (method==3 ? "RK45" : "Stationary"));
-            datei << meth_str  << ", " << Q0sccm    << ", " << Te         << ", " << Tg    << ", "
-                  << scientific << n   << ", "       << ng                << ", "
-                  << fixed      << iondeg << ", "    << P_RFG             << ", "
-                  << P_abs      << ", " << I_extr*1000 << ", "
-                  << cf         << ", " << R_induktiv  << ", " << I_coil  << ", "
-                  << real(eps_p)<< ", " << imag(eps_p) << ", "
-                  << u_Bohm     << ", " << J_i          << ", "
-                  << zeta       << ", " << gamma_eff    << ", "
-                  << xi         << ", " << eta          << ", "
-                  << pf         << ", " << frequency/1e6 << "\n";
-
-            // Live-Ergebnis fuer Python-Plot schreiben (gefiltert)
-            {
-                static bool first_point = true;
-                static double P_prev = -1.0;
-
-                bool valid = true;
-
-                // physikalische Grenzen
-                if (P_RFG <= 0.0 || P_RFG > 1e4) valid = false;
-
-                // erster Punkt verwerfen
-                if (first_point) {
-                    valid = false;
-                    first_point = false;
-                }
-
-                // Sprungfilter
-                if (P_prev > 0.0) {
-                    if (fabs(P_RFG - P_prev) > 0.5 * P_prev) valid = false;
-                }
-
-                if (valid) {
-                    std::ofstream live("live_results.txt", std::ios::app);
-                    live << std::fixed << std::setprecision(6)
-                         << Q0sccm << " " << P_RFG << " " << Te << " " << Tg << " "
-                         << n << " " << ng << " " << I_extr*1000 << "\n";
-                    live.flush();
-                    P_prev = P_RFG;
-                }
-            }
-
-            P_RFG = P_RFG_start;
-        }
+        } // for (jj)
 
     } catch (const exception& ex) {
         cerr << "Fehler: " << ex.what() << endl;
@@ -2064,11 +2190,15 @@ int main(int argc, char** argv) {
 
             // BLOCK 1 — Header
             lf << "==================================================\n"
-               << "GLOBAL XENON MODEL — SIMULATION LOG\n"
+               << "GLOBAL PLASMA MODEL — SIMULATION LOG\n"
+               << "gas_species:     " << gas_species << "\n"
                << "timestamp_start: " << make_timestamp_readable() << "\n"
                << "timestamp_end:   " << end_ts << "\n"
                << "runtime_seconds: " << std::fixed << std::setprecision(3) << elapsed << "\n"
-               << "solver_mode:     method=" << method << "\n"
+               << "solver_mode:     stationary (LM), solve_mode=" << solve_mode << "\n"
+               << "rate_model:      " << rate_model << " ("
+               << ((rate_model == 2) ? "Full tabulated" : (rate_model == 1) ? "Conservative tabulated" : "Legacy")
+               << ")\n"
                << "config_file:     " << (argc >= 2 ? argv[1] : "params.txt") << "\n"
                << "==================================================\n\n";
 
@@ -2112,6 +2242,12 @@ int main(int argc, char** argv) {
             pp("L_coil",                         L_coil,    "H",    "L_coil");
             pp("J_CL (Child-Langmuir)",          J_CL,      "A/m^2","J_CL");
             pp("newton_tol",                     newton_tol,"rel",  "newton_tol");
+            lf << std::left << std::setw(35) << "gas_species"
+               << "| " << gas_species << "\n";
+            lf << std::left << std::setw(35) << "Kel-Modell"
+               << "| " << (elastic_model == 1 ? "tabulated (Biagi/LXCat)" : "constant (legacy)")
+               << ", kel_constant=" << kel_constant
+               << "\n";
             lf << "\n";
 
             // BLOCK 3 — Ergebnistabelle
@@ -2205,6 +2341,65 @@ int main(int argc, char** argv) {
                    << std::setw(30) << "P_solution_range_W"     << "| " << std::setprecision(2) << p_min << " .. " << p_max << "\n"
                    << std::setw(30) << "Te_range_eV"            << "| " << std::setprecision(3) << te_min_v << " .. " << te_max_v << "\n"
                    << std::setw(30) << "I_mA_range"             << "| " << std::setprecision(3) << i_min << " .. " << i_max << "\n";
+            }
+            lf << "--------------------------------------------------\n\n";
+
+            // BLOCK 6 — Maschinenlesbare Datentabelle (CSV mit | Separator)
+            // Parser-Hinweis: Zeilen die mit "DATA|" beginnen sind Datensaetze.
+            // Zeile mit "DATA_HEADER|" ist der Spaltenkopf.
+            lf << "--------------------------------------------------\n"
+               << "MACHINE-READABLE DATA TABLE\n"
+               << "--------------------------------------------------\n";
+            lf << "# CL_LIMIT_J_A_per_m2=" << std::scientific << std::setprecision(6) << J_CL << "\n";
+            lf << "# CL_LIMIT_I_mA=" << std::fixed << std::setprecision(4) << J_CL * Ai * 1000.0 << "\n";
+            lf << "DATA_HEADER|idx|Q0sccm|status|P_RFG_W|P_abs_W|P_RF_W|I_mA|Te_eV|Tg_K"
+               << "|n_m3|ng_m3|iondeg_pct|collision_freq|R_induktiv_Ohm|I_coil_A"
+               << "|eps_p_real|eps_p_imag|u_Bohm_ms|J_i_A_m2|plasmafrequenz_rad_s"
+               << "|thrust_ions_mN|thrust_atoms_mN|thrust_total_mN"
+               << "|icp_power_efficiency|gamma_thrust_eff|xi_mN_per_kW|eta_mass_util"
+               << "|n_eff|density_profile_factor"
+               << "|resid|note\n";
+
+            for (const auto& row : g_log_rows) {
+                lf << "DATA|" << row.idx << "|"
+                   << std::fixed << std::setprecision(4) << row.Q0sccm << "|"
+                   << row.status << "|";
+                if (row.has_data) {
+                    lf << std::fixed << std::setprecision(4) << row.P_sol << "|"
+                       << row.P_abs << "|" << row.P_RF << "|"
+                       << std::setprecision(4) << row.I_mA << "|"
+                       << std::setprecision(4) << row.Te << "|"
+                       << std::setprecision(2) << row.Tg << "|"
+                       << std::scientific << std::setprecision(6)
+                       << row.n << "|" << row.ng << "|"
+                       << std::fixed << std::setprecision(4)
+                       << row.iondeg << "|"
+                       << std::scientific << std::setprecision(6)
+                       << row.collision_freq << "|"
+                       << row.R_induktiv << "|"
+                       << row.I_coil << "|"
+                       << row.eps_p_real << "|"
+                       << row.eps_p_imag << "|"
+                       << row.u_Bohm << "|"
+                       << row.J_i << "|"
+                       << row.plasmafrequenz << "|"
+                       << std::fixed << std::setprecision(6)
+                       << row.thrust_ions_mN << "|"
+                       << row.thrust_atoms_mN << "|"
+                       << row.thrust_total_mN << "|"
+                       << std::setprecision(6)
+                       << row.icp_eff << "|"
+                       << row.gamma_eff << "|"
+                       << row.xi_mN_kW << "|"
+                       << row.eta_mass << "|"
+                       << density_profile_factor * row.n << "|"
+                       << density_profile_factor << "|"
+                       << std::scientific << row.resid;
+                } else {
+                    // 28 leere Felder fuer fehlgeschlagene Punkte (26 + n_eff + dpf)
+                    for (int f = 0; f < 28; ++f) lf << "|";
+                }
+                lf << "|" << row.note << "\n";
             }
             lf << "--------------------------------------------------\n";
         }

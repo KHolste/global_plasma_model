@@ -1,0 +1,54 @@
+# ============================================================
+# Konfiguration: Dietz et al. (2021) RIT-4 Benchmark
+#
+# Referenz: Dietz, P. et al., "Global models for radio-frequency
+#           ion thrusters", EPJ Tech. Instrum. 8:10 (2021), Table 2
+#
+# Triebwerk: RIT-4 (Radio-frequency Ion Thruster, 4 cm Klasse)
+# ============================================================
+
+# --- Geometrie (Table 2) ---
+R 0.0215              # Radius Entladungskammer [m] (21.5 mm)
+L 0.041               # Laenge Entladungskammer [m] (41.0 mm)
+
+# --- Gitter ---
+# betai wird im 0D-Modell als fester Parameter verwendet.
+# Im Dietz-Paper wird betai iterativ ueber IGUN bestimmt.
+# Startwert: typisch 0.3-0.5 fuer RIT-4
+betai 0.4
+betag 0.0529          # Neutralgas-Transparenz (Table 2)
+Vgrid 1200.0          # Screen-Grid-Spannung [V] (Table 2: 1200 V an Gas-Einlass)
+sgrid 0.00075         # Gitterabstand [m] (Table 2: s = 0.75 mm)
+
+# --- RF-Spule (Table 2) ---
+Nw 6.0                # Spulenwindungen
+R_ohm 0.48            # Spulenwiderstand [Ohm] (inkl. Zuleitung, experimentell)
+Rc 0.025              # Spulenradius [m] (etwas groesser als R)
+lc 0.030              # Spulenlaenge [m] (5 mm/Windung * 6 Windungen)
+frequency 2.53e6      # RF-Frequenz [Hz] (2.53 MHz)
+
+# --- Betriebspunkt ---
+P_RFG 45.0            # RF-Generatorleistung [W] (Fig. 9a: ~40-55 W)
+P_RFG_max 200.0       # Max. RF-Leistung [W]
+
+# --- Gasfluss ---
+# Q0 in sccm. Umrechnung: 1 sccm Xe ~ 1.3 ug/s
+# Dietz-Paper: 50-100 ug/s => ca. 0.38-0.77 sccm
+# Performance-Mapping bei I_beam = 30 mA
+Q0sccm 0.5            # Startwert [sccm] (~65 ug/s)
+Q0sccm_start 0.40     # Sweep-Start [sccm] (~52 ug/s)
+Q0sccm_step 0.05      # Sweep-Schritt [sccm]
+jjmax 10              # Anzahl Schritte (0.40 bis 0.85 sccm)
+
+# --- Solver ---
+solve_mode 2          # Selbstkonsistent (P_RFG fest, I ergibt sich)
+I_soll 30.0           # Zielstrom [mA] (nur fuer solve_mode=1)
+
+# --- Modelloptionen ---
+use_paper_kel 1       # Paper-Konstante Kel (Dietz nutzt Biagi-DB, hier Naeherung)
+kel_constant 1e-13    # Kel-Wert [m^3/s]
+alpha_e_wall 7.0      # Wandverlustfaktor
+Kex_scale 1.0         # Anregung aktiv
+P_abs_scale 1.0       # Keine P_abs-Skalierung
+density_profile_factor 1.0  # Standard: homogenes 0D-Profil
+                            # 0.82: Dietz-Korrektur (n_mean/n_center)

@@ -1,0 +1,203 @@
+/* style.qss — Dark-Theme fuer Global Plasma Model GUI */
+
+QMainWindow, QWidget {
+    background: #0b1020;
+    color: #e6edf7;
+    font-size: 9pt;
+}
+
+/* Header */
+QFrame#Header {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 #15203b, stop:1 #1f3b73);
+    border: 1px solid #2a4b8d;
+    border-radius: 8px;
+}
+QLabel#HeaderTitle {
+    font-size: 15pt;
+    font-weight: 700;
+    color: white;
+}
+QLabel#HeaderSubtitle {
+    color: #8899bb;
+    font-size: 8pt;
+}
+QLabel#HeaderTag {
+    background: #1a2744;
+    border: 1px solid #3a5080;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: #8cf0d8;
+    font-size: 8pt;
+    font-weight: 600;
+}
+
+/* GroupBox */
+QGroupBox {
+    border: 1px solid #24314f;
+    border-radius: 8px;
+    margin-top: 7px;
+    padding-top: 10px;
+    background: #0f172a;
+    font-weight: 600;
+    font-size: 8pt;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+    color: #c0d0f0;
+}
+
+/* Labels */
+QLabel#SectionHeader {
+    color: #7aa2ff;
+    font-weight: 700;
+    font-size: 8pt;
+}
+QLabel#ParamLabel {
+    font-size: 8pt;
+    color: #c0cce0;
+}
+QLabel#MutedLabel {
+    color: #6b7fa0;
+    font-size: 8pt;
+}
+
+/* Inputs */
+QLineEdit {
+    background: #111a31;
+    border: 1px solid #31466d;
+    border-radius: 5px;
+    padding: 3px 5px;
+    color: white;
+    font-size: 9pt;
+}
+QLineEdit#ReadOnlyField {
+    background: #0a1020;
+    color: #6b7fa0;
+    border-color: #1e2e4a;
+}
+
+/* Buttons */
+QPushButton {
+    background: #17233f;
+    border: 1px solid #31466d;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-weight: 600;
+    font-size: 8pt;
+}
+QPushButton:hover {
+    background: #1e2f56;
+}
+QPushButton[primary="true"] {
+    background: #2553d8;
+    border-color: #4f7eff;
+}
+QPushButton[primary="true"]:hover {
+    background: #2d62fb;
+}
+QPushButton[danger="true"] {
+    background: #7e2431;
+    border-color: #b44b5b;
+}
+QPushButton[danger="true"]:hover {
+    background: #9a2c3c;
+}
+
+/* Progress */
+QProgressBar {
+    border: 1px solid #31466d;
+    border-radius: 5px;
+    background: #111a31;
+    text-align: center;
+    min-height: 14px;
+    font-size: 7pt;
+}
+QProgressBar::chunk {
+    background: #2dd4bf;
+    border-radius: 4px;
+}
+
+/* Log */
+QTextEdit {
+    background: #050812;
+    border: 1px solid #24314f;
+    border-radius: 6px;
+    color: #8ff7c8;
+    font-family: Consolas, Menlo, monospace;
+    font-size: 8pt;
+    padding: 3px;
+}
+
+/* Metric Cards */
+QFrame#MetricCard {
+    background: #111a31;
+    border: 1px solid #24314f;
+    border-radius: 6px;
+}
+QLabel#MetricTitle {
+    color: #7090b8;
+    font-size: 7pt;
+}
+QLabel#MetricValue {
+    background: #030712;
+    border-radius: 4px;
+    padding: 3px;
+    color: #7fffd4;
+    font-size: 10pt;
+    font-weight: 700;
+    font-family: Consolas, Menlo, monospace;
+}
+
+/* Radio Buttons */
+QRadioButton {
+    spacing: 4px;
+    color: #e6edf7;
+    font-size: 8pt;
+    padding: 1px 3px;
+}
+QRadioButton::indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    border: 2px solid #7aa2ff;
+    background: #09101f;
+}
+QRadioButton::indicator:checked {
+    border: 2px solid #2dd4bf;
+    background: #2dd4bf;
+}
+QRadioButton:checked {
+    color: #2dd4bf;
+    font-weight: 700;
+}
+
+/* ComboBox */
+QComboBox {
+    background: #111a31;
+    border: 1px solid #31466d;
+    border-radius: 5px;
+    padding: 2px 5px;
+    color: white;
+    font-size: 8pt;
+    min-width: 90px;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 16px;
+}
+QComboBox QAbstractItemView {
+    background: #111a31;
+    border: 1px solid #31466d;
+    color: white;
+    selection-background-color: #2553d8;
+}
+
+/* Splitter */
+QSplitter::handle {
+    background: #1a2844;
+    width: 2px;
+    height: 2px;
+}

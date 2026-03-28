@@ -1,0 +1,526 @@
+{
+  "source": "LXCat / Biagi database (MagBoltz V8.97)",
+  "origin_file": "cross_sections\\tests\\xenon_all.txt",
+  "retrieved": "2026-03-28",
+  "gas": "xenon",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Xe",
+      "process": "E + Xe -> E + Xe, Elastic",
+      "threshold_eV": null,
+      "mM": 4.2e-06,
+      "data_points": 199,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(1S5)(8.315eV)",
+      "process": "E + Xe -> E + Xe(1S5)(8.315eV), Excitation",
+      "threshold_eV": 8.315,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_1s5.csv",
+      "state": "1S5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(1S4)(8.436eV)",
+      "process": "E + Xe -> E + Xe(1S4)(8.436eV), Excitation",
+      "threshold_eV": 8.436,
+      "mM": null,
+      "data_points": 73,
+      "file": "excitation/excitation_1s4.csv",
+      "state": "1S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(1S3)(9.447eV)",
+      "process": "E + Xe -> E + Xe(1S3)(9.447eV), Excitation",
+      "threshold_eV": 9.447,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_1s3.csv",
+      "state": "1S3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(1S2)(9.57eV)",
+      "process": "E + Xe -> E + Xe(1S2)(9.57eV), Excitation",
+      "threshold_eV": 9.57,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_1s2.csv",
+      "state": "1S2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P10)(9.58eV)",
+      "process": "E + Xe -> E + Xe(2P10)(9.58eV), Excitation",
+      "threshold_eV": 9.58,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p10.csv",
+      "state": "2P10"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P9)(9.686eV)",
+      "process": "E + Xe -> E + Xe(2P9)(9.686eV), Excitation",
+      "threshold_eV": 9.686,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p9.csv",
+      "state": "2P9"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P8)(9.721eV)",
+      "process": "E + Xe -> E + Xe(2P8)(9.721eV), Excitation",
+      "threshold_eV": 9.721,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p8.csv",
+      "state": "2P8"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P7)(9.789eV)",
+      "process": "E + Xe -> E + Xe(2P7)(9.789eV), Excitation",
+      "threshold_eV": 9.789,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p7.csv",
+      "state": "2P7"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P6)(9.821eV)",
+      "process": "E + Xe -> E + Xe(2P6)(9.821eV), Excitation",
+      "threshold_eV": 9.821,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p6.csv",
+      "state": "2P6"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D6)(9.89eV)",
+      "process": "E + Xe -> E + Xe(3D6)(9.89eV), Excitation",
+      "threshold_eV": 9.89,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d6.csv",
+      "state": "3D6"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D5)(9.917eV)",
+      "process": "E + Xe -> E + Xe(3D5)(9.917eV), Excitation",
+      "threshold_eV": 9.917,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3d5.csv",
+      "state": "3D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P5)(9.934eV)",
+      "process": "E + Xe -> E + Xe(2P5)(9.934eV), Excitation",
+      "threshold_eV": 9.934,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p5.csv",
+      "state": "2P5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D4!)(9.943eV)",
+      "process": "E + Xe -> E + Xe(3D4!)(9.943eV), Excitation",
+      "threshold_eV": 9.943,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d4.csv",
+      "state": "3D4!"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D3)(9.959eV)",
+      "process": "E + Xe -> E + Xe(3D3)(9.959eV), Excitation",
+      "threshold_eV": 9.959,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d3.csv",
+      "state": "3D3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D4)(10.039eV)",
+      "process": "E + Xe -> E + Xe(3D4)(10.039eV), Excitation",
+      "threshold_eV": 10.039,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d4_1.csv",
+      "state": "3D4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D1!!)(10.158eV)",
+      "process": "E + Xe -> E + Xe(3D1!!)(10.158eV), Excitation",
+      "threshold_eV": 10.158,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d1.csv",
+      "state": "3D1!!"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D1!)(10.22eV)",
+      "process": "E + Xe -> E + Xe(3D1!)(10.22eV), Excitation",
+      "threshold_eV": 10.22,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_3d1_1.csv",
+      "state": "3D1!"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3D2)(10.401eV)",
+      "process": "E + Xe -> E + Xe(3D2)(10.401eV), Excitation",
+      "threshold_eV": 10.401,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3d2.csv",
+      "state": "3D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2S5)(10.562eV)",
+      "process": "E + Xe -> E + Xe(2S5)(10.562eV), Excitation",
+      "threshold_eV": 10.562,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2s5.csv",
+      "state": "2S5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2S4)(10.593eV)",
+      "process": "E + Xe -> E + Xe(2S4)(10.593eV), Excitation",
+      "threshold_eV": 10.593,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2s4.csv",
+      "state": "2S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(Ex Sum 3P10-5)(10.902eV)",
+      "process": "E + Xe -> E + Xe(Ex Sum 3P10-5)(10.902eV), Excitation",
+      "threshold_eV": 10.902,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_ex_sum_3p10_5.csv",
+      "state": "Ex Sum 3P10-5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P4)(10.958eV)",
+      "process": "E + Xe -> E + Xe(2P4)(10.958eV), Excitation",
+      "threshold_eV": 10.958,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p4.csv",
+      "state": "2P4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(Ex Sum 4D)(10.972eV)",
+      "process": "E + Xe -> E + Xe(Ex Sum 4D)(10.972eV), Excitation",
+      "threshold_eV": 10.972,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_ex_sum_4d.csv",
+      "state": "Ex Sum 4D"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(4D5)(10.979eV)",
+      "process": "E + Xe -> E + Xe(4D5)(10.979eV), Excitation",
+      "threshold_eV": 10.979,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_4d5.csv",
+      "state": "4D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P3)(11.055ev)",
+      "process": "E + Xe -> E + Xe(2P3)(11.055ev), Excitation",
+      "threshold_eV": 11.055,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p3.csv",
+      "state": "2P3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P2)(11.069eV)",
+      "process": "E + Xe -> E + Xe(2P2)(11.069eV), Excitation",
+      "threshold_eV": 11.069,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p2.csv",
+      "state": "2P2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2P1)(11.141eV)",
+      "process": "E + Xe -> E + Xe(2P1)(11.141eV), Excitation",
+      "threshold_eV": 11.141,
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_2p1.csv",
+      "state": "2P1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(4D2)(11.163)",
+      "process": "E + Xe -> E + Xe(4D2)(11.163), Excitation",
+      "threshold_eV": 11.163,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_4d2.csv",
+      "state": "4D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3S4)(11.274eV)",
+      "process": "E + Xe -> E + Xe(3S4)(11.274eV), Excitation",
+      "threshold_eV": 11.274,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s4.csv",
+      "state": "3S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(5D5)(11.423eV)",
+      "process": "E + Xe -> E + Xe(5D5)(11.423eV), Excitation",
+      "threshold_eV": 11.423,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_5d5.csv",
+      "state": "5D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(5D2)(11.495eV)",
+      "process": "E + Xe -> E + Xe(5D2)(11.495eV), Excitation",
+      "threshold_eV": 11.495,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_5d2.csv",
+      "state": "5D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(4S4)(11.583eV)",
+      "process": "E + Xe -> E + Xe(4S4)(11.583eV), Excitation",
+      "threshold_eV": 11.583,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_4s4.csv",
+      "state": "4S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(3S1!)(11.607eV)",
+      "process": "E + Xe -> E + Xe(3S1!)(11.607eV), Excitation",
+      "threshold_eV": 11.607,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s1.csv",
+      "state": "3S1!"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(6D5)(11.683eV)",
+      "process": "E + Xe -> E + Xe(6D5)(11.683eV), Excitation",
+      "threshold_eV": 11.683,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_6d5.csv",
+      "state": "6D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(6D2)(11.74eV)",
+      "process": "E + Xe -> E + Xe(6D2)(11.74eV), Excitation",
+      "threshold_eV": 11.74,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_6d2.csv",
+      "state": "6D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(5S4)(11.752eV)",
+      "process": "E + Xe -> E + Xe(5S4)(11.752eV), Excitation",
+      "threshold_eV": 11.752,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_5s4.csv",
+      "state": "5S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(7D5)(11.807eV)",
+      "process": "E + Xe -> E + Xe(7D5)(11.807eV), Excitation",
+      "threshold_eV": 11.807,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_7d5.csv",
+      "state": "7D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(7D2)(11.84eV)",
+      "process": "E + Xe -> E + Xe(7D2)(11.84eV), Excitation",
+      "threshold_eV": 11.84,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_7d2.csv",
+      "state": "7D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(6S4)(11.852eV)",
+      "process": "E + Xe -> E + Xe(6S4)(11.852eV), Excitation",
+      "threshold_eV": 11.852,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_6s4.csv",
+      "state": "6S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(2S2)(11.878eV)",
+      "process": "E + Xe -> E + Xe(2S2)(11.878eV), Excitation",
+      "threshold_eV": 11.878,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2s2.csv",
+      "state": "2S2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(8D5)(11.892eV)",
+      "process": "E + Xe -> E + Xe(8D5)(11.892eV), Excitation",
+      "threshold_eV": 11.892,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_8d5.csv",
+      "state": "8D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(8D2)(11.908eV)",
+      "process": "E + Xe -> E + Xe(8D2)(11.908eV), Excitation",
+      "threshold_eV": 11.908,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_8d2.csv",
+      "state": "8D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(7S4)(11.918eV)",
+      "process": "E + Xe -> E + Xe(7S4)(11.918eV), Excitation",
+      "threshold_eV": 11.918,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_7s4.csv",
+      "state": "7S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(9D5)(11.942eV)",
+      "process": "E + Xe -> E + Xe(9D5)(11.942eV), Excitation",
+      "threshold_eV": 11.942,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_9d5.csv",
+      "state": "9D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(9D2)(11.955eV)",
+      "process": "E + Xe -> E + Xe(9D2)(11.955eV), Excitation",
+      "threshold_eV": 11.955,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_9d2.csv",
+      "state": "9D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(8S4)(11.962eV)",
+      "process": "E + Xe -> E + Xe(8S4)(11.962eV), Excitation",
+      "threshold_eV": 11.962,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_8s4.csv",
+      "state": "8S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(10D5)(11.979eV)",
+      "process": "E + Xe -> E + Xe(10D5)(11.979eV), Excitation",
+      "threshold_eV": 11.979,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_10d5.csv",
+      "state": "10D5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(10D2)(11.989eV)",
+      "process": "E + Xe -> E + Xe(10D2)(11.989eV), Excitation",
+      "threshold_eV": 11.989,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_10d2.csv",
+      "state": "10D2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(9S4)(11.994eV)",
+      "process": "E + Xe -> E + Xe(9S4)(11.994eV), Excitation",
+      "threshold_eV": 11.994,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_9s4.csv",
+      "state": "9S4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe -> Xe(EX HIGH)(12.00eV)",
+      "process": "E + Xe -> E + Xe(EX HIGH)(12.00eV), Excitation",
+      "threshold_eV": 12.0,
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_ex_high.csv",
+      "state": "EX HIGH"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Xe -> Xe^+",
+      "process": "E + Xe -> E + E + Xe+, Ionization",
+      "threshold_eV": 12.13,
+      "mM": null,
+      "data_points": 54,
+      "file": "ionization.csv"
+    }
+  ]
+}
