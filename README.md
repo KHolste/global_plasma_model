@@ -101,7 +101,8 @@ global-xenon-model/
     krypton/                Placeholder (README only)
     argon/                  Placeholder (README only)
     tests/                  LXCat source files
-  chemistry/                Chemistry packages (xenon_simple, two iodine sets)
+  chemistry/                Chemistry packages (xenon_simple, xenon_biagi, two iodine sets)
+  make_xenon_package.py     Builds a chemistry package from cross-section data
   Iodmodell/                Legacy iodine model (2019), reference only
   archive/                  Pre-split monolith, for reference
   docs/
@@ -202,7 +203,7 @@ The `cross_sections/xenon/` directory contains Biagi/LXCat data for Xenon. To ad
 
 - **Chabert 2012**: Legacy mode reproduces paper results
 - **Dietz et al. 2021**: RIT-4 benchmark comparison available via `dietz_validation.py`
-- **Test suite**: `python run_tests.py` runs the whole test bestand — 19 Python
+- **Test suite**: `python run_tests.py` runs the whole test bestand — 21 Python
   tests plus the four compiled C++ test programs — and reports pass/fail per test.
 
 ```bash
@@ -215,7 +216,7 @@ python run_tests.py --list       # just list what would run
 The runner uses the interpreter it was started with and names it in the header.
 Several tests import PyQt6; if the interpreter lacks it, those tests are
 reported as an incomplete environment rather than as a failure. Last full run:
-23 of 23 pass.
+24 of 24 pass.
 
 ## Known Limitations
 

@@ -293,14 +293,18 @@ inline std::vector<double> assemble_residual(
         if (rxn.energy_eV > 0 && rxn.is_electron_impact)
             resid[Te_i] -= rxn.energy_eV * e * rate;
 
-        // Elastische Heizung -> Gastemperatur, ebenfalls dieselbe Rate
+        // Elastischer Energieuebertrag: was die Elektronen verlieren, nimmt
+        // das Gas auf. Beide Seiten mit derselben Rate, sonst geht Energie
+        // verloren oder entsteht aus dem Nichts.
         if (rxn.contributes_elastic) {
             for (auto& [sp_id, stoech] : rxn.reactants) {
                 if (sp_id == "e") continue;
                 int idx = sys.species_index(sp_id);
                 if (idx >= 0) {
                     double M_sp = sys.species[idx].mass_kg;
-                    resid[Tg_i] += 3.0 * me / M_sp * kB * (Te*conv - Tg) * rate;
+                    double P_el = 3.0 * me / M_sp * kB * (Te*conv - Tg) * rate;
+                    resid[Tg_i] += P_el;
+                    resid[Te_i] -= P_el;
                 }
             }
         }

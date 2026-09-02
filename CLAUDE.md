@@ -39,7 +39,7 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **23 von 23 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **24 von 24 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
@@ -59,6 +59,17 @@ Daneben liegt eine **generische Chemieschicht** mit Spezies, Reaktionen und
 einem Bilanz-Assembler, in Python und in C++, jeweils mit eigenem Test. Beide
 Seiten lesen dieselben Chemiepakete aus `chemistry/<name>/chemistry.json`; ein
 Test stellt die geladenen Inhalte Wert für Wert gegenüber.
+
+`chemistry/xenon_biagi/` ist aus den Biagi-Querschnitten erzeugt und führt die
+fünfzig Anregungsprozesse einzeln, jeder mit eigener Schwelle und eigener
+Ratentabelle. Erzeugt wird es mit `python make_xenon_package.py`; ein Test
+stellt es dem fest verdrahteten tabellierten Weg gegenüber.
+
+**Zur Abbruchschranke:** Die Voreinstellung `newton_tol` von 1e-2 legt die
+Lösung nicht fest. Am Standardpunkt unterscheidet sich das Ergebnis zwischen
+1e-2 und 1e-4 um knapp sieben Prozent in der Dichte und 0.18 eV in Te — beide
+Rechenwege stimmen bei 1e-4 auf fünf Stellen überein, bei 1e-2 nicht. Wer
+Zahlen vergleicht, sollte `newton_tol 1e-4` setzen.
 
 Der Rechenkern wählt seinen Weg über den Konfigurationsschlüssel
 `chemistry_package`: ist er gesetzt und das Paket ladbar, rechnet der

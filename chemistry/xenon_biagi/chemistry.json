@@ -1,0 +1,1024 @@
+{
+  "name": "Xenon (xenon, biagi)",
+  "description": "Xenon aus LXCat / Biagi database (MagBoltz V8.97). Elastischer Stoss, Einfachionisation und 50 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Xe",
+      "name": "Xenon",
+      "type": "neutral_atom",
+      "mass_kg": 2.1801711e-25,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0057
+    },
+    {
+      "id": "Xe+",
+      "name": "Xe+",
+      "type": "positive_ion",
+      "mass_kg": 2.1801711e-25,
+      "charge": 1,
+      "is_beam_extracted": true
+    }
+  ],
+  "reactions": [
+    {
+      "id": "el_Xe",
+      "name": "Elastisch: e + Xe -> e + Xe",
+      "type": "elastic",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kel_Xe.csv"
+      },
+      "energy_eV": 0.0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    },
+    {
+      "id": "iz_Xe",
+      "name": "Ionisation: e + Xe -> 2e + Xe+",
+      "type": "ionization",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 2,
+        "Xe+": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kiz_Xe.csv"
+      },
+      "energy_eV": 12.13,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_1s5",
+      "name": "Anregung: e + Xe -> e + Xe(1S5) bei 8.315 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_1s5.csv"
+      },
+      "energy_eV": 8.315,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_1s4",
+      "name": "Anregung: e + Xe -> e + Xe(1S4) bei 8.436 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_1s4.csv"
+      },
+      "energy_eV": 8.436,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_1s3",
+      "name": "Anregung: e + Xe -> e + Xe(1S3) bei 9.447 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_1s3.csv"
+      },
+      "energy_eV": 9.447,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_1s2",
+      "name": "Anregung: e + Xe -> e + Xe(1S2) bei 9.57 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_1s2.csv"
+      },
+      "energy_eV": 9.57,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p10",
+      "name": "Anregung: e + Xe -> e + Xe(2P10) bei 9.58 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p10.csv"
+      },
+      "energy_eV": 9.58,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p9",
+      "name": "Anregung: e + Xe -> e + Xe(2P9) bei 9.686 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p9.csv"
+      },
+      "energy_eV": 9.686,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p8",
+      "name": "Anregung: e + Xe -> e + Xe(2P8) bei 9.721 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p8.csv"
+      },
+      "energy_eV": 9.721,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p7",
+      "name": "Anregung: e + Xe -> e + Xe(2P7) bei 9.789 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p7.csv"
+      },
+      "energy_eV": 9.789,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p6",
+      "name": "Anregung: e + Xe -> e + Xe(2P6) bei 9.821 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p6.csv"
+      },
+      "energy_eV": 9.821,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d6",
+      "name": "Anregung: e + Xe -> e + Xe(3D6) bei 9.89 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d6.csv"
+      },
+      "energy_eV": 9.89,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d5",
+      "name": "Anregung: e + Xe -> e + Xe(3D5) bei 9.917 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d5.csv"
+      },
+      "energy_eV": 9.917,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p5",
+      "name": "Anregung: e + Xe -> e + Xe(2P5) bei 9.934 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p5.csv"
+      },
+      "energy_eV": 9.934,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d4!",
+      "name": "Anregung: e + Xe -> e + Xe(3D4!) bei 9.943 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d4!.csv"
+      },
+      "energy_eV": 9.943,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d3",
+      "name": "Anregung: e + Xe -> e + Xe(3D3) bei 9.959 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d3.csv"
+      },
+      "energy_eV": 9.959,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d4",
+      "name": "Anregung: e + Xe -> e + Xe(3D4) bei 10.039 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d4.csv"
+      },
+      "energy_eV": 10.039,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d1!!",
+      "name": "Anregung: e + Xe -> e + Xe(3D1!!) bei 10.158 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d1!!.csv"
+      },
+      "energy_eV": 10.158,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d1!",
+      "name": "Anregung: e + Xe -> e + Xe(3D1!) bei 10.22 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d1!.csv"
+      },
+      "energy_eV": 10.22,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3d2",
+      "name": "Anregung: e + Xe -> e + Xe(3D2) bei 10.401 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3d2.csv"
+      },
+      "energy_eV": 10.401,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2s5",
+      "name": "Anregung: e + Xe -> e + Xe(2S5) bei 10.562 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2s5.csv"
+      },
+      "energy_eV": 10.562,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2s4",
+      "name": "Anregung: e + Xe -> e + Xe(2S4) bei 10.593 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2s4.csv"
+      },
+      "energy_eV": 10.593,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_exsum3p10-5",
+      "name": "Anregung: e + Xe -> e + Xe(Ex Sum 3P10-5) bei 10.902 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_exsum3p10-5.csv"
+      },
+      "energy_eV": 10.902,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p4",
+      "name": "Anregung: e + Xe -> e + Xe(2P4) bei 10.958 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p4.csv"
+      },
+      "energy_eV": 10.958,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_exsum4d",
+      "name": "Anregung: e + Xe -> e + Xe(Ex Sum 4D) bei 10.972 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_exsum4d.csv"
+      },
+      "energy_eV": 10.972,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_4d5",
+      "name": "Anregung: e + Xe -> e + Xe(4D5) bei 10.979 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_4d5.csv"
+      },
+      "energy_eV": 10.979,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p3",
+      "name": "Anregung: e + Xe -> e + Xe(2P3) bei 11.055 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p3.csv"
+      },
+      "energy_eV": 11.055,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p2",
+      "name": "Anregung: e + Xe -> e + Xe(2P2) bei 11.069 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p2.csv"
+      },
+      "energy_eV": 11.069,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2p1",
+      "name": "Anregung: e + Xe -> e + Xe(2P1) bei 11.141 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2p1.csv"
+      },
+      "energy_eV": 11.141,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_4d2",
+      "name": "Anregung: e + Xe -> e + Xe(4D2) bei 11.163 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_4d2.csv"
+      },
+      "energy_eV": 11.163,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3s4",
+      "name": "Anregung: e + Xe -> e + Xe(3S4) bei 11.274 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3s4.csv"
+      },
+      "energy_eV": 11.274,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_5d5",
+      "name": "Anregung: e + Xe -> e + Xe(5D5) bei 11.423 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_5d5.csv"
+      },
+      "energy_eV": 11.423,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_5d2",
+      "name": "Anregung: e + Xe -> e + Xe(5D2) bei 11.495 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_5d2.csv"
+      },
+      "energy_eV": 11.495,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_4s4",
+      "name": "Anregung: e + Xe -> e + Xe(4S4) bei 11.583 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_4s4.csv"
+      },
+      "energy_eV": 11.583,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_3s1!",
+      "name": "Anregung: e + Xe -> e + Xe(3S1!) bei 11.607 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_3s1!.csv"
+      },
+      "energy_eV": 11.607,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_6d5",
+      "name": "Anregung: e + Xe -> e + Xe(6D5) bei 11.683 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_6d5.csv"
+      },
+      "energy_eV": 11.683,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_6d2",
+      "name": "Anregung: e + Xe -> e + Xe(6D2) bei 11.74 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_6d2.csv"
+      },
+      "energy_eV": 11.74,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_5s4",
+      "name": "Anregung: e + Xe -> e + Xe(5S4) bei 11.752 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_5s4.csv"
+      },
+      "energy_eV": 11.752,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_7d5",
+      "name": "Anregung: e + Xe -> e + Xe(7D5) bei 11.807 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_7d5.csv"
+      },
+      "energy_eV": 11.807,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_7d2",
+      "name": "Anregung: e + Xe -> e + Xe(7D2) bei 11.84 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_7d2.csv"
+      },
+      "energy_eV": 11.84,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_6s4",
+      "name": "Anregung: e + Xe -> e + Xe(6S4) bei 11.852 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_6s4.csv"
+      },
+      "energy_eV": 11.852,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_2s2",
+      "name": "Anregung: e + Xe -> e + Xe(2S2) bei 11.878 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_2s2.csv"
+      },
+      "energy_eV": 11.878,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_8d5",
+      "name": "Anregung: e + Xe -> e + Xe(8D5) bei 11.892 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_8d5.csv"
+      },
+      "energy_eV": 11.892,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_8d2",
+      "name": "Anregung: e + Xe -> e + Xe(8D2) bei 11.908 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_8d2.csv"
+      },
+      "energy_eV": 11.908,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_7s4",
+      "name": "Anregung: e + Xe -> e + Xe(7S4) bei 11.918 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_7s4.csv"
+      },
+      "energy_eV": 11.918,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_9d5",
+      "name": "Anregung: e + Xe -> e + Xe(9D5) bei 11.942 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_9d5.csv"
+      },
+      "energy_eV": 11.942,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_9d2",
+      "name": "Anregung: e + Xe -> e + Xe(9D2) bei 11.955 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_9d2.csv"
+      },
+      "energy_eV": 11.955,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_8s4",
+      "name": "Anregung: e + Xe -> e + Xe(8S4) bei 11.962 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_8s4.csv"
+      },
+      "energy_eV": 11.962,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_10d5",
+      "name": "Anregung: e + Xe -> e + Xe(10D5) bei 11.979 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_10d5.csv"
+      },
+      "energy_eV": 11.979,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_10d2",
+      "name": "Anregung: e + Xe -> e + Xe(10D2) bei 11.989 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_10d2.csv"
+      },
+      "energy_eV": 11.989,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_9s4",
+      "name": "Anregung: e + Xe -> e + Xe(9S4) bei 11.994 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_9s4.csv"
+      },
+      "energy_eV": 11.994,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe_exhigh",
+      "name": "Anregung: e + Xe -> e + Xe(EX HIGH) bei 12.0 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Xe_exhigh.csv"
+      },
+      "energy_eV": 12.0,
+      "is_electron_impact": true
+    }
+  ]
+}

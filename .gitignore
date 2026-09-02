@@ -60,3 +60,6 @@ test_extraction.exe
 
 # Von den Tests erzeugte Konfigurationen
 chem_run_params.txt
+
+# Von den Tests erzeugte Konfigurationen
+xenon_package_params.txt

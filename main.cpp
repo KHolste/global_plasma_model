@@ -129,6 +129,10 @@ static void run_generic_sweep(SimContext& ctx, const ChemSystem& sys, ofstream& 
         DerivedQuantities dq = compute_derived_from(ctx, ex, st.n, st.ng, st.Te, st.Tg,
                                                      ps.rf.R_ind, ps.rf.I_coil, ps.rf.P_abs);
 
+        if (isfinite(ps.inner_resid_norm) && ps.inner_resid_norm >= sp.newton_tol)
+            cout << "SOFT_ACCEPT " << fixed << setprecision(4) << t.Q0sccm << " "
+                 << scientific << ps.inner_resid_norm << endl;
+
         if (sp.solve_mode == 2) {
             cout << "PID_DONE " << fixed << setprecision(4) << ps.I_mA << " 0.0000 "
                  << ps.P_RFG_sol << " " << st.Te << " " << st.Tg << endl;
