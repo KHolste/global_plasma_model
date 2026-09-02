@@ -45,3 +45,11 @@ iodine_sweep_results.csv
 
 # Fremdes Repository, nur als Referenz danebengelegt (eigene Lizenz)
 Global_Model_GIT-main/
+
+# Von Oberflaeche bzw. Testlauf erzeugt
+run_config.json
+test_reference.txt
+test_chem_system
+test_chem_system.exe
+test_generic_lm
+test_generic_lm.exe
