@@ -249,7 +249,10 @@ void applyConfig(SimContext& ctx, const ConfigData& cd) {
     if (c.count("ionization_model")) r.ionization_model = (int)c.at("ionization_model");
     if (c.count("elastic_model"))    r.elastic_model = (int)c.at("elastic_model");
     if (c.count("excitation_model")) r.excitation_model = (int)c.at("excitation_model");
-    if (c.count("kel_constant"))     r.kel_constant = c.at("kel_constant");
+    if (c.count("kel_constant"))   { r.kel_constant = c.at("kel_constant");
+                                     r.kel_constant_explicit = true; }
+    if (c.count("allow_foreign_rate_fits"))
+        ctx.allow_foreign_rate_fits = c.at("allow_foreign_rate_fits") != 0.0;
     if (c.count("Kex_scale"))        r.Kex_scale = c.at("Kex_scale");
     if (c.count("use_paper_kel") && (int)c.at("use_paper_kel") != 0)
         r.elastic_model = 0;

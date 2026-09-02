@@ -28,11 +28,16 @@ struct GasProps {
     double kappa    = 0.0057;          // Waermeleitfaehigkeit [W/(m*K)]
     std::string species = "xenon";
 
-    struct Entry { double M_kg, Eiz_J, Eexc_J, kappa_WmK; };
+    // Die fest eingebauten Ratenanpassungen sind Xenon-Polynome aus Chabert
+    // 2012. Fuer die anderen Gase gibt es sie nicht -- das haelt legacy_fits
+    // fest, damit niemand still mit Xenon-Raten fuer Argon rechnet.
+    bool has_legacy_fits = true;
+
+    struct Entry { double M_kg, Eiz_J, Eexc_J, kappa_WmK; bool legacy_fits; };
     static inline const std::map<std::string, Entry> DB = {
-        {"xenon",   {2.1801711e-25, 1.943408035e-18, 1.858524725e-18, 0.0057}},
-        {"krypton", {1.3914984e-25, 2.24009e-18,     1.60218e-18,     0.0094}},
-        {"argon",   {6.6335209e-26, 2.52473e-18,     1.85853e-18,     0.0177}},
+        {"xenon",   {2.1801711e-25, 1.943408035e-18, 1.858524725e-18, 0.0057,  true}},
+        {"krypton", {1.3914984e-25, 2.24009e-18,     1.60218e-18,     0.0094, false}},
+        {"argon",   {6.6335209e-26, 2.52473e-18,     1.85853e-18,     0.0177, false}},
     };
 
     bool set_species(const std::string& name) {
@@ -41,6 +46,7 @@ struct GasProps {
         species = name;
         M = it->second.M_kg; Eiz = it->second.Eiz_J;
         Eexc = it->second.Eexc_J; kappa = it->second.kappa_WmK;
+        has_legacy_fits = it->second.legacy_fits;
         return true;
     }
 };
@@ -89,6 +95,9 @@ struct RateConfig {
     int excitation_model = 0;
     double Kex_scale     = 1.0;
     double kel_constant  = 1.0e-13;
+    // Wurde der Wert bewusst gesetzt? Dann ist er eine Entscheidung des
+    // Anwenders und keine stillschweigend uebernommene Xenon-Zahl.
+    bool   kel_constant_explicit = false;
 
     std::vector<KizEntry> kiz;
     std::vector<KelEntry> kel;
@@ -175,6 +184,8 @@ struct SimContext {
     SolverParams solver;
 
     std::string  cs_database     = "biagi";
+    // Bewusst mit den Xenon-Anpassungen fuer ein anderes Gas rechnen.
+    bool         allow_foreign_rate_fits = false;
     // Chemiepaket fuer den generischen Rechenweg. Leer heisst: fest
     // verdrahtete Xenon-Physik wie bisher.
     std::string  chem_package    = "";

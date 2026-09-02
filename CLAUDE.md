@@ -39,7 +39,7 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **25 von 25 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **26 von 26 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
@@ -104,10 +104,16 @@ bewusst nicht mitversioniert.
 
 Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
-- Die Legacy-Ratenanpassungen sind Xenon-Polynome ohne Absicherung gegen die
-  Gasauswahl; Argon und Krypton rechnen still mit Xenon-Raten.
 
 ## Erledigte Befunde
+
+Die **Legacy-Ratenanpassungen** sind Xenon-Polynome. Wird ein anderes Gas
+gewählt und liegen keine tabellierten Daten vor, bricht der Lauf jetzt ab und
+nennt jeden betroffenen Prozess einzeln. Ausdrücklich erlaubt wird das über
+`allow_foreign_rate_fits 1`; dann läuft es mit Warnung und einer Kennzeichnung
+in der Ausgabe. Ein selbst gesetzter `kel_constant` gilt als Entscheidung und
+wird nicht beanstandet. Ein geladenes Chemiepaket bringt eigene Raten mit und
+ist von der Prüfung ausgenommen.
 
 Der **Konvergenzabbruch oberhalb 60 bis 70 W** war kein physikalischer Befund,
 sondern ein Startwertproblem: Bei hoher Leistung liegt die Lösung zu weit von

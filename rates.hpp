@@ -15,6 +15,29 @@ bool load_kiz_table(RateConfig& r, const std::string& path);
 bool load_kel_table(RateConfig& r, const std::string& path);
 bool load_kex_table(RateConfig& r, const std::string& path);
 
+// ═══ Absicherung gegen die Gasauswahl ══════════════════════
+//
+// Die fest eingebauten Anpassungen fuer Ionisation und Anregung sind
+// Xenon-Polynome, und der voreingestellte elastische Wert ist eine
+// Xenon-Zahl. Wird ein anderes Gas gewaehlt und liegen keine tabellierten
+// Daten vor, faellt der Rechenkern sonst still auf diese Anpassungen zurueck
+// und liefert Zahlen, die wie Argon aussehen, aber Xenon sind.
+
+inline std::vector<std::string> rate_fit_gas_problems(const SimContext& ctx) {
+    std::vector<std::string> probleme;
+    if (ctx.gas.has_legacy_fits) return probleme;
+    if (ctx.rates.ionization_model == 0)
+        probleme.push_back("Ionisation: die eingebaute Anpassung ist ein "
+                           "Xenon-Polynom (Chabert 2012).");
+    if (ctx.rates.excitation_model == 0)
+        probleme.push_back("Anregung: die eingebaute Anpassung ist eine "
+                           "Xenon-Arrhenius-Form (Chabert 2012).");
+    if (ctx.rates.elastic_model == 0 && !ctx.rates.kel_constant_explicit)
+        probleme.push_back("Elastischer Stoss: der voreingestellte Wert "
+                           "1e-13 m^3/s ist eine Xenon-Zahl.");
+    return probleme;
+}
+
 // ═══ Inline-Interpolation (Hot Path) ═══════════════════════
 
 namespace detail {

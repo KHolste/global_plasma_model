@@ -273,6 +273,29 @@ int main(int argc, char** argv) {
         }
         if (r.excitation_model == 0) cout << "EXCITATION_MODEL legacy (Chabert Arrhenius)" << endl;
 
+        // Ratenanpassungen gegen die Gasauswahl absichern. Ein geladenes
+        // Chemiepaket bringt seine eigenen Raten mit und ist davon nicht
+        // betroffen.
+        if (!chem_geladen) {
+            auto probleme = rate_fit_gas_problems(ctx);
+            if (!probleme.empty()) {
+                ostream& aus = ctx.allow_foreign_rate_fits ? cout : cerr;
+                aus << (ctx.allow_foreign_rate_fits ? "WARNUNG" : red + "FEHLER")
+                    << ": fuer " << g.species << " liegen keine tabellierten Raten vor, "
+                    << "und die eingebauten Anpassungen gelten nur fuer Xenon."
+                    << (ctx.allow_foreign_rate_fits ? "" : reset) << endl;
+                for (const auto& p : probleme) aus << "  - " << p << endl;
+                if (!ctx.allow_foreign_rate_fits) {
+                    cerr << "Abhilfe: Querschnittsdaten unter cross_sections/" << g.species
+                         << "/ hinterlegen, ein Chemiepaket ueber chemistry_package waehlen, "
+                         << "oder mit allow_foreign_rate_fits 1 bewusst mit Xenon-Raten rechnen."
+                         << endl;
+                    return 2;
+                }
+                cout << "FOREIGN_RATE_FITS " << g.species << endl;
+            }
+        }
+
         ofstream datei("output_kh.txt");
         if (!datei) { cerr << "Fehler: Ausgabedatei!" << endl; return 1; }
         datei << "Method, Q0sccm, Te, Tg, n, ng, iondeg, P_RFG, P_abs, I_extr_mA, "
