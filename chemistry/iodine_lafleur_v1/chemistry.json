@@ -3,7 +3,6 @@
   "description": "Kuratierte Iod-Basisdatenbank Version 1, basierend auf Lafleur et al., J. Phys. D 59, 023001 (2026). Core-Set: 6 Spezies, 12 Reaktionen. Ratenkoeffizienten aus Tabellen 13/14 des Reviews (Fits an Ambalampitiya et al. 2021 Cross-Sections). Status: Review-basiert, nicht vollstaendig validiert.",
   "wall_temperature_K": 293.0,
   "sigma_i": 1e-18,
-
   "species": [
     {
       "id": "e",
@@ -37,7 +36,10 @@
       "type": "positive_ion",
       "mass_kg": 2.1071711e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "I": 1
+      }
     },
     {
       "id": "I2+",
@@ -45,7 +47,11 @@
       "type": "positive_ion",
       "mass_kg": 4.2143422e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "I2": 1
+      },
+      "_wall_products_note": "Annahme: das Molekuelion bleibt an der Wand als Molekuel erhalten. Fuer dissoziative Neutralisation stattdessen {\"I\": 2} eintragen."
     },
     {
       "id": "I-",
@@ -56,25 +62,37 @@
       "_note": "Electron affinity 3.059 eV. Negative ion wall flux = 0 (electropositive sheath assumption)."
     }
   ],
-
   "_rate_fit_documentation": {
     "format_eq33": "K(Te) = A * [ln(1 + B*Te + C*Te^2)]^D * exp(-E/Te), Te in eV, K in m^3/s",
     "format_eq34": "K(Te) = A * exp(-B/Te + C/Te^2 - D/Te^3 + E/Te^4) * Te^(-F), Te in eV, K in m^3/s",
     "source": "Lafleur et al. 2026, Tables 13 and 14",
     "cross_section_basis": "Ambalampitiya et al. (2021) BSR calculations + Esteves (2022) extrapolations"
   },
-
   "reactions": [
     {
       "id": "iz_I2",
       "name": "e + I2 -> I2+ + 2e (Ionisation)",
       "type": "molecular_ionization",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 2, "I2+": 1},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 2,
+        "I2+": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kiz_I2.csv",
-        "_fit_eq33": {"A": 1.20694e-13, "B": -2.05557e-3, "C": 8.10106e-2, "D": 7.95734e-1, "E": 9.31, "Te_range": "[1,50]", "error_pct": 4.16}
+        "_fit_eq33": {
+          "A": 1.20694e-13,
+          "B": -0.00205557,
+          "C": 0.0810106,
+          "D": 0.795734,
+          "E": 9.31,
+          "Te_range": "[1,50]",
+          "error_pct": 4.16
+        }
       },
       "energy_eV": 9.31,
       "is_electron_impact": true,
@@ -84,12 +102,27 @@
       "id": "dissiz_I2",
       "name": "e + I2 -> I+ + I + 2e (Diss. Ionisation)",
       "type": "dissociative_ionization",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 2, "I+": 1, "I": 1},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 2,
+        "I+": 1,
+        "I": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kdissiz_I2.csv",
-        "_fit_eq33": {"A": 2.73612e-14, "B": 1.62507e-1, "C": -9.69904e-4, "D": 9.41764e-1, "E": 11.94, "Te_range": "[0.5,50]", "error_pct": 6.74}
+        "_fit_eq33": {
+          "A": 2.73612e-14,
+          "B": 0.162507,
+          "C": -0.000969904,
+          "D": 0.941764,
+          "E": 11.94,
+          "Te_range": "[0.5,50]",
+          "error_pct": 6.74
+        }
       },
       "energy_eV": 11.63,
       "is_electron_impact": true,
@@ -99,12 +132,26 @@
       "id": "diss_I2",
       "name": "e + I2 -> 2I + e (Dissoziation)",
       "type": "dissociation",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I": 2},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 2
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kdiss_I2.csv",
-        "_fit_eq33": {"A": 1.94272e-14, "B": 1.65161e-5, "C": -1.36170e-7, "D": -6.05364e-2, "E": 2.92201, "Te_range": "[1,50]", "error_pct": 8.91}
+        "_fit_eq33": {
+          "A": 1.94272e-14,
+          "B": 1.65161e-05,
+          "C": -1.3617e-07,
+          "D": -0.0605364,
+          "E": 2.92201,
+          "Te_range": "[1,50]",
+          "error_pct": 8.91
+        }
       },
       "energy_eV": 1.542,
       "is_electron_impact": true,
@@ -114,12 +161,26 @@
       "id": "dissatt_I2",
       "name": "e + I2 -> I- + I (Diss. Attachment)",
       "type": "dissociative_attachment",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"I-": 1, "I": 1},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "I-": 1,
+        "I": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kdissatt_I2.csv",
-        "_fit_eq33": {"A": 8.51271e-18, "B": 5.26610e-6, "C": 1.94777e-7, "D": -5.57411e-1, "E": 2.94075, "Te_range": "[2,50]", "error_pct": 17.22}
+        "_fit_eq33": {
+          "A": 8.51271e-18,
+          "B": 5.2661e-06,
+          "C": 1.94777e-07,
+          "D": -0.557411,
+          "E": 2.94075,
+          "Te_range": "[2,50]",
+          "error_pct": 17.22
+        }
       },
       "energy_eV": 0.0,
       "is_electron_impact": true,
@@ -129,12 +190,26 @@
       "id": "iz_I",
       "name": "e + I -> I+ + 2e (Ionisation)",
       "type": "ionization",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 2, "I+": 1},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 2,
+        "I+": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kiz_I.csv",
-        "_fit_eq33": {"A": 1.00526e-13, "B": 3.04247e-1, "C": -1.87150e-3, "D": 1.02720, "E": 10.45, "Te_range": "[0.5,50]", "error_pct": 7.16}
+        "_fit_eq33": {
+          "A": 1.00526e-13,
+          "B": 0.304247,
+          "C": -0.0018715,
+          "D": 1.0272,
+          "E": 10.45,
+          "Te_range": "[0.5,50]",
+          "error_pct": 7.16
+        }
       },
       "energy_eV": 10.451,
       "is_electron_impact": true,
@@ -144,12 +219,26 @@
       "id": "exc_I_lumped",
       "name": "e + I -> I* + e (Lumped excitation, 4 levels)",
       "type": "excitation",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 1, "I": 1},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kexc1_I.csv",
-        "_fit_eq33_exc1": {"A": 8.99640e-14, "B": 3.34729e-4, "C": 1.38934e-6, "D": 2.84949e-1, "E": 4.63389, "Te_range": "[0.5,50]", "error_pct": 8.87}
+        "_fit_eq33_exc1": {
+          "A": 8.9964e-14,
+          "B": 0.000334729,
+          "C": 1.38934e-06,
+          "D": 0.284949,
+          "E": 4.63389,
+          "Te_range": "[0.5,50]",
+          "error_pct": 8.87
+        }
       },
       "energy_eV": 0.9426,
       "is_electron_impact": true,
@@ -159,8 +248,14 @@
       "id": "exc_I2_relax",
       "name": "e + I2 -> I2* -> I2 + hv (Anregung, relaxiert)",
       "type": "excitation",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I2": 1},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I2": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kexc_I2_relax.csv",
@@ -174,8 +269,14 @@
       "id": "exc_I2_prediss",
       "name": "e + I2 -> I2* -> 2I + e (Anregung -> Praedissoziation)",
       "type": "dissociation",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I": 2},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 2
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kexc_I2_prediss.csv",
@@ -189,12 +290,27 @@
       "id": "el_I2",
       "name": "e + I2 -> e + I2 (Elastisch, MTCS)",
       "type": "elastic",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I2": 1},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I2": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kelm_I2.csv",
-        "_fit_eq34": {"A": 4.35460e-13, "B": -4.36057, "C": -1.32992e1, "D": -1.11529e1, "E": -2.92094, "F": -4.88306e-1, "Te_range": "[1.5,50]", "error_pct": 8.06}
+        "_fit_eq34": {
+          "A": 4.3546e-13,
+          "B": -4.36057,
+          "C": -13.2992,
+          "D": -11.1529,
+          "E": -2.92094,
+          "F": -0.488306,
+          "Te_range": "[1.5,50]",
+          "error_pct": 8.06
+        }
       },
       "energy_eV": 0,
       "is_electron_impact": true,
@@ -206,12 +322,27 @@
       "id": "el_I",
       "name": "e + I -> e + I (Elastisch, total)",
       "type": "elastic",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 1, "I": 1},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 1
+      },
       "rate": {
         "model": "tabulated",
         "file": "rates/Kel_I.csv",
-        "_fit_eq34": {"A": 3.54863e-12, "B": 5.50332, "C": 6.21721, "D": 2.87360, "E": 4.67478e-1, "F": 6.06788e-1, "Te_range": "[0.5,50]", "error_pct": 7.51}
+        "_fit_eq34": {
+          "A": 3.54863e-12,
+          "B": 5.50332,
+          "C": 6.21721,
+          "D": 2.8736,
+          "E": 0.467478,
+          "F": 0.606788,
+          "Te_range": "[0.5,50]",
+          "error_pct": 7.51
+        }
       },
       "energy_eV": 0,
       "is_electron_impact": true,
@@ -223,8 +354,13 @@
       "id": "rec_Ip_Im",
       "name": "I+ + I- -> 2I (Ion-Ion Rekombination)",
       "type": "recombination",
-      "reactants": {"I+": 1, "I-": 1},
-      "products": {"I": 2},
+      "reactants": {
+        "I+": 1,
+        "I-": 1
+      },
+      "products": {
+        "I": 2
+      },
       "rate": {
         "model": "constant",
         "value": 5e-14,
@@ -238,8 +374,14 @@
       "id": "rec_I2p_Im",
       "name": "I2+ + I- -> I + I2 (Ion-Ion Rekombination)",
       "type": "recombination",
-      "reactants": {"I2+": 1, "I-": 1},
-      "products": {"I": 1, "I2": 1},
+      "reactants": {
+        "I2+": 1,
+        "I-": 1
+      },
+      "products": {
+        "I": 1,
+        "I2": 1
+      },
       "rate": {
         "model": "constant",
         "value": 5e-14,
@@ -253,9 +395,16 @@
       "id": "surfrec_I",
       "name": "I (wall) -> 0.5 I2 (Surface Recombination)",
       "type": "surface_recombination",
-      "reactants": {"I": 1},
-      "products": {"I2": 1},
-      "rate": {"model": "constant", "value": 0.0},
+      "reactants": {
+        "I": 1
+      },
+      "products": {
+        "I2": 1
+      },
+      "rate": {
+        "model": "constant",
+        "value": 0.0
+      },
       "surface_gamma": 0.02,
       "is_electron_impact": false,
       "_source": "gamma = 0.02 used by Grondein 2016 (Table II). Review Sec.4 discusses values from 0.005 to 0.44 depending on material. 0.02 is conservative baseline."

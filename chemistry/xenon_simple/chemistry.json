@@ -3,7 +3,6 @@
   "description": "Einfaches Xenon-Modell nach Chabert 2012. 3 Spezies (e, Xe, Xe+), 3 Reaktionen (Ionisation, Anregung, elastisch). Aequivalent zum Legacy-C++-Solver.",
   "wall_temperature_K": 293.0,
   "sigma_i": 1e-18,
-
   "species": [
     {
       "id": "e",
@@ -27,17 +26,25 @@
       "type": "positive_ion",
       "mass_kg": 2.1801711e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Xe": 1
+      }
     }
   ],
-
   "reactions": [
     {
       "id": "iz_Xe",
       "name": "Ionisation: e + Xe -> 2e + Xe+",
       "type": "ionization",
-      "reactants": {"e": 1, "Xe": 1},
-      "products": {"e": 2, "Xe+": 1},
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 2,
+        "Xe+": 1
+      },
       "rate": {
         "model": "arrhenius",
         "A": 1.8e-13,
@@ -50,8 +57,14 @@
       "id": "exc_Xe",
       "name": "Anregung: e + Xe -> e + Xe*",
       "type": "excitation",
-      "reactants": {"e": 1, "Xe": 1},
-      "products": {"e": 1, "Xe": 1},
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
       "rate": {
         "model": "arrhenius",
         "A": 1.2921e-13,
@@ -64,8 +77,14 @@
       "id": "el_Xe",
       "name": "Elastisch: e + Xe -> e + Xe",
       "type": "elastic",
-      "reactants": {"e": 1, "Xe": 1},
-      "products": {"e": 1, "Xe": 1},
+      "reactants": {
+        "e": 1,
+        "Xe": 1
+      },
+      "products": {
+        "e": 1,
+        "Xe": 1
+      },
       "rate": {
         "model": "constant",
         "value": 1e-13

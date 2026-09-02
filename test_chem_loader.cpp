@@ -82,7 +82,8 @@ static int dump(const string& path) {
     for (const auto& sp : sys.species)
         cout << "SPECIES\t" << sp.id << "\t" << type_name(sp.type) << "\t"
              << sp.mass_kg << "\t" << sp.charge << "\t" << sp.thermal_cond << "\t"
-             << (sp.is_feedstock ? 1 : 0) << "\t" << (sp.is_beam_extracted ? 1 : 0) << "\n";
+             << (sp.is_feedstock ? 1 : 0) << "\t" << (sp.is_beam_extracted ? 1 : 0) << "\t"
+             << stoich_text(sp.wall_products) << "\n";
     for (const auto& rx : sys.reactions) {
         cout << "REACTION\t" << rx.id << "\t" << rx.type << "\t"
              << stoich_text(rx.reactants) << "\t" << stoich_text(rx.products) << "\t"
@@ -327,8 +328,135 @@ int main(int argc, char** argv) {
     }
     remove(zweifach);
 
-    // ── Test 7: Kurzname zu Pfad ─────────────────────────────
-    cout << "\n--- Test 7: Pfadaufloesung ---" << endl;
+    // ── Test 7: Wandprodukte ─────────────────────────────────
+    // Was ein Ion an der Wand hinterlaesst, gehoert in das Paket und darf
+    // nicht aus der Masse geraten werden. Fuer einatomige Ionen faellt beides
+    // zusammen, fuer molekulare nicht.
+    cout << "\n--- Test 7: Wandprodukte ---" << endl;
+    {
+        const ChemSpecies* xe_ion2 = find_species(xe.system, "Xe+");
+        check("Xe+ hinterlaesst ein Xe",
+              xe_ion2 && stoich_text(xe_ion2->wall_products) == "Xe:1",
+              xe_ion2 ? stoich_text(xe_ion2->wall_products) : "-");
+        check("nichts abgeleitet, weil erklaert", xe.wall_products_derived == 0,
+              to_string(xe.wall_products_derived));
+
+        // Molekuelion, das an der Wand in zwei Atome zerfaellt
+        const char* mol = "test_chem_loader_tmp4.json";
+        {
+            ofstream f(mol);
+            f << R"({"name":"Iod mit dissoziativer Neutralisation","sigma_i":1e-18,"species":[)"
+                 R"({"id":"e","type":"electron","mass_kg":9.10938215e-31,"charge":-1},)"
+                 R"({"id":"I2","type":"neutral_molecule","mass_kg":4.2143422e-25,"charge":0,)"
+                 R"("is_feedstock":true,"thermal_conductivity":0.0039},)"
+                 R"({"id":"I","type":"neutral_atom","mass_kg":2.1071711e-25,"charge":0,)"
+                 R"("thermal_conductivity":0.0039},)"
+                 R"({"id":"I2+","type":"positive_ion","mass_kg":4.2143422e-25,"charge":1,)"
+                 R"("is_beam_extracted":true,"wall_products":{"I":2}}],)"
+                 R"("reactions":[)"
+                 R"({"id":"iz_I2","type":"ionization","reactants":{"e":1,"I2":1},)"
+                 R"("products":{"e":2,"I2+":1},"energy_eV":9.31,)"
+                 R"("rate":{"model":"arrhenius","A":1e-13,"E_a_eV":9.31}}]})";
+        }
+        ChemLoadResult mr = load_chem_package(mol);
+        check("Paket mit zwei Wandprodukten geladen", mr.ok, mr.error_text());
+        if (mr.ok) {
+            const ChemSpecies* i2p = find_species(mr.system, "I2+");
+            check("I2+ hinterlaesst zwei I",
+                  i2p && stoich_text(i2p->wall_products) == "I:2",
+                  i2p ? stoich_text(i2p->wall_products) : "-");
+            check("nichts abgeleitet", mr.wall_products_derived == 0);
+
+            // Der Rueckstrom muss doppelt in die Atombilanz gehen
+            SimContext ctx2;
+            ctx2.recompute();
+            const ChemSystem& ms = mr.system;
+            vector<double> st(ms.state_size());
+            st[ms.species_index("I2")]  = 1e19;
+            st[ms.species_index("I")]   = 1e18;
+            st[ms.species_index("I2+")] = 1e17;
+            st[ms.Te_idx()] = 4.0;
+            st[ms.Tg_idx()] = 400.0;
+            auto r = assemble_residual(ms, st, 1e6, ctx2.thruster.Q0, ctx2.thruster, ctx2);
+            // Ohne Reaktionen auf I bleibt nur Rueckstrom minus Ausstroemen
+            double uB = sqrt(1 * PhysConst::kB * 4.0 * PhysConst::conv / 4.2143422e-25);
+            double lam = 1.0 / (1.1e19 * 1e-18);
+            double hL = 0.86 * pow(3.0 + ctx2.thruster.L/(2*lam), -0.5);
+            double hR = 0.80 * pow(4.0 + ctx2.thruster.R/lam, -0.5);
+            double Aeff1 = 2*hR*PhysConst::pi*ctx2.thruster.R*ctx2.thruster.L
+                         + (2 - ctx2.thruster.betai)*hL*PhysConst::pi*ctx2.thruster.R*ctx2.thruster.R;
+            double rueck = 2.0 * 1e17 * uB * Aeff1 / ctx2.thruster.V;
+            double v_mean = sqrt(8*PhysConst::kB*400.0/(PhysConst::pi*2.1071711e-25));
+            double raus = 0.25 * 1e18 * v_mean * ctx2.thruster.Ag / ctx2.thruster.V;
+            double erwartet = rueck - raus;
+            double ist = r[ms.species_index("I")];
+            check("Rueckstrom geht doppelt in die Atombilanz",
+                  fabs(ist - erwartet) <= 1e-9 * fabs(erwartet),
+                  to_string(ist) + " statt " + to_string(erwartet));
+        }
+        remove(mol);
+
+        // Fehlerfaelle
+        const char* schlecht = "test_chem_loader_tmp5.json";
+        auto schreibe = [&](const char* wp) {
+            ofstream f(schlecht);
+            f << R"({"name":"kaputt","sigma_i":1e-18,"species":[)"
+                 R"({"id":"e","type":"electron","mass_kg":9.10938215e-31,"charge":-1},)"
+                 R"({"id":"Xe","type":"neutral_atom","mass_kg":2.1801711e-25,"charge":0,)"
+                 R"("is_feedstock":true},)"
+                 R"({"id":"Xe+","type":"positive_ion","mass_kg":2.1801711e-25,"charge":1,)"
+                 R"("wall_products":)" << wp << R"(}],)"
+                 R"("reactions":[{"id":"iz","type":"ionization","reactants":{"e":1,"Xe":1},)"
+                 R"("products":{"e":2,"Xe+":1},"energy_eV":12.1,)"
+                 R"("rate":{"model":"constant","value":1e-15}}]})";
+        };
+
+        schreibe(R"({"Kr":1})");
+        ChemLoadResult e1 = load_chem_package(schlecht);
+        check("unbekanntes Wandprodukt abgelehnt", !e1.ok,
+              e1.ok ? "durchgelassen" : "");
+        check("unbekanntes Wandprodukt benannt",
+              e1.error_text().find("nicht definiert") != string::npos, e1.error_text());
+
+        schreibe(R"({"Xe+":1})");
+        ChemLoadResult e2 = load_chem_package(schlecht);
+        check("nichtneutrales Wandprodukt abgelehnt", !e2.ok);
+        check("nichtneutrales Wandprodukt benannt",
+              e2.error_text().find("nicht neutral") != string::npos, e2.error_text());
+
+        schreibe(R"({"Xe":2})");
+        ChemLoadResult e3 = load_chem_package(schlecht);
+        check("Massenbilanz an der Wand geprueft", !e3.ok);
+        check("Massenfehler benannt",
+              e3.error_text().find("wiegen nicht") != string::npos, e3.error_text());
+        remove(schlecht);
+
+        // Fehlt die Angabe, wird sie abgeleitet und gezaehlt
+        const char* ohne = "test_chem_loader_tmp6.json";
+        {
+            ofstream f(ohne);
+            f << R"({"name":"ohne Angabe","sigma_i":1e-18,"species":[)"
+                 R"({"id":"e","type":"electron","mass_kg":9.10938215e-31,"charge":-1},)"
+                 R"({"id":"Xe","type":"neutral_atom","mass_kg":2.1801711e-25,"charge":0,)"
+                 R"("is_feedstock":true},)"
+                 R"({"id":"Xe+","type":"positive_ion","mass_kg":2.1801711e-25,"charge":1}],)"
+                 R"("reactions":[{"id":"iz","type":"ionization","reactants":{"e":1,"Xe":1},)"
+                 R"("products":{"e":2,"Xe+":1},"energy_eV":12.1,)"
+                 R"("rate":{"model":"constant","value":1e-15}}]})";
+        }
+        ChemLoadResult ar = load_chem_package(ohne);
+        check("ohne Angabe abgeleitet", ar.ok, ar.error_text());
+        check("Ableitung wird gezaehlt", ar.wall_products_derived == 1,
+              to_string(ar.wall_products_derived));
+        const ChemSpecies* abg = ar.ok ? find_species(ar.system, "Xe+") : nullptr;
+        check("Ableitung trifft das Neutralteilchen",
+              abg && stoich_text(abg->wall_products) == "Xe:1",
+              abg ? stoich_text(abg->wall_products) : "-");
+        remove(ohne);
+    }
+
+    // ── Test 8: Kurzname zu Pfad ─────────────────────────────
+    cout << "\n--- Test 8: Pfadaufloesung ---" << endl;
     check("Kurzname aufgeloest",
           resolve_chem_package("xenon_simple") == "chemistry/xenon_simple/chemistry.json",
           resolve_chem_package("xenon_simple"));

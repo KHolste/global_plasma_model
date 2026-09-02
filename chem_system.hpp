@@ -49,6 +49,11 @@ struct ChemSpecies {
     // Klammerinitialisierungen unveraendert gueltig bleiben.
     std::string name;         // Anzeigename, sonst gleich der id
     bool is_beam_extracted = false;  // Wird ueber das Gitter extrahiert?
+    // Was ein Ion an der Wand hinterlaesst, wenn es dort neutralisiert wird.
+    // Xe+ hinterlaesst ein Xe, Xe2+ ebenso, I2+ je nach Modellannahme ein I2
+    // oder zwei I. Das ist eine Entscheidung des Chemiepakets und darf nicht
+    // aus der Masse geraten werden.
+    std::map<std::string, int> wall_products;
 
     bool is_neutral() const { return type == SpeciesType::NEUTRAL_ATOM || type == SpeciesType::NEUTRAL_MOLECULE; }
     bool is_positive_ion() const { return type == SpeciesType::POSITIVE_ION; }
@@ -362,14 +367,13 @@ inline std::vector<double> assemble_residual(
             double wall_loss = state[i] * uBi * Aeff / V;
             resid[i] -= wall_loss;
 
-            // Neutralrueckstrom: Ionen die an der Wand neutralisiert werden
-            // tragen ueber Aeff1 zur Neutralbilanz bei (Chabert r2 Term 2)
-            for (auto& n_sp : sys.species) {
-                if (n_sp.is_neutral() && std::abs(n_sp.mass_kg - sp.mass_kg)/sp.mass_kg < 0.01) {
-                    int ni = sys.species_index(n_sp.id);
-                    if (ni >= 0) resid[ni] += state[i] * uBi * Aeff1 / V;
-                    break;
-                }
+            // Neutralrueckstrom: was das Ion an der Wand hinterlaesst, steht
+            // im Paket. Der Rueckstrom geht ueber Aeff1, weil der Anteil, der
+            // durch das Gitter austritt, nicht zurueckkommt (Chabert r2).
+            const double rueckstrom = state[i] * uBi * Aeff1 / V;
+            for (const auto& wp : sp.wall_products) {
+                int ni = sys.species_index(wp.first);
+                if (ni >= 0) resid[ni] += wp.second * rueckstrom;
             }
 
             // Ion-Neutral Stoss-Heizung (Chabert Pg2) -- Volumenprozess,
@@ -429,8 +433,10 @@ inline ChemSystem build_xenon_system(const SimContext& ctx) {
     // Spezies
     sys.species.push_back({"Xe", SpeciesType::NEUTRAL_ATOM, ctx.gas.M, 0,
                            ctx.gas.kappa, true, ctx.gas.sigma_i});
-    sys.species.push_back({"Xe+", SpeciesType::POSITIVE_ION, ctx.gas.M, +1,
-                           0, false, ctx.gas.sigma_i});
+    ChemSpecies xe_ion{"Xe+", SpeciesType::POSITIVE_ION, ctx.gas.M, +1,
+                        0, false, ctx.gas.sigma_i};
+    xe_ion.wall_products = {{"Xe", 1}};
+    sys.species.push_back(xe_ion);
 
     // Ionisation: e + Xe -> 2e + Xe+
     ChemReaction ioniz;

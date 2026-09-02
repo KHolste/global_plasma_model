@@ -8,6 +8,7 @@
 #include <sstream>
 #include <set>
 #include <map>
+#include <cmath>
 
 using json = nlohmann::json;
 
@@ -188,6 +189,7 @@ ChemLoadResult load_chem_package(const std::string& json_path) {
         sp.sigma_i = get_double(sd, "sigma_i", sys.sigma_i);
         sp.name = get_string(sd, "name", id);
         sp.is_beam_extracted = get_bool(sd, "is_beam_extracted", false);
+        sp.wall_products = get_stoich(sd, "wall_products");
 
         if (sp.mass_kg <= 0)
             res.errors.push_back("Spezies '" + id + "': Masse ist nicht positiv");
@@ -200,6 +202,60 @@ ChemLoadResult load_chem_package(const std::string& json_path) {
 
         known_ids.insert(id);
         sys.species.push_back(sp);
+    }
+
+    // ── Wandprodukte der Ionen ───────────────────────────────
+    // Was ein Ion an der Wand hinterlaesst, gehoert in das Paket. Fehlt die
+    // Angabe, wird sie aus der Masse abgeleitet -- das trifft den einatomigen
+    // Fall, aber nicht den molekularen, und wird deshalb gezaehlt und
+    // gemeldet. Die Massenbilanz wird in jedem Fall geprueft.
+    for (auto& sp : sys.species) {
+        if (!sp.is_positive_ion()) continue;
+
+        if (sp.wall_products.empty()) {
+            for (const auto& n : sys.species) {
+                if (!n.is_neutral()) continue;
+                if (std::fabs(n.mass_kg - sp.mass_kg) <= 0.01 * sp.mass_kg) {
+                    sp.wall_products[n.id] = 1;
+                    ++res.wall_products_derived;
+                    break;
+                }
+            }
+            if (sp.wall_products.empty()) {
+                res.errors.push_back("Spezies '" + sp.id + "': 'wall_products' fehlt "
+                                     "und laesst sich nicht aus der Masse ableiten");
+                continue;
+            }
+        }
+
+        double masse = 0;
+        bool brauchbar = true;
+        for (const auto& wp : sp.wall_products) {
+            int idx = sys.species_index(wp.first);
+            if (idx < 0) {
+                res.errors.push_back("Spezies '" + sp.id + "': Wandprodukt '" +
+                                     wp.first + "' ist nicht definiert");
+                brauchbar = false;
+                break;
+            }
+            if (!sys.species[idx].is_neutral()) {
+                res.errors.push_back("Spezies '" + sp.id + "': Wandprodukt '" +
+                                     wp.first + "' ist nicht neutral");
+                brauchbar = false;
+                break;
+            }
+            if (wp.second <= 0) {
+                res.errors.push_back("Spezies '" + sp.id + "': Wandprodukt '" +
+                                     wp.first + "' mit Anzahl " +
+                                     std::to_string(wp.second));
+                brauchbar = false;
+                break;
+            }
+            masse += wp.second * sys.species[idx].mass_kg;
+        }
+        if (brauchbar && std::fabs(masse - sp.mass_kg) > 0.01 * sp.mass_kg)
+            res.errors.push_back("Spezies '" + sp.id + "': die Wandprodukte wiegen "
+                                 "nicht so viel wie das Ion");
     }
 
     // ── Reaktionen ───────────────────────────────────────────

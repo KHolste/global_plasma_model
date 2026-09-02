@@ -77,6 +77,7 @@ def dump_lesen(prog: Path, paket: Path) -> dict:
                 "id": f[1], "type": f[2], "mass_kg": float(f[3]),
                 "charge": int(f[4]), "thermal_conductivity": float(f[5]),
                 "is_feedstock": f[6] == "1", "is_beam_extracted": f[7] == "1",
+                "wall_products": f[8] if len(f) > 8 else "",
             })
         elif f[0] == "REACTION":
             out["reactions"].append({
@@ -108,7 +109,7 @@ def nahe(a: float, b: float) -> bool:
 def vergleiche(paket: Path, cpp: dict) -> None:
     """Ein Paket auf beiden Wegen laden und gegenueberstellen."""
     kurz = paket.parent.name
-    py = load_chemistry(paket)
+    py = load_chemistry(paket)  # leitet fehlende Wandprodukte selbst ab
 
     check(f"{kurz}: Name", cpp["name"] == py.name, f"{cpp['name']} vs {py.name}")
     check(f"{kurz}: Wandtemperatur",
@@ -135,6 +136,9 @@ def vergleiche(paket: Path, cpp: dict) -> None:
         check(f"{kurz}/{p.id}: Feedstock", c["is_feedstock"] == p.is_feedstock)
         check(f"{kurz}/{p.id}: Extraktion",
               c["is_beam_extracted"] == p.is_beam_extracted)
+        check(f"{kurz}/{p.id}: Wandprodukte",
+              c["wall_products"] == stoich_text(p.wall_products),
+              f"{c['wall_products']} vs {stoich_text(p.wall_products)}")
 
     # ── Reaktionen: Struktur und Raten ───────────────────────
     check(f"{kurz}: Reaktionsanzahl", len(cpp["reactions"]) == len(py.reactions),

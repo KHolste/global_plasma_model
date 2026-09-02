@@ -56,6 +56,10 @@ class Species:
     is_feedstock: bool = False       # Wird von aussen zugefuehrt?
     is_beam_extracted: bool = False  # Wird ueber Grid extrahiert?
     thermal_conductivity: float = 0.0  # kappa [W/(m*K)], fuer Neutrale
+    # Was ein Ion an der Wand hinterlaesst, wenn es dort neutralisiert wird:
+    # {Spezies-ID: Anzahl}. Fehlt die Angabe, wird sie beim Laden aus der Masse
+    # abgeleitet -- das trifft den einatomigen Fall, nicht den molekularen.
+    wall_products: dict[str, int] = field(default_factory=dict)
 
     @property
     def is_electron(self) -> bool:
@@ -86,6 +90,7 @@ class Species:
             is_feedstock=d.get("is_feedstock", False),
             is_beam_extracted=d.get("is_beam_extracted", False),
             thermal_conductivity=float(d.get("thermal_conductivity", 0.0)),
+            wall_products={k: int(v) for k, v in d.get("wall_products", {}).items()},
         )
 
 
@@ -238,10 +243,56 @@ class ChemistryPackage:
     wall_temperature_K: float = 293.0
     sigma_i: float = 1e-18            # Ion-neutral cross-section [m^2]
 
+    def derive_wall_products(self) -> int:
+        """Fehlende Wandprodukte aus der Masse ableiten.
+
+        Rueckgabe: Anzahl der Ionen, fuer die abgeleitet wurde. Dieselbe Regel
+        wie im C++-Lader, damit beide Seiten dieselbe Chemie sehen.
+        """
+        abgeleitet = 0
+        for sp in self.species.values():
+            if not sp.is_positive_ion or sp.wall_products:
+                continue
+            for neut in self.neutral_species:
+                if abs(neut.mass_kg - sp.mass_kg) <= 0.01 * sp.mass_kg:
+                    sp.wall_products = {neut.id: 1}
+                    abgeleitet += 1
+                    break
+        return abgeleitet
+
     def validate(self) -> list[str]:
         """Pruefe Konsistenz. Gibt Liste von Fehlern zurueck."""
         errors = []
         sp_ids = set(self.species.keys())
+
+        # Wandprodukte: vorhanden, neutral, und massenerhaltend
+        for sp in self.species.values():
+            if not sp.is_positive_ion:
+                continue
+            if not sp.wall_products:
+                errors.append(f"Spezies '{sp.id}': 'wall_products' fehlt und "
+                              f"laesst sich nicht aus der Masse ableiten")
+                continue
+            masse = 0.0
+            brauchbar = True
+            for pid, n in sp.wall_products.items():
+                ziel = self.species.get(pid)
+                if ziel is None:
+                    errors.append(f"Spezies '{sp.id}': Wandprodukt '{pid}' ist nicht definiert")
+                    brauchbar = False
+                    break
+                if not ziel.is_neutral:
+                    errors.append(f"Spezies '{sp.id}': Wandprodukt '{pid}' ist nicht neutral")
+                    brauchbar = False
+                    break
+                if n <= 0:
+                    errors.append(f"Spezies '{sp.id}': Wandprodukt '{pid}' mit Anzahl {n}")
+                    brauchbar = False
+                    break
+                masse += n * ziel.mass_kg
+            if brauchbar and abs(masse - sp.mass_kg) > 0.01 * sp.mass_kg:
+                errors.append(f"Spezies '{sp.id}': die Wandprodukte wiegen nicht "
+                              f"so viel wie das Ion")
 
         # Muss Elektronen enthalten
         electrons = [s for s in self.species.values() if s.is_electron]
@@ -529,13 +580,10 @@ class BalanceAssembler:
                 wall_loss = n_sp * uB * Aeff / V
                 resid[idx] -= wall_loss
 
-                # Ion neutralisation at wall -> returns neutral atom
-                # I+ -> I, I2+ -> I2 (simplified: product is atom with same mass)
-                for neut in self.chem.neutral_species:
-                    if abs(neut.mass_kg - sp.mass_kg) / sp.mass_kg < 0.01:
-                        if neut.id in self._idx:
-                            resid[self._idx[neut.id]] += wall_loss
-                        break
+                # Was das Ion an der Wand hinterlaesst, steht im Paket
+                for pid, anzahl in sp.wall_products.items():
+                    if pid in self._idx:
+                        resid[self._idx[pid]] += anzahl * wall_loss
 
                 # Wandverlust-Energie (Elektronen verlieren Energie an Wand)
                 resid[self._Te_idx] -= alpha_e_wall * KB * Te * CONV * wall_loss
@@ -589,6 +637,7 @@ def load_chemistry(path: str | Path) -> ChemistryPackage:
     """Lade und validiere ein Chemiepaket."""
     path = Path(path)
     pkg = ChemistryPackage.from_json(path)
+    pkg.derive_wall_products()
     errors = pkg.validate()
     if errors:
         raise ValueError(f"Chemiepaket '{pkg.name}' ungueltig:\n" +

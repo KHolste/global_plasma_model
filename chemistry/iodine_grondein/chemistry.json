@@ -3,7 +3,6 @@
   "description": "Iod-Modell nach Grondein et al., Phys. Plasmas 23, 033514 (2016). 6 Spezies, 11 Reaktionen. DEMO: Ratenkoeffizienten als Arrhenius-Fits, nicht als tabellierte Querschnitte. Architektur-Demonstration, keine validierte Referenzchemie.",
   "wall_temperature_K": 293.0,
   "sigma_i": 1e-18,
-
   "species": [
     {
       "id": "e",
@@ -35,7 +34,10 @@
       "type": "positive_ion",
       "mass_kg": 2.107e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "I": 1
+      }
     },
     {
       "id": "I2+",
@@ -43,7 +45,11 @@
       "type": "positive_ion",
       "mass_kg": 4.214e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "I2": 1
+      },
+      "_wall_products_note": "Annahme: das Molekuelion bleibt an der Wand als Molekuel erhalten. Fuer dissoziative Neutralisation stattdessen {\"I\": 2} eintragen."
     },
     {
       "id": "I-",
@@ -53,15 +59,24 @@
       "charge": -1
     }
   ],
-
   "reactions": [
     {
       "id": "exc_I",
       "name": "Anregung I: e + I -> e + I*",
       "type": "excitation",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 1, "I": 1},
-      "rate": {"model": "arrhenius", "A": 5e-14, "E_a_eV": 2.449},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 1
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 5e-14,
+        "E_a_eV": 2.449
+      },
       "energy_eV": 2.449,
       "is_electron_impact": true
     },
@@ -69,9 +84,18 @@
       "id": "el_I2",
       "name": "Elastisch I2: e + I2 -> e + I2",
       "type": "elastic",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I2": 1},
-      "rate": {"model": "constant", "value": 1e-13},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I2": 1
+      },
+      "rate": {
+        "model": "constant",
+        "value": 1e-13
+      },
       "energy_eV": 0,
       "elastic_heating": true,
       "nu_m": true
@@ -80,9 +104,18 @@
       "id": "el_I",
       "name": "Elastisch I: e + I -> e + I",
       "type": "elastic",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 1, "I": 1},
-      "rate": {"model": "constant", "value": 1e-13},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 1
+      },
+      "rate": {
+        "model": "constant",
+        "value": 1e-13
+      },
       "energy_eV": 0,
       "elastic_heating": true,
       "nu_m": true
@@ -91,9 +124,19 @@
       "id": "dissatt_I2",
       "name": "Diss. Attachment: e + I2 -> I- + I",
       "type": "dissociative_attachment",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"I-": 1, "I": 1},
-      "rate": {"model": "arrhenius", "A": 5e-15, "E_a_eV": 0.5},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "I-": 1,
+        "I": 1
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 5e-15,
+        "E_a_eV": 0.5
+      },
       "energy_eV": 1.567,
       "is_electron_impact": true
     },
@@ -101,9 +144,20 @@
       "id": "dissiz_I2",
       "name": "Diss. Ionisation: e + I2 -> I+ + I + 2e",
       "type": "dissociative_ionization",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 2, "I+": 1, "I": 1},
-      "rate": {"model": "arrhenius", "A": 8e-14, "E_a_eV": 10.5},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 2,
+        "I+": 1,
+        "I": 1
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 8e-14,
+        "E_a_eV": 10.5
+      },
       "energy_eV": 10.5,
       "is_electron_impact": true
     },
@@ -111,9 +165,19 @@
       "id": "iz_I",
       "name": "Ionisation I: e + I -> 2e + I+",
       "type": "ionization",
-      "reactants": {"e": 1, "I": 1},
-      "products": {"e": 2, "I+": 1},
-      "rate": {"model": "arrhenius", "A": 2e-13, "E_a_eV": 10.45},
+      "reactants": {
+        "e": 1,
+        "I": 1
+      },
+      "products": {
+        "e": 2,
+        "I+": 1
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 2e-13,
+        "E_a_eV": 10.45
+      },
       "energy_eV": 10.45,
       "is_electron_impact": true
     },
@@ -121,9 +185,19 @@
       "id": "iz_I2",
       "name": "Ionisation I2: e + I2 -> 2e + I2+",
       "type": "molecular_ionization",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 2, "I2+": 1},
-      "rate": {"model": "arrhenius", "A": 1.5e-13, "E_a_eV": 9.41},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 2,
+        "I2+": 1
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 1.5e-13,
+        "E_a_eV": 9.41
+      },
       "energy_eV": 9.41,
       "is_electron_impact": true
     },
@@ -131,9 +205,19 @@
       "id": "diss_I2",
       "name": "Dissoziation: e + I2 -> e + 2I",
       "type": "dissociation",
-      "reactants": {"e": 1, "I2": 1},
-      "products": {"e": 1, "I": 2},
-      "rate": {"model": "arrhenius", "A": 3e-14, "E_a_eV": 1.567},
+      "reactants": {
+        "e": 1,
+        "I2": 1
+      },
+      "products": {
+        "e": 1,
+        "I": 2
+      },
+      "rate": {
+        "model": "arrhenius",
+        "A": 3e-14,
+        "E_a_eV": 1.567
+      },
       "energy_eV": 1.567,
       "is_electron_impact": true
     },
@@ -141,27 +225,51 @@
       "id": "chex_I",
       "name": "Ladungsaustausch: I- + I2+ -> I + I2",
       "type": "charge_exchange",
-      "reactants": {"I-": 1, "I2+": 1},
-      "products": {"I": 1, "I2": 1},
-      "rate": {"model": "constant", "value": 1.22e-13},
+      "reactants": {
+        "I-": 1,
+        "I2+": 1
+      },
+      "products": {
+        "I": 1,
+        "I2": 1
+      },
+      "rate": {
+        "model": "constant",
+        "value": 1.22e-13
+      },
       "is_electron_impact": false
     },
     {
       "id": "ionrec_I",
       "name": "Ionen-Rekombination: I- + I+ -> 2I",
       "type": "recombination",
-      "reactants": {"I-": 1, "I+": 1},
-      "products": {"I": 2},
-      "rate": {"model": "constant", "value": 9.311e-15},
+      "reactants": {
+        "I-": 1,
+        "I+": 1
+      },
+      "products": {
+        "I": 2
+      },
+      "rate": {
+        "model": "constant",
+        "value": 9.311e-15
+      },
       "is_electron_impact": false
     },
     {
       "id": "surfrec_I",
       "name": "Oberflaechenrekombination: I -> 0.5 I2",
       "type": "surface_recombination",
-      "reactants": {"I": 1},
-      "products": {"I2": 1},
-      "rate": {"model": "constant", "value": 0.0},
+      "reactants": {
+        "I": 1
+      },
+      "products": {
+        "I2": 1
+      },
+      "rate": {
+        "model": "constant",
+        "value": 0.0
+      },
       "surface_gamma": 0.02,
       "is_electron_impact": false
     }

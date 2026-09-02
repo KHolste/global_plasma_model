@@ -169,7 +169,8 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
              "mass_kg": M_XE, "charge": 0, "is_feedstock": True,
              "thermal_conductivity": KAPPA_XE},
             {"id": "Xe+", "name": "Xe+", "type": "positive_ion",
-             "mass_kg": M_XE, "charge": 1, "is_beam_extracted": True},
+             "mass_kg": M_XE, "charge": 1, "is_beam_extracted": True,
+             "wall_products": {"Xe": 1}},
         ],
         "reactions": reaktionen,
     }

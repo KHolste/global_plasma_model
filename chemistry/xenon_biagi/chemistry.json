@@ -26,7 +26,10 @@
       "type": "positive_ion",
       "mass_kg": 2.1801711e-25,
       "charge": 1,
-      "is_beam_extracted": true
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Xe": 1
+      }
     }
   ],
   "reactions": [

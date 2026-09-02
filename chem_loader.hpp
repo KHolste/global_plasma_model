@@ -26,6 +26,7 @@ struct ChemLoadResult {
     std::vector<std::string> errors;  // leer, wenn das Paket in Ordnung ist
     int electron_entries = 0;         // Elektroneneintraege in der Datei
     int tables_loaded = 0;            // erfolgreich gelesene Ratentabellen
+    int wall_products_derived = 0;    // Ionen ohne erklaerte Wandprodukte
 
     std::string error_text() const;   // Fehlerliste als mehrzeiliger Klartext
 };

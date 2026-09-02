@@ -107,6 +107,16 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 ## Erledigte Befunde
 
+Die **Wandprodukte** eines Ions stehen im Chemiepaket, als `wall_products` bei
+der Ionenspezies: was das Ion hinterlässt, wenn es an der Wand neutralisiert
+wird. Vorher wurde die neutrale Sorte über einen Massenvergleich geraten, was
+für einatomige Ionen zufällig stimmt und für molekulare falsch ist. Fehlt die
+Angabe, wird sie beim Laden aus der Masse abgeleitet und gezählt; die
+Massenbilanz wird in jedem Fall geprüft. Beide Rechenwege lesen dieselbe
+Angabe. Für die Iod-Pakete ist die bisherige Annahme eingetragen, dass das
+Molekülion als Molekül erhalten bleibt — für dissoziative Neutralisation ist
+dort `{"I": 2}` einzutragen, mehr braucht es nicht.
+
 Die **Legacy-Ratenanpassungen** sind Xenon-Polynome. Wird ein anderes Gas
 gewählt und liegen keine tabellierten Daten vor, bricht der Lauf jetzt ab und
 nennt jeden betroffenen Prozess einzeln. Ausdrücklich erlaubt wird das über
