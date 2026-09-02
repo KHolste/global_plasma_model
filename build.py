@@ -1,7 +1,7 @@
 """
 build.py -- Uebersetzung des C++-Rechenkerns. Eine Definition fuer alle Aufrufer.
 
-Der Kern besteht aus sechs Uebersetzungseinheiten plus dem Einstiegspunkt.
+Der Kern besteht aus sieben Uebersetzungseinheiten plus dem Einstiegspunkt.
 Welche das sind und mit welchen Schaltern sie uebersetzt werden, steht
 ausschliesslich hier. Die Oberflaeche baut sich daraus ihre Prozesszeile,
 die Kommandozeile ruft die Schritte direkt auf.
@@ -24,7 +24,8 @@ PROJECT_DIR = Path(__file__).resolve().parent
 #: Uebersetzungseinheiten des Rechenkerns, ohne Endung. Reihenfolge ist die
 #: Uebersetzungsreihenfolge; sie spielt fuer das Ergebnis keine Rolle, macht
 #: aber die Ausgabe nachvollziehbar.
-CPP_MODULES = ["bessel_wrapper", "sim_config", "rates", "physics", "solver", "sim_logging"]
+CPP_MODULES = ["bessel_wrapper", "sim_config", "rates", "physics", "solver",
+               "sim_logging", "chem_loader"]
 
 #: Einstiegspunkt, wird gegen die Objektdateien gebunden.
 CPP_SOURCE = "main.cpp"
@@ -34,7 +35,7 @@ CPP_SOURCE = "main.cpp"
 CXXFLAGS = ["-O3", "-march=native", "-std=c++17"]
 
 #: Eigenstaendige C++-Testprogramme. Jedes bindet gegen dieselben Objekte.
-CPP_TESTS = ["test_chem_system", "test_generic_lm"]
+CPP_TESTS = ["test_chem_system", "test_generic_lm", "test_chem_loader"]
 
 
 def object_suffix(platform: str = sys.platform) -> str:

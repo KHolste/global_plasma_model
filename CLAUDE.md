@@ -39,26 +39,31 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **19 von 19 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **21 von 21 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
 
-Der Rechenkern besteht aus sechs Übersetzungseinheiten plus Einstiegspunkt und
+Der Rechenkern besteht aus sieben Übersetzungseinheiten plus Einstiegspunkt und
 hat **keinen globalen Zustand** — aller veränderliche Zustand hängt an einem
 einzigen Kontextobjekt, das per Referenz durchgereicht wird. Das bitte so
 lassen. Die Zuständigkeiten sind Konstanten, Konfiguration, Ratenkoeffizienten,
-Physik mit RF-Kopplung und Residuen, numerischer Löser und Protokollierung.
+Physik mit RF-Kopplung und Residuen, numerischer Löser, Protokollierung und das
+Einlesen der Chemiepakete.
 
 Alle Laufparameter stehen an einer Stelle und werden von der Oberfläche
 geschrieben; beide Rechenwege lesen dieselbe Datei. Diese Datei wird nicht
 mitversioniert, weil jeder Testlauf sie überschreibt.
 
 Daneben liegt eine **generische Chemieschicht** mit Spezies, Reaktionen und
-einem Bilanz-Assembler, in Python und in C++, jeweils mit eigenem Test. Sie ist
-**noch nicht an das Hauptprogramm angeschlossen** — der Produktivpfad rechnet
-weiter die fest verdrahtete Xenon-Physik. Ob dieser Umbau vollendet oder
-aufgegeben wird, ist offen.
+einem Bilanz-Assembler, in Python und in C++, jeweils mit eigenem Test. Beide
+Seiten lesen dieselben Chemiepakete aus `chemistry/<name>/chemistry.json`; ein
+Test stellt die geladenen Inhalte Wert für Wert gegenüber. Angeschlossen an das
+Hauptprogramm ist die Schicht **noch nicht** — der Produktivpfad rechnet weiter
+die fest verdrahtete Xenon-Physik.
+
+Fremde Kopfdateien liegen unverändert in `third_party/` mit eigener Lizenz; die
+JSON-Bibliothek wird ausschließlich vom Chemielader eingebunden.
 
 `archive/` enthält den Monolithen vor der Zerlegung, nur zum Nachschlagen.
 `Global_Model_GIT-main/` ist ein fremdes Repository mit eigener Lizenz und wird

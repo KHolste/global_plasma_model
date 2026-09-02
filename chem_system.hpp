@@ -44,6 +44,10 @@ struct ChemSpecies {
     double thermal_cond = 0;  // Waermeleitfaehigkeit [W/(m*K)]
     bool is_feedstock = false;
     double sigma_i = 1e-18;   // Ion-Neutral Stossquerschnitt [m^2]
+    // Nachgereichte Felder stehen am Ende, damit die bestehenden
+    // Klammerinitialisierungen unveraendert gueltig bleiben.
+    std::string name;         // Anzeigename, sonst gleich der id
+    bool is_beam_extracted = false;  // Wird ueber das Gitter extrahiert?
 
     bool is_neutral() const { return type == SpeciesType::NEUTRAL_ATOM || type == SpeciesType::NEUTRAL_MOLECULE; }
     bool is_positive_ion() const { return type == SpeciesType::POSITIVE_ION; }
@@ -53,21 +57,53 @@ struct ChemSpecies {
 // ═════════════════════════════════════════════════════════════
 // Ratenkoeffizient (verschiedene Modelle)
 // ═════════════════════════════════════════════════════════════
-enum class RateType { CONSTANT, ARRHENIUS, CTX_KIZ, CTX_KEL, CTX_KEX };
+enum class RateType { CONSTANT, ARRHENIUS, TABULATED, POLYNOMIAL,
+                      CTX_KIZ, CTX_KEL, CTX_KEX };
 
 struct RateCoeff {
     RateType type = RateType::CONSTANT;
     double value = 0;         // Fuer CONSTANT
     double A = 0, E_a_eV = 0; // Fuer ARRHENIUS: K = A * exp(-E_a / Te)
 
-    // CTX_KIZ/KEL/KEX: Nutzen die bestehenden Ratenfunktionen aus rates.hpp
-    // mit SimContext. Evaluate braucht dann den ctx als Parameter.
+    // Fuer TABULATED: Dateiname relativ zum Paketverzeichnis und die
+    // geladene Stuetzstellenreihe. Ausserhalb des Tabellenbereichs wird auf
+    // den Randwert festgehalten -- dasselbe Verhalten wie auf der Python-Seite.
+    std::string table_file;
+    std::vector<double> table_Te, table_K;
+
+    // Fuer POLYNOMIAL: K = sum_i coeffs[i] * Te^i
+    std::vector<double> poly_coeffs;
+
+    // CTX_KIZ/KEL/KEX: nutzen die Ratenfunktionen aus rates.hpp und brauchen
+    // deshalb den SimContext.
+
+    double interp_table(double Te_eV) const {
+        if (table_Te.empty()) return 0.0;
+        if (Te_eV <= table_Te.front()) return table_K.front();
+        if (Te_eV >= table_Te.back())  return table_K.back();
+        size_t lo = 0, hi = table_Te.size() - 1;
+        while (hi - lo > 1) {
+            size_t m = (lo + hi) / 2;
+            if (table_Te[m] <= Te_eV) lo = m; else hi = m;
+        }
+        double d = table_Te[hi] - table_Te[lo];
+        if (d <= 0) return table_K[lo];
+        double f = (Te_eV - table_Te[lo]) / d;
+        return table_K[lo] * (1.0 - f) + table_K[hi] * f;
+    }
+
+    double eval_poly(double Te_eV) const {
+        double acc = 0, pw = 1;
+        for (double c : poly_coeffs) { acc += c * pw; pw *= Te_eV; }
+        return acc;
+    }
 
     double evaluate(double Te_eV) const {
         switch (type) {
-            case RateType::CONSTANT: return value;
-            case RateType::ARRHENIUS:
-                return (Te_eV > 0) ? A * std::exp(-E_a_eV / Te_eV) : 0;
+            case RateType::CONSTANT:   return value;
+            case RateType::ARRHENIUS:  return (Te_eV > 0) ? A * std::exp(-E_a_eV / Te_eV) : 0;
+            case RateType::TABULATED:  return interp_table(Te_eV);
+            case RateType::POLYNOMIAL: return eval_poly(Te_eV);
             default: return value;
         }
     }
@@ -77,10 +113,7 @@ struct RateCoeff {
             case RateType::CTX_KIZ: return Kiz(ctx, Te_eV);
             case RateType::CTX_KEL: return Kel(ctx, Te_eV);
             case RateType::CTX_KEX: return Kex(ctx, Te_eV);
-            case RateType::CONSTANT: return value;
-            case RateType::ARRHENIUS:
-                return (Te_eV > 0) ? A * std::exp(-E_a_eV / Te_eV) : 0;
-            default: return value;
+            default: return evaluate(Te_eV);
         }
     }
 };
@@ -89,13 +122,16 @@ struct RateCoeff {
 // Reaktion
 // ═════════════════════════════════════════════════════════════
 struct ChemReaction {
+    std::string id;              // Kennung aus dem Paket, z.B. "iz_Xe"
     std::string name;
+    std::string type;            // Prozessart als Klartext, z.B. "ionization"
     std::map<std::string, int> reactants;  // {species_id: stoechiometrie}
     std::map<std::string, int> products;
     RateCoeff rate;
     double energy_eV = 0;        // Energieverlust pro Ereignis [eV]
     bool is_electron_impact = false;
     bool contributes_elastic = false;
+    bool contributes_nu_m = false;  // Beitrag zur Stossfrequenz
     double surface_gamma = 0;    // Oberflaechenrekombinationskoeffizient
 
     // Netto-Stoechiometrie: products - reactants
@@ -112,6 +148,10 @@ struct ChemReaction {
 // ═════════════════════════════════════════════════════════════
 struct ChemSystem {
     std::string name;
+    std::string description;
+    std::string source_path;          // Woher das Paket geladen wurde, sonst leer
+    double wall_temperature_K = 293.0;
+    double sigma_i = 1e-18;           // Voreinstellung fuer alle Spezies
     std::vector<ChemSpecies> species;
     std::vector<ChemReaction> reactions;
 

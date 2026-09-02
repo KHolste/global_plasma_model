@@ -53,3 +53,5 @@ test_chem_system
 test_chem_system.exe
 test_generic_lm
 test_generic_lm.exe
+test_chem_loader
+test_chem_loader.exe

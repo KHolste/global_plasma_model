@@ -10,6 +10,7 @@ Based on **Chabert et al., Phys. Plasmas 19, 073512 (2012)**, extended with tabu
 - **3 rate model presets**: Legacy (paper-compatible), Conservative tabulated, Full tabulated
 - **2 operating modes**: fixed beam current (I-fix) and self-consistent (SC)
 - **Multi-gas architecture**: Xenon fully integrated, Krypton/Argon structurally prepared
+- **Chemistry packages**: species/reactions/rate tables read from JSON by both the Python and the C++ side
 - **PyQt6 GUI** with real-time streaming, live plots, and parameter sweeps
 - **Levenberg-Marquardt solver** with Pseudo-Transient Continuation (PTC) warm-start
 - **Adaptive power bracketing** for robust fixed-current operation across all rate models
@@ -49,7 +50,7 @@ RF coupling is modeled via the complex plasma permittivity with cylindrical Bess
 
 ```
 global-xenon-model/
-  C++ core (six translation units + entry point)
+  C++ core (seven translation units + entry point)
     main.cpp                Entry point, sweep loop
     sim_context.hpp         Single mutable context, replaces all globals
     sim_config.cpp/hpp      Config file parsing
@@ -58,6 +59,7 @@ global-xenon-model/
     physics.cpp/hpp         RF coupling, residuals, derived quantities
     solver.cpp/hpp          LM, PTC, multi-start, I-fix, SC mode
     sim_logging.cpp/hpp     Run logging
+    chem_loader.cpp/hpp     Loads chemistry packages (JSON + rate tables)
     beam_extraction_cpp.hpp Bohm / Child-Langmuir extraction model
     bessel_wrapper.cpp/hpp  Bessel functions (separate compilation unit)
     bessel-library.hpp      Template Bessel library
@@ -74,6 +76,8 @@ global-xenon-model/
     generic_solver.py       LM solver over the dynamic state vector
     chem_system.hpp         C++ counterpart
     generic_lm.hpp          C++ generic LM solver
+  third_party/
+    json.hpp                nlohmann/json 3.11.3 (MIT), used only by chem_loader
   rate_coefficients.py      Maxwell-Boltzmann integration, legacy fits
   convert_lxcat.py          LXCat raw data to CSV converter
   precompute_rates.py       Generate lookup tables from cross-sections
@@ -192,8 +196,8 @@ The `cross_sections/xenon/` directory contains Biagi/LXCat data for Xenon. To ad
 
 - **Chabert 2012**: Legacy mode reproduces paper results
 - **Dietz et al. 2021**: RIT-4 benchmark comparison available via `dietz_validation.py`
-- **Test suite**: `python run_tests.py` runs the whole test bestand — 17 Python
-  tests plus the two compiled C++ test programs — and reports pass/fail per test.
+- **Test suite**: `python run_tests.py` runs the whole test bestand — 18 Python
+  tests plus the three compiled C++ test programs — and reports pass/fail per test.
 
 ```bash
 python run_tests.py              # everything
@@ -205,7 +209,7 @@ python run_tests.py --list       # just list what would run
 The runner uses the interpreter it was started with and names it in the header.
 Several tests import PyQt6; if the interpreter lacks it, those tests are
 reported as an incomplete environment rather than as a failure. Last full run:
-19 of 19 pass.
+21 of 21 pass.
 
 ## Known Limitations
 
