@@ -146,12 +146,16 @@ def write_csv(block: LXCatBlock, filepath: Path):
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python convert_lxcat.py <lxcat_file> <gas_name>")
-        print("Example: python convert_lxcat.py cross_sections/tests/xenon_all.txt xenon")
+        print("Usage: python convert_lxcat.py <lxcat_file> <output_dir>")
+        print("Examples:")
+        print("  python convert_lxcat.py cross_sections/tests/xenon_all_Biagi_database.txt cross_sections/xenon/biagi")
+        print("  python convert_lxcat.py cross_sections/tests/xenon_all_Hayashi_database.txt cross_sections/xenon/hayashi")
+        print("")
+        print("Legacy (flat): python convert_lxcat.py <file> <gas_name>")
         sys.exit(1)
 
     lxcat_file = Path(sys.argv[1])
-    gas_name = sys.argv[2].lower()
+    out_dir = Path(sys.argv[2])
 
     if not lxcat_file.exists():
         print(f"FEHLER: {lxcat_file} nicht gefunden!")
@@ -161,8 +165,8 @@ def main():
     blocks = parse_lxcat(lxcat_file)
     print(f"Gefunden: {len(blocks)} Bloecke")
 
-    # Zielverzeichnis
-    out_dir = Path("cross_sections") / gas_name
+    # Zielverzeichnis (wird aus Argument genommen, nicht mehr aus gas_name abgeleitet)
+    gas_name = out_dir.parent.name if out_dir.parent.name != "cross_sections" else out_dir.name
     out_dir.mkdir(parents=True, exist_ok=True)
     exc_dir = out_dir / "excitation"
     exc_dir.mkdir(exist_ok=True)

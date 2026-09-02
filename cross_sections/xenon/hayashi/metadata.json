@@ -1,0 +1,166 @@
+{
+  "source": "LXCat / Biagi database (MagBoltz V8.97)",
+  "origin_file": "cross_sections\\tests\\xenon_all_Hayashi_database.txt",
+  "retrieved": "2026-03-28",
+  "gas": "xenon_hayashi_tmp",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Xe",
+      "process": "E + Xe -> E + Xe, Elastic",
+      "threshold_eV": null,
+      "mM": 4.2e-06,
+      "data_points": 99,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 8.315,
+      "mM": null,
+      "data_points": 54,
+      "file": "excitation/excitation_exc_0.csv",
+      "state": "exc_0"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 8.437,
+      "mM": null,
+      "data_points": 45,
+      "file": "excitation/excitation_exc_1.csv",
+      "state": "exc_1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 9.447,
+      "mM": null,
+      "data_points": 40,
+      "file": "excitation/excitation_exc_2.csv",
+      "state": "exc_2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 9.57,
+      "mM": null,
+      "data_points": 38,
+      "file": "excitation/excitation_exc_3.csv",
+      "state": "exc_3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 9.686,
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_4.csv",
+      "state": "exc_4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 9.789,
+      "mM": null,
+      "data_points": 34,
+      "file": "excitation/excitation_exc_5.csv",
+      "state": "exc_5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 9.891,
+      "mM": null,
+      "data_points": 34,
+      "file": "excitation/excitation_exc_6.csv",
+      "state": "exc_6"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 10.039,
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_7.csv",
+      "state": "exc_7"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 10.158,
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_8.csv",
+      "state": "exc_8"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 10.22,
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_9.csv",
+      "state": "exc_9"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 10.401,
+      "mM": null,
+      "data_points": 32,
+      "file": "excitation/excitation_exc_10.csv",
+      "state": "exc_10"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 10.562,
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_11.csv",
+      "state": "exc_11"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 11.259,
+      "mM": null,
+      "data_points": 28,
+      "file": "excitation/excitation_exc_12.csv",
+      "state": "exc_12"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Xe",
+      "process": "E + Xe, Excitation",
+      "threshold_eV": 11.58,
+      "mM": null,
+      "data_points": 27,
+      "file": "excitation/excitation_exc_13.csv",
+      "state": "exc_13"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Xe",
+      "process": "E + Xe, Ionization",
+      "threshold_eV": 12.13,
+      "mM": null,
+      "data_points": 65,
+      "file": "ionization.csv"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "key": "hayashi",
+  "display_name": "Hayashi (NIFS-DATA-079)",
+  "type": "experimental",
+  "source": "M. Hayashi (2003), NIFS-DATA-079, via LXCat",
+  "reference": "Hayashi database, www.lxcat.net/Hayashi",
+  "retrieved": "2026-03-29",
+  "version": "NIFS-DATA-079",
+  "gas": "xenon",
+  "processes": {
+    "elastic": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 14
+  },
+  "comment": "Xenon cross-section set from Hayashi. Derived by comparing calculated swarm parameters with measurements. Includes 14 excitation processes."
+}

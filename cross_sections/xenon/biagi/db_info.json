@@ -1,0 +1,17 @@
+{
+  "key": "biagi",
+  "display_name": "Biagi (MagBoltz V8.97)",
+  "type": "theoretical",
+  "source": "S.F. Biagi, MagBoltz, transcribed by LXCat",
+  "reference": "Biagi database, www.lxcat.net/Biagi",
+  "retrieved": "2026-03-28",
+  "version": "V8.97",
+  "gas": "xenon",
+  "processes": {
+    "elastic": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 50
+  },
+  "comment": "Comprehensive Xenon cross-section set from Biagi/MagBoltz. Includes elastic momentum transfer, single ionization, and 50 excitation processes (1S5 through EX HIGH)."
+}
