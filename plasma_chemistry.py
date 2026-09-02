@@ -545,21 +545,21 @@ class BalanceAssembler:
         # Surface reactions: rate = gamma * 0.25 * v_th * n * A_wall / V
         for rxn in self.chem.reactions:
             if rxn.surface_gamma > 0:
-                for sp_id in rxn.reactants:
-                    if sp_id in self._idx:
+                for sp_id, edukt_zahl in rxn.reactants.items():
+                    if sp_id in self._idx and edukt_zahl > 0:
                         sp = self.chem.species[sp_id]
                         n_sp = state[self._idx[sp_id]]
                         v_th = self._mean_speed(sp, Tg)
-                        # Oberflaechenrate: gamma * (1/4) * n * v * A_n / V
-                        # A_n = gesamte Neutralverlustflaeche (Waende + Gitter)
+                        # Ankunftsfluss an der Wand: gamma * (1/4) * n * v * A / V
                         A_n = geom.A  # Vollstaendige Wandflaeche
-                        surf_rate = rxn.surface_gamma * 0.25 * v_th * n_sp * A_n / V
-                        resid[self._idx[sp_id]] -= surf_rate
-                        # Produkte
+                        ankunft = rxn.surface_gamma * 0.25 * v_th * n_sp * A_n / V
+                        # Ein Ereignis verbraucht edukt_zahl Teilchen: bei
+                        # 2 I -> I2 ist die Ereignisrate der halbe Fluss.
+                        ereignisse = ankunft / edukt_zahl
+                        resid[self._idx[sp_id]] -= ankunft
                         for prod_id, stoech in rxn.products.items():
                             if prod_id in self._idx:
-                                # Stoechiometrie: 2 I -> 1 I2, also pro I-Verlust 0.5 I2 produziert
-                                resid[self._idx[prod_id]] += stoech * surf_rate
+                                resid[self._idx[prod_id]] += stoech * ereignisse
 
         # ── Wandverluste (Ionen + Neutrale) ───────────────────
         sigma_i = self.chem.sigma_i

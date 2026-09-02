@@ -139,6 +139,14 @@ static void run_generic_sweep(SimContext& ctx, const ChemSystem& sys, ofstream& 
             cout << "CONVERGED " << ps.iterations << endl;
         }
 
+        {
+            auto grenzen = touched_bounds(sp, st.Te, st.Tg, 0, 0);
+            if (!grenzen.empty()) {
+                cout << "BOUND_TOUCHED " << fixed << setprecision(4) << t.Q0sccm;
+                for (const auto& g_ : grenzen) cout << " " << g_;
+                cout << endl;
+            }
+        }
         cout << "RESULT " << scientific << setprecision(4) << st.n << " " << st.ng << " "
              << fixed << setprecision(3) << st.Te << " " << st.Tg << " "
              << dq.I_extr_mA << " " << t.P_RFG << endl;
@@ -382,6 +390,14 @@ int main(int argc, char** argv) {
             if (isfinite(ps.inner_resid_norm) && ps.inner_resid_norm >= sp.newton_tol)
                 cout << "SOFT_ACCEPT " << fixed << setprecision(4) << t.Q0sccm << " " << scientific << ps.inner_resid_norm << endl;
 
+            {
+                auto grenzen = touched_bounds(sp, Te, Tg, n, ng);
+                if (!grenzen.empty()) {
+                    cout << "BOUND_TOUCHED " << fixed << setprecision(4) << t.Q0sccm;
+                    for (const auto& g_ : grenzen) cout << " " << g_;
+                    cout << endl;
+                }
+            }
             cout << "RESULT " << scientific << setprecision(4) << n << " " << ng << " "
                  << fixed << setprecision(3) << Te << " " << Tg << " " << dq.I_extr_mA << " " << t.P_RFG << endl;
 

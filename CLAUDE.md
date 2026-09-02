@@ -107,6 +107,27 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 ## Erledigte Befunde
 
+**Molekulare Netze rechnen im C++-Kern.** Das Iod-Paket läuft über den
+generischen Weg: sieben Gleichungen, fünf schwere Spezies, darunter ein
+negatives Ion und ein Molekülion. Vier Änderungen waren nötig, davon war nur
+die letzte der eigentliche Blocker:
+
+- Die Residuen werden an ihrem jeweils größten Einzelterm gemessen statt an
+  einer geratenen Skala. Ein Residuum von 1e-4 heißt damit in jeder Gleichung
+  dasselbe.
+- Der generische Löser hat jetzt dieselbe pseudo-transiente Vorstufe wie der
+  fest verdrahtete.
+- Die Oberflächenrekombination wertet die Stöchiometrie aus: bei `2 I -> I2`
+  ist die Ereignisrate der halbe Ankunftsfluss. Vorher stand in beiden
+  Iod-Paketen `I -> I2`, was die Masse an der Wand verdoppelte. Der Lader
+  prüft jetzt die Massenbilanz jeder Reaktion.
+- **Die obere Schranke der Gastemperatur** lag bei 2500 K. Der Weg zur Lösung
+  führt bei molekularen Gasen vorübergehend durch sehr heiße Zwischenzustände,
+  obwohl die Lösung selbst bei 432 K liegt. Die Schranke steht jetzt bei
+  10000 K. Die Zustandsgrenzen sind Fangnetze für den Löser, keine Physik;
+  sitzt eine konvergierte Lösung dicht an einer, meldet das Programm
+  `BOUND_TOUCHED`.
+
 Die **Wandprodukte** eines Ions stehen im Chemiepaket, als `wall_products` bei
 der Ionenspezies: was das Ion hinterlässt, wenn es an der Wand neutralisiert
 wird. Vorher wurde die neutrale Sorte über einen Massenvergleich geraten, was

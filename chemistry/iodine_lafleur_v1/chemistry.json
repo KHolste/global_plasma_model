@@ -393,10 +393,10 @@
     },
     {
       "id": "surfrec_I",
-      "name": "I (wall) -> 0.5 I2 (Surface Recombination)",
+      "name": "Oberflaechenrekombination: 2 I (Wand) -> I2",
       "type": "surface_recombination",
       "reactants": {
-        "I": 1
+        "I": 2
       },
       "products": {
         "I2": 1
@@ -407,7 +407,8 @@
       },
       "surface_gamma": 0.02,
       "is_electron_impact": false,
-      "_source": "gamma = 0.02 used by Grondein 2016 (Table II). Review Sec.4 discusses values from 0.005 to 0.44 depending on material. 0.02 is conservative baseline."
+      "_source": "gamma = 0.02 used by Grondein 2016 (Table II). Review Sec.4 discusses values from 0.005 to 0.44 depending on material. 0.02 is conservative baseline.",
+      "_note": "Zwei Atome bilden ein Molekuel. Mit {\"I\": 1} auf der Eduktseite entstuende an der Wand Masse aus dem Nichts."
     }
   ]
 }

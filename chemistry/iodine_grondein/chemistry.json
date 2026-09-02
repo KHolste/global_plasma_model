@@ -258,10 +258,10 @@
     },
     {
       "id": "surfrec_I",
-      "name": "Oberflaechenrekombination: I -> 0.5 I2",
+      "name": "Oberflaechenrekombination: 2 I (Wand) -> I2",
       "type": "surface_recombination",
       "reactants": {
-        "I": 1
+        "I": 2
       },
       "products": {
         "I2": 1
@@ -271,7 +271,8 @@
         "value": 0.0
       },
       "surface_gamma": 0.02,
-      "is_electron_impact": false
+      "is_electron_impact": false,
+      "_note": "Zwei Atome bilden ein Molekuel. Mit {\"I\": 1} auf der Eduktseite entstuende an der Wand Masse aus dem Nichts."
     }
   ]
 }

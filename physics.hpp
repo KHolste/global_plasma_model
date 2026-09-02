@@ -10,6 +10,8 @@
 #include <cmath>
 #include <complex>
 #include <array>
+#include <string>
+#include <vector>
 
 // ═══ Kleine Hilfsfunktionen (inline, hot path) ═══════════
 using namespace PhysConst;
@@ -81,6 +83,32 @@ inline double wall_energy_alpha(const SimContext& ctx, double n, double Te) {
     if (ctx.solver.wall_energy_model == 0) return ctx.solver.alpha_e_wall;
     double u = uB(ctx.gas.M, Te);
     return wall_energy_per_ion(1, sheath_potential_over_Te(n, n*u, Te));
+}
+
+// ═══ Naehe zu den Zustandsgrenzen ══════════════════════════
+//
+// Die Grenzen sind Fangnetze fuer den Loeser. Bestimmt eine von ihnen das
+// Ergebnis, ist das Ergebnis keine Loesung der Gleichungen, sondern eine
+// Aussage ueber die Grenze. Diese Pruefung macht das sichtbar.
+
+// Gemessen wird der Abstand zur Grenze selbst, nicht zur Spanne: eine weite
+// Grenze soll nicht dazu fuehren, dass jeder Wert als grenznah gilt.
+inline bool near_bound(double wert, double unten, double oben, double rel = 0.02) {
+    if (!(oben > unten)) return false;
+    return wert <= unten * (1.0 + rel) || wert >= oben * (1.0 - rel);
+}
+
+inline std::vector<std::string> touched_bounds(const SolverParams& sp,
+                                                double Te, double Tg,
+                                                double n = 0, double ng = 0) {
+    std::vector<std::string> namen;
+    if (near_bound(Te, sp.Te_min, sp.Te_max)) namen.push_back("Te");
+    if (near_bound(Tg, sp.Tg_min, sp.Tg_max)) namen.push_back("Tg");
+    if (n > 0 && near_bound(std::log(n), std::log(sp.n_min), std::log(sp.n_max)))
+        namen.push_back("n");
+    if (ng > 0 && near_bound(std::log(ng), std::log(sp.ng_min), std::log(sp.ng_max)))
+        namen.push_back("ng");
+    return namen;
 }
 
 // ═══ Zustandspruefungen ════════════════════════════════════

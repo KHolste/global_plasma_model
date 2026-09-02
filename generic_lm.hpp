@@ -157,48 +157,23 @@ static std::vector<double> gen_residual_scaled(
 
     double P_abs_V = rf.P_abs * ctx.solver.P_abs_scale / t.V;
 
+    std::vector<double> skala;
     auto raw = assemble_residual(sys, state, P_abs_V, t.Q0, t, ctx,
-                                  ctx.solver.alpha_e_wall, ctx.solver.density_profile_factor);
+                                  ctx.solver.alpha_e_wall, ctx.solver.density_profile_factor,
+                                  &skala);
 
-    // Skalierung: physikalisch motiviert (analog zu Legacy residual_scaled)
-    // Spezies-Bilanzen: skaliert mit dominantem Produktionsterm
-    // Energiebilanzen: skaliert mit Leistungsdichte oder Waermeleitung
+    // Jede Bilanz wird an ihrem eigenen groessten Einzelterm gemessen. Ein
+    // Residuum von 1e-4 heisst dann in jeder Gleichung dasselbe: die Bilanz
+    // geht um ein Zehntausendstel dessen nicht auf, was in ihr vorkommt.
+    // Das ist gasunabhaengig und traegt auch bei vielen Spezies mit sehr
+    // verschiedenen Dichten, wo eine geratene Skala danebenliegt.
     std::vector<double> scaled(N);
-    double ne = electron_density(sys, state);
     for (int i = 0; i < N; ++i) {
         if (!std::isfinite(raw[i])) return std::vector<double>(N, std::numeric_limits<double>::quiet_NaN());
-        double sc;
-        if (i == sys.Te_idx()) {
-            // Elektronenenergie: P_abs/V als Skala
-            sc = std::max(1e-6, rf.P_abs / t.V);
-        } else if (i == sys.Tg_idx()) {
-            // Gasenergie: Waermeleitung + elastische Heizung
-            double Te = state[sys.Te_idx()], Tg = state[sys.Tg_idx()];
-            double ng_total = 0;
-            for (int j = 0; j < (int)sys.species.size(); ++j)
-                if (sys.species[j].is_neutral()) ng_total += state[j];
-            sc = std::max(1e-6, std::fabs(sys.species[0].thermal_cond * (Tg - PhysConst::Tg0) / t.lambda_0 * t.A / t.V)
-                        + std::fabs(3.0*PhysConst::me/sys.species[0].mass_kg*PhysConst::kB*(Te*PhysConst::conv-Tg)*ne*ng_total*1e-13));
-        } else {
-            // Spezies-Bilanz: ne*ng*Kiz als Skala (wie Legacy scale1/scale2)
-            double Te = state[sys.Te_idx()];
-            double ng_main = 0;
-            for (int j = 0; j < (int)sys.species.size(); ++j)
-                if (sys.species[j].is_feedstock) ng_main = state[j];
-            // Ionisationsrate (erster CTX_KIZ-Reaktionskoeffizient)
-            double Kiz_val = 1e-15;
-            for (auto& rxn : sys.reactions) {
-                if (rxn.rate.type == RateType::CTX_KIZ) {
-                    Kiz_val = rxn.rate.evaluate(ctx, Te); break;
-                }
-            }
-            double ion_rate = std::fabs(ne * ng_main * Kiz_val);
-            // Fuer Ionen: Ionisationsrate; fuer Neutrale: Q0/V
-            if (sys.species[i].is_positive_ion())
-                sc = std::max(1e-20, ion_rate);
-            else
-                sc = std::max(1e-20, std::max(ion_rate, t.Q0 / t.V));
-        }
+        // Kommt in einer Gleichung gar nichts vor, ist auch nichts zu
+        // erfuellen; die winzige Schranke verhindert nur die Division durch
+        // null.
+        double sc = (i < (int)skala.size() && skala[i] > 0) ? skala[i] : 1e-300;
         scaled[i] = raw[i] / sc;
     }
     return scaled;
@@ -225,11 +200,15 @@ inline GenSolveResult gen_solve_lm(
     x[lay.Te_idx] = std::log(initial[lay.Te_idx]);
     x[lay.Tg_idx] = std::log(initial[lay.Tg_idx]);
 
+    // Nur der Exponent wird begrenzt, damit nichts ueberlaeuft. Die
+    // Zustandsgrenzen werden hier bewusst nicht erzwungen: ein festgehaltener
+    // Wert sieht fuer die Jacobi-Matrix aus wie eine Richtung ohne Wirkung,
+    // und der Loeser bleibt an der Grenze haengen, auch wenn die Loesung weit
+    // innerhalb liegt. Ueberschreitungen werden stattdessen als Schritt
+    // verworfen, wie im fest verdrahteten Weg.
     auto from_log = [&](const std::vector<double>& u) -> std::vector<double> {
         std::vector<double> s(N);
         for (int i = 0; i < N; ++i) s[i] = std::exp(std::clamp(u[i], -50.0, 50.0));
-        s[lay.Te_idx] = std::clamp(s[lay.Te_idx], sp.Te_min, sp.Te_max);
-        s[lay.Tg_idx] = std::clamp(s[lay.Tg_idx], sp.Tg_min, sp.Tg_max);
         return s;
     };
 
@@ -344,6 +323,85 @@ inline GenSolveResult gen_solve_lm(
 }
 
 // ═════════════════════════════════════════════════════════════
+// Pseudo-transiente Vorstufe
+//
+// Das Levenberg-Marquardt-Verfahren braucht einen Startwert in der Naehe der
+// Loesung. Bei einem Netz aus mehreren Spezies liegt der Vorgabestartwert
+// leicht mehrere Groessenordnungen daneben -- fuer molekulare Gase etwa der
+// Dissoziationsgrad. Die Vorstufe verschiebt den Zustand in kleinen Schritten
+// entlang des negativen Residuums, was einem gedaempften expliziten
+// Euler-Verfahren in einer Pseudozeit entspricht, und uebergibt an das
+// Levenberg-Marquardt-Verfahren, sobald es nahe genug ist. Der fest
+// verdrahtete Weg arbeitet seit jeher so; im generischen fehlte die Stufe.
+// ═════════════════════════════════════════════════════════════
+inline GenSolveResult gen_ptc_then_lm(
+    const ChemSystem& sys, const SimContext& ctx,
+    double P_RFG, const std::vector<double>& initial)
+{
+    const auto& sp = ctx.solver;
+    StateLayout lay(sys);
+    const int N = lay.N;
+
+    GenSolveResult best = gen_solve_lm(sys, ctx, P_RFG, initial);
+    if (best.converged) return best;
+    if (!gen_state_valid(initial, lay, sp)) return best;
+
+    std::vector<double> x(N);
+    for (int i = 0; i < N; ++i) x[i] = std::log(initial[i]);
+    std::vector<double> state = initial;
+
+    RFState rf;
+    auto r = gen_residual_scaled(sys, state, P_RFG, ctx, &rf);
+    double m = gen_merit(r);
+    if (!std::isfinite(m) || !rf.valid) return best;
+
+    GenSolveResult bester = best;
+    if (m < bester.resid_norm) { bester.state = state; bester.rf = rf; bester.resid_norm = m; }
+
+    double gain = sp.ptc_start_gain;
+    for (int it = 0; it < sp.ptc_max_iter; ++it) {
+        bool angenommen = false;
+        for (double al : {1.0, 0.5, 0.25, 0.125, 0.0625}) {
+            std::vector<double> xt(N);
+            for (int j = 0; j < N; ++j) {
+                double schritt = -al * gain * r[j];
+                xt[j] = x[j] + std::clamp(schritt, -0.12, 0.12);
+            }
+            std::vector<double> st(N);
+            for (int j = 0; j < N; ++j) st[j] = std::exp(std::clamp(xt[j], -50.0, 50.0));
+            if (!gen_state_valid(st, lay, sp)) continue;
+
+            RFState rft;
+            auto rt = gen_residual_scaled(sys, st, P_RFG, ctx, &rft);
+            double mt = gen_merit(rt);
+            if (!std::isfinite(mt) || !rft.valid) continue;
+            if (mt < sp.ptc_accept_ratio * m) {
+                x = xt; state = st; r = rt; rf = rft; m = mt; angenommen = true;
+                if (m < bester.resid_norm) {
+                    bester.state = state; bester.rf = rf; bester.resid_norm = m;
+                    bester.iterations = it + 1;
+                }
+                break;
+            }
+        }
+        if (!angenommen) {
+            gain *= 0.5;
+            if (gain < sp.ptc_min_gain) break;
+            continue;
+        }
+        if (m < sp.ptc_switch_merit) {
+            GenSolveResult poliert = gen_solve_lm(sys, ctx, P_RFG, state);
+            if (poliert.converged) return poliert;
+            if (poliert.resid_norm < bester.resid_norm) bester = poliert;
+        }
+    }
+
+    GenSolveResult letzte = gen_solve_lm(sys, ctx, P_RFG, bester.state);
+    if (letzte.converged) return letzte;
+    return (letzte.resid_norm < bester.resid_norm) ? letzte : bester;
+}
+
+// ═════════════════════════════════════════════════════════════
 // Multi-Start Wrapper
 // ═════════════════════════════════════════════════════════════
 inline GenSolveResult gen_solve_multistart(
@@ -353,7 +411,7 @@ inline GenSolveResult gen_solve_multistart(
     GenSolveResult best; best.reason = "all starts failed";
     for (auto& s0 : starts) {
         if (!gen_state_valid(s0, StateLayout(sys), ctx.solver)) continue;
-        auto r = gen_solve_lm(sys, ctx, P_RFG, s0);
+        auto r = gen_ptc_then_lm(sys, ctx, P_RFG, s0);
         if (r.converged) return r;
         if (r.resid_norm < best.resid_norm) best = r;
     }

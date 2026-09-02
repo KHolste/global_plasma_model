@@ -135,10 +135,16 @@ struct SolverParams {
     int    power_max_iter = 35;
     double power_min     = 1.0;
 
+    // Zustandsgrenzen. Sie sind Fangnetze fuer den Loeser, keine Physik: sie
+    // sollen ein davonlaufendes Verfahren abfangen, aber niemals das Ergebnis
+    // bestimmen. Sitzt eine konvergierte Loesung dicht an einer Grenze, wird
+    // das gemeldet. Die Gastemperatur brauchte mehr Luft, weil der Weg zur
+    // Loesung bei molekularen Gasen voruebergehend durch sehr heisse
+    // Zwischenzustaende fuehrt, obwohl die Loesung selbst kuehl ist.
     double n_min  = 1e12, n_max  = 1e20;
     double ng_min = 1e16, ng_max = 1e22;
     double Te_min = 0.3,  Te_max = 20.0;
-    double Tg_min = 200.0, Tg_max = 2500.0;
+    double Tg_min = 200.0, Tg_max = 10000.0;
 
     int    ptc_max_iter     = 80;
     double ptc_start_gain   = 0.20;

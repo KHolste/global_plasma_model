@@ -114,6 +114,45 @@ def test_mit_paket(prog: Path) -> None:
           str(zusammen[:1]))
 
 
+def test_molekulares_paket(prog: Path) -> None:
+    """Ein molekulares Netz muss ueber den C++-Weg rechnen.
+
+    Sieben Gleichungen statt vier, zwei Neutralsorten, drei Ionensorten,
+    darunter ein negatives Ion und ein Molekuelion. Bis 2026-09-02 lief das
+    nur ueber den Python-Loeser.
+    """
+    out, _ = lauf(prog, "chemistry_package iodine_lafleur_v1\nP_RFG 30.0\n"
+                        "Q0sccm_start 1.00\nQ0sccm_step 0.20\n")
+
+    umfang = zeilen(out, "CHEM_SPECIES")
+    check("5 schwere Spezies, 13 Reaktionen",
+          bool(umfang) and umfang[0][1] == "5" and umfang[0][3] == "13", str(umfang[:1]))
+
+    ergebnisse = zeilen(out, "RESULT")
+    check("beide Betriebspunkte gerechnet", len(ergebnisse) == 2, str(len(ergebnisse)))
+
+    dichten = zeilen(out, "SPECIES_DENSITY")
+    check("Dichte je Spezies ausgegeben", len(dichten) == 5 * 2, str(len(dichten)))
+    namen = {d[1] for d in dichten}
+    check("alle fuenf Sorten benannt", namen == {"I2", "I", "I+", "I2+", "I-"}, str(namen))
+    check("alle Dichten positiv", all(float(d[2]) > 0 for d in dichten))
+
+    check("keine Loesung an einer Zustandsgrenze",
+          not zeilen(out, "BOUND_TOUCHED"), str(zeilen(out, "BOUND_TOUCHED")[:1]))
+
+    if ergebnisse:
+        n, ng, Te, Tg = (float(x) for x in ergebnisse[0][1:5])
+        check("Elektronentemperatur plausibel", 1.0 < Te < 8.0, f"{Te}")
+        check("Gastemperatur plausibel", 300.0 < Tg < 1500.0, f"{Tg}")
+        # Die zusammengefasste Plasmadichte ist die Summe der positiven Ionen
+        summe = sum(float(d[2]) for d in dichten[:5] if d[1] in ("I+", "I2+"))
+        check("Plasmadichte ist die Summe der positiven Ionen",
+              abs(n - summe) <= 1e-3 * n, f"{n:.4e} vs {summe:.4e}")
+        # Der Strahl traegt beide Ionensorten
+        anteile = zeilen(out, "BEAM_SHARE")
+        check("Strahlanteile je Ionensorte", len(anteile) == 2 * 2, str(len(anteile)))
+
+
 def test_ohne_paket(prog: Path) -> None:
     out, _ = lauf(prog)
     check("ohne Angabe der alte Weg", "SOLVER_PATH legacy" in out)
@@ -135,6 +174,7 @@ def main() -> int:
         return 1
     try:
         test_mit_paket(prog)
+        test_molekulares_paket(prog)
         test_ohne_paket(prog)
         test_kaputtes_paket(prog)
     finally:

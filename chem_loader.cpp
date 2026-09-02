@@ -346,6 +346,29 @@ ChemLoadResult load_chem_package(const std::string& json_path) {
                                          kv.first + "' nicht definiert");
             }
         }
+
+        // Massenerhaltung: was hineingeht, muss herauskommen. Die
+        // Elektronenmasse bleibt aussen vor, sie ist fuenf Groessenordnungen
+        // kleiner. Diese Pruefung faengt falsche Stoechiometrien wie
+        // "I -> I2" ab, bei denen an der Wand Masse entstuende.
+        double m_ein = 0, m_aus = 0;
+        bool wiegbar = true;
+        for (const auto& kv : rxn.reactants) {
+            if (kv.first == "e") continue;
+            int idx = sys.species_index(kv.first);
+            if (idx < 0) { wiegbar = false; break; }
+            m_ein += kv.second * sys.species[idx].mass_kg;
+        }
+        for (const auto& kv : rxn.products) {
+            if (!wiegbar) break;
+            if (kv.first == "e") continue;
+            int idx = sys.species_index(kv.first);
+            if (idx < 0) { wiegbar = false; break; }
+            m_aus += kv.second * sys.species[idx].mass_kg;
+        }
+        if (wiegbar && m_ein > 0 && std::fabs(m_aus - m_ein) > 0.01 * m_ein)
+            res.errors.push_back("Reaktion '" + rxn.id + "': Massenbilanz stimmt nicht "
+                                 "(Edukte und Produkte wiegen verschieden)");
     }
 
     res.ok = res.errors.empty();

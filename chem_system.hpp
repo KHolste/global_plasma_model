@@ -239,7 +239,12 @@ inline std::vector<double> assemble_residual(
     const Thruster& geom,
     const SimContext& ctx,    // Fuer kontextabhaengige Raten (Kiz/Kel/Kex)
     double alpha_e_wall = 7.0,
-    double density_profile_factor = 1.0)
+    double density_profile_factor = 1.0,
+    // Groesster Einzelterm je Bilanz. Damit laesst sich das Residuum an dem
+    // messen, was in derselben Gleichung tatsaechlich vorkommt, statt an einer
+    // geratenen Groesse. Nur so ist eine Abbruchschranke fuer ein Netz aus
+    // vielen Spezies mit sehr verschiedenen Dichten ueberhaupt sinnvoll.
+    std::vector<double>* term_scale = nullptr)
 {
     using namespace PhysConst;
 
@@ -252,6 +257,15 @@ inline std::vector<double> assemble_residual(
     double ne = electron_density(sys, state);
 
     std::vector<double> resid(N, 0.0);
+    std::vector<double> skala(N, 0.0);
+
+    // Jeder Beitrag geht durch diese Stelle: er wird aufsummiert und zugleich
+    // als Massstab fuer seine Gleichung vermerkt.
+    auto eintrag = [&](int i, double wert) {
+        resid[i] += wert;
+        double betrag = std::fabs(wert);
+        if (betrag > skala[i]) skala[i] = betrag;
+    };
 
     // Gesamte Neutraldichte (fuer mittlere freie Weglaenge)
     double n_neut_total = 0;
@@ -291,12 +305,12 @@ inline std::vector<double> assemble_residual(
         for (auto& [sp_id, delta] : net) {
             if (sp_id == "e") continue;
             int idx = sys.species_index(sp_id);
-            if (idx >= 0) resid[idx] += delta * rate;
+            if (idx >= 0) eintrag(idx, delta * rate);
         }
 
         // Energieverlust -> Elektronenenergiebilanz, dieselbe Rate
         if (rxn.energy_eV > 0 && rxn.is_electron_impact)
-            resid[Te_i] -= rxn.energy_eV * e * rate;
+            eintrag(Te_i, -rxn.energy_eV * e * rate);
 
         // Elastischer Energieuebertrag: was die Elektronen verlieren, nimmt
         // das Gas auf. Beide Seiten mit derselben Rate, sonst geht Energie
@@ -308,26 +322,32 @@ inline std::vector<double> assemble_residual(
                 if (idx >= 0) {
                     double M_sp = sys.species[idx].mass_kg;
                     double P_el = 3.0 * me / M_sp * kB * (Te*conv - Tg) * rate;
-                    resid[Tg_i] += P_el;
-                    resid[Te_i] -= P_el;
+                    eintrag(Tg_i, P_el);
+                    eintrag(Te_i, -P_el);
                 }
             }
         }
     }
 
     // ── 2. Oberflaechenreaktionen ───────────────────────────
+    // Der Wandfluss gehoert zur Spezies, die ankommt. Wie viele Ereignisse das
+    // sind, haengt daran, wie viele Teilchen ein Ereignis verbraucht: bei
+    // 2 I -> I2 ist die Ereignisrate der halbe Ankunftsfluss, und es entsteht
+    // ein halbes Molekuel je verlorenem Atom. Wird stattdessen mit dem vollen
+    // Fluss gerechnet, entsteht an der Wand Masse aus dem Nichts.
     for (auto& rxn : sys.reactions) {
         if (rxn.surface_gamma <= 0) continue;
         for (auto& [sp_id, stoech] : rxn.reactants) {
-            if (sp_id == "e") continue;
+            if (sp_id == "e" || stoech <= 0) continue;
             int idx = sys.species_index(sp_id);
             if (idx < 0) continue;
             double v_th = std::sqrt(8*kB*Tg / (pi*sys.species[idx].mass_kg));
-            double surf_rate = rxn.surface_gamma * 0.25 * v_th * state[idx] * geom.A / V;
-            resid[idx] -= surf_rate;
+            double ankunft = rxn.surface_gamma * 0.25 * v_th * state[idx] * geom.A / V;
+            double ereignisse = ankunft / stoech;
+            eintrag(idx, -ankunft);
             for (auto& [pid, ps] : rxn.products) {
                 int pi_ = sys.species_index(pid);
-                if (pi_ >= 0) resid[pi_] += ps * surf_rate;
+                if (pi_ >= 0) eintrag(pi_, ps * ereignisse);
             }
         }
     }
@@ -336,7 +356,7 @@ inline std::vector<double> assemble_residual(
     for (auto& sp : sys.species) {
         if (sp.is_feedstock) {
             int idx = sys.species_index(sp.id);
-            if (idx >= 0) resid[idx] += Q0_pps / V;
+            if (idx >= 0) eintrag(idx, Q0_pps / V);
         }
     }
 
@@ -365,7 +385,7 @@ inline std::vector<double> assemble_residual(
             // Bohm-Geschwindigkeit mit Ladungszahl, wie in der Extraktion
             double uBi = std::sqrt(sp.charge * kB*Te*conv / sp.mass_kg);
             double wall_loss = state[i] * uBi * Aeff / V;
-            resid[i] -= wall_loss;
+            eintrag(i, -wall_loss);
 
             // Neutralrueckstrom: was das Ion an der Wand hinterlaesst, steht
             // im Paket. Der Rueckstrom geht ueber Aeff1, weil der Anteil, der
@@ -373,7 +393,7 @@ inline std::vector<double> assemble_residual(
             const double rueckstrom = state[i] * uBi * Aeff1 / V;
             for (const auto& wp : sp.wall_products) {
                 int ni = sys.species_index(wp.first);
-                if (ni >= 0) resid[ni] += wp.second * rueckstrom;
+                if (ni >= 0) eintrag(ni, wp.second * rueckstrom);
             }
 
             // Ion-Neutral Stoss-Heizung (Chabert Pg2) -- Volumenprozess,
@@ -381,25 +401,25 @@ inline std::vector<double> assemble_residual(
             double vi_val = std::sqrt(8*kB*Tg / (pi*sp.mass_kg));
             double Pg2 = 0.25 * sp.mass_kg * uBi * uBi * density_profile_factor
                          * state[i] * n_neut_total * sigma_avg * vi_val;
-            resid[Tg_i] += Pg2;
+            eintrag(Tg_i, Pg2);
 
             // Energie, die ein Ion der Ladung Z samt seiner Z Elektronen an
             // die Wand traegt: Vorschicht, Randschicht, Elektronenanteil.
             double alpha = (ctx.solver.wall_energy_model == 0)
                            ? alpha_e_wall
                            : wall_energy_per_ion(sp.charge, V_over_Te);
-            resid[Te_i] -= alpha * kB * Te * conv * wall_loss;
+            eintrag(Te_i, -alpha * kB * Te * conv * wall_loss);
         }
         else if (sp.is_neutral()) {
             // Neutralverlust durch Gitter
             double v_mean = std::sqrt(8*kB*Tg / (pi*sp.mass_kg));
             double outflow = 0.25 * state[i] * v_mean * geom.Ag / V;
-            resid[i] -= outflow;
+            eintrag(i, -outflow);
         }
     }
 
     // ── 5. RF-Leistungseintrag ──────────────────────────────
-    resid[Te_i] += P_abs_V;
+    eintrag(Te_i, P_abs_V);
 
     // ── 6. Gaswaermeleitung ─────────────────────────────────
     double kappa_eff = 0;
@@ -413,9 +433,10 @@ inline std::vector<double> assemble_residual(
     }
     if (kappa_eff > 0) {
         double Pg_cond = kappa_eff * (Tg - Tg0) / geom.lambda_0 * geom.A / V;
-        resid[Tg_i] -= Pg_cond;
+        eintrag(Tg_i, -Pg_cond);
     }
 
+    if (term_scale) *term_scale = skala;
     return resid;
 }
 
