@@ -1,18 +1,22 @@
 """
-log_viewer.py – Standalone Log-Viewer fuer Global Xenon Model Masterlogs.
+log_viewer.py – Standalone Log-Viewer fuer Global Xenon Model.
+
+Unterstuetzt beide Backends:
+  - C++ Masterlogs (simulation_log_*.txt)
+  - Python Run-Logs (python_run_*.jsonl)
+  Automatische Formaterkennung beim Laden.
 
 Features:
-  - Laedt die strukturierte Masterlog-Datei (simulation_log_*.txt)
   - Vordefinierte Einzel- und Multi-Kurven-Plots
   - Frei waehlbare x/y-Achsen mit Multi-Select fuer y
   - CL-Limit-Marker bei RF-Power-Plots
-  - Legende bei Multi-Kurven
-  - Log-Achsen (x/y unabhaengig umschaltbar)
-  - Benutzerdefinierte Kurven-Stile (Linienstaerke, Marker, Farbe)
+  - I-fix-Groessen (I_target, delta_I) fuer Python-Logs
+  - Iod-Chemie (diss, fIp, alpha) fuer Python-Logs
+  - Log-Achsen, Kurven-Stile, Legende
   - Standalone oder aus der Haupt-GUI startbar
 
 Start:
-    python log_viewer.py [logfile.txt]
+    python log_viewer.py [logfile.txt|logfile.jsonl]
 
 Voraussetzungen:
     pip install PyQt6 pyqtgraph
@@ -110,6 +114,150 @@ def parse_master_log(path: str) -> dict:
     return result
 
 
+def parse_jsonl_log(path: str) -> dict:
+    """Parse ein Python-JSONL-Run-Log in das gemeinsame Viewer-Datenmodell."""
+    import json as _json
+
+    result: dict = {
+        "metadata": {}, "params": {}, "columns": [], "data": [],
+        "events": [], "summary": {},
+        "cl_limit_I_mA": None, "cl_limit_J": None,
+        "source": "python",
+    }
+
+    # Feld-Mapping: JSONL-Name -> Viewer-Spaltenname
+    COL_MAP = {
+        "Q0_sccm": "Q0sccm",
+        "P_W": "P_W",
+        "I_beam_mA": "I_mA",
+        "Te_eV": "Te_eV",
+        "Tg_K": "Tg_K",
+        "ne": "n_m3",
+        "ng": "ng_m3",
+        "I_target_mA": "I_target_mA",
+        "delta_I_mA": "delta_I_mA",
+        "diss": "diss",
+        "fIp": "fIp",
+        "fI2p": "fI2p",
+        "alpha": "alpha",
+        "merit": "merit",
+        "iterations": "iterations",
+        "nI": "nI", "nI2": "nI2", "nIp": "nIp", "nI2p": "nI2p", "nIm": "nIm",
+    }
+
+    STATUS_MAP = {
+        "converged": "CONVERGED",
+        "above_P_max": "ABOVE_P_MAX",
+        "below_P_min": "BELOW_P_MIN",
+        "plateau": "PLATEAU",
+        "max_iter": "MAX_ITER",
+        "not_converged": "NOT_CONVERGED",
+    }
+
+    text = Path(path).read_text(encoding="utf-8", errors="replace")
+    for line in text.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = _json.loads(line)
+        except _json.JSONDecodeError:
+            continue
+
+        rtype = rec.get("type", "")
+
+        if rtype == "metadata":
+            for k, v in rec.items():
+                if k != "type":
+                    result["metadata"][k] = v
+
+        elif rtype == "params":
+            for k, v in rec.items():
+                if k != "type":
+                    result["params"][k] = str(v)
+
+        elif rtype == "point":
+            row: dict = {}
+            # idx
+            row["idx"] = rec.get("idx", 0)
+            # Status normalisieren
+            raw_status = rec.get("status", "")
+            row["status"] = STATUS_MAP.get(raw_status, raw_status.upper())
+            # Felder mappen
+            for jsonl_key, col_name in COL_MAP.items():
+                val = rec.get(jsonl_key)
+                if val is not None:
+                    try:
+                        row[col_name] = float(val)
+                    except (ValueError, TypeError):
+                        row[col_name] = val
+            # Diagnose als note
+            row["note"] = rec.get("diag", "")
+            result["data"].append(row)
+
+        elif rtype == "event":
+            msg = rec.get("message", "")
+            q0 = rec.get("Q0_sccm", "?")
+            result["events"].append(f"[Q0={q0}] {msg}")
+
+        elif rtype == "summary":
+            for k, v in rec.items():
+                if k != "type":
+                    result["summary"][k] = str(v)
+
+    # Spalten aus den tatsaechlich vorhandenen Daten ableiten
+    if result["data"]:
+        all_keys = set()
+        for row in result["data"]:
+            all_keys.update(row.keys())
+        # Geordnet: zuerst Standard, dann Rest
+        ordered = ["idx", "Q0sccm", "status", "P_W", "I_mA", "Te_eV", "Tg_K",
+                    "n_m3", "ng_m3", "I_target_mA", "delta_I_mA",
+                    "diss", "fIp", "fI2p", "alpha", "merit", "iterations", "note"]
+        result["columns"] = [c for c in ordered if c in all_keys]
+        # Restliche Spalten anhaengen
+        for k in sorted(all_keys):
+            if k not in result["columns"]:
+                result["columns"].append(k)
+
+    return result
+
+
+def detect_log_format(path: str) -> str:
+    """Erkenne ob eine Datei ein C++ Masterlog oder Python JSONL ist.
+
+    Returns: 'cpp', 'jsonl', oder 'unknown'.
+    """
+    p = Path(path)
+    if p.suffix == ".jsonl":
+        return "jsonl"
+    try:
+        first_line = p.read_text(encoding="utf-8", errors="replace").split("\n", 1)[0].strip()
+        if first_line.startswith("{"):
+            return "jsonl"
+        if "GLOBAL PLASMA MODEL" in first_line or first_line.startswith("="):
+            return "cpp"
+    except Exception:
+        pass
+    # Fallback: Dateiname pruefen
+    if "python_run_" in p.name:
+        return "jsonl"
+    if "simulation_log_" in p.name:
+        return "cpp"
+    return "unknown"
+
+
+def load_any_log(path: str) -> dict:
+    """Lade ein Log in beliebigem Format (auto-detect)."""
+    fmt = detect_log_format(path)
+    if fmt == "jsonl":
+        parsed = parse_jsonl_log(path)
+    else:
+        parsed = parse_master_log(path)
+        parsed["source"] = "cpp"
+    return parsed
+
+
 def get_numeric_columns(parsed: dict) -> list[str]:
     if not parsed["data"]:
         return []
@@ -178,6 +326,14 @@ PLOT_GROUPS = [
     ("P_RFG_W", ["xi_mN_per_kW"],    "Thrust Efficiency vs RF Power"),
     ("P_RFG_W", ["thrust_total_mN", "thrust_ions_mN", "thrust_atoms_mN"],
      "Thrust vs RF Power"),
+    # Python-spezifisch: I-fix und Iod-Chemie
+    ("Q0sccm", ["I_mA", "I_target_mA"],         "I_beam + I_target vs Flow"),
+    ("Q0sccm", ["delta_I_mA"],                   "Delta I vs Flow"),
+    ("Q0sccm", ["diss"],                         "Dissociation vs Flow"),
+    ("Q0sccm", ["fIp", "fI2p"],                  "Ion Fractions vs Flow"),
+    ("Q0sccm", ["alpha"],                         "Alpha (I-/ne) vs Flow"),
+    ("P_W",    ["I_mA"],                          "Beam Current vs P (Python)"),
+    ("P_W",    ["Te_eV", "Tg_K"],                 "Temperatures vs P (Python)"),
 ]
 
 
@@ -186,7 +342,7 @@ PLOT_GROUPS = [
 class LogViewerWindow(QMainWindow):
     def __init__(self, initial_file: Optional[str] = None):
         super().__init__()
-        self.setWindowTitle("Global Xenon Model – Log Viewer")
+        self.setWindowTitle("Global Plasma Model – Log Viewer (C++ / Python)")
         self.resize(1300, 850)
         self.parsed: Optional[dict] = None
         self._build_ui()
@@ -374,22 +530,27 @@ class LogViewerWindow(QMainWindow):
 
     def _on_open(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Open Master Log", "",
-            "Log files (simulation_log_*.txt);;All (*)")
+            self, "Open Log File", "",
+            "All Logs (simulation_log_*.txt python_run_*.jsonl);;"
+            "C++ Masterlogs (simulation_log_*.txt);;"
+            "Python Run-Logs (python_run_*.jsonl);;"
+            "All (*)")
         if path:
             self._load_file(path)
 
     def _load_file(self, path: str):
         try:
-            self.parsed = parse_master_log(path)
+            self.parsed = load_any_log(path)
         except Exception as exc:
             self.statusBar().showMessage(f"Fehler: {exc}")
             return
 
-        self.file_label.setText(Path(path).name)
+        source = self.parsed.get("source", "?")
+        self.file_label.setText(f"{Path(path).name}  [{source.upper()}]")
         n_rows = len(self.parsed["data"])
         n_conv = sum(1 for r in self.parsed["data"] if r.get("status") == "CONVERGED")
-        self.statusBar().showMessage(f"{n_rows} Punkte geladen ({n_conv} konvergiert)")
+        self.statusBar().showMessage(
+            f"{n_rows} Punkte ({n_conv} konvergiert)  [{source} backend]")
 
         cols = get_numeric_columns(self.parsed)
         self.combo_x.clear()
@@ -398,9 +559,16 @@ class LogViewerWindow(QMainWindow):
             self.combo_x.addItem(c)
             self.list_y.addItem(c)
 
-        info = []
+        info = [f"--- Backend: {source.upper()} ---"]
         for k, v in self.parsed["metadata"].items():
             info.append(f"{k}: {v}")
+        if self.parsed["params"]:
+            info.append("")
+            info.append("--- Parameters ---")
+            for k, v in sorted(self.parsed["params"].items()):
+                info.append(f"  {k}: {v}")
+        info.append("")
+        info.append("--- Summary ---")
         for k, v in self.parsed["summary"].items():
             info.append(f"{k}: {v}")
         cl = self.parsed.get("cl_limit_I_mA")

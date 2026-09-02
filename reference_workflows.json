@@ -1,0 +1,147 @@
+{
+  "_description": "Reproduzierbare Referenz-Workflows fuer Regressionstests. Jeder Fall definiert Paket, Preset, Modus, Parameter und erwartetes Verhalten.",
+
+  "workflows": [
+    {
+      "id": "holste_xe_ifix_30",
+      "name": "Holste + Xenon I-fix 30 mA",
+      "description": "Konvergierender Positivfall: RIT-10 mit Xenon bei moderatem Sollstrom.",
+      "why": "Validiert den I-fix-Pfad mit Holste-Geometrie. 30 mA liegt sicher im erreichbaren Bereich (~30-100 mA).",
+      "chemistry": "chemistry/xenon_simple/chemistry.json",
+      "preset": "holste",
+      "mode": "ifix",
+      "params": {
+        "I_soll": 30.0,
+        "Q0_start": 2.0, "Q0_step": 0.5, "N": 3,
+        "P_max": 120.0
+      },
+      "expected": {
+        "all_converged": true,
+        "I_beam_range": [28, 32],
+        "P_range": [40, 80],
+        "Te_range": [3.5, 4.2],
+        "status_pattern": "converged"
+      }
+    },
+    {
+      "id": "holste_xe_ifix_80_neg",
+      "name": "Holste + Xenon I-fix 80 mA (unerreichbar)",
+      "description": "Negativfall: 80 mA bei sgrid=4mm CL-limitiert. Modell erreicht ~43-47 mA bei P_max.",
+      "why": "Validiert saubere Fehlererkennung wenn I_soll ausserhalb des CL-Limits liegt. Erwartet above_P_max.",
+      "chemistry": "chemistry/xenon_simple/chemistry.json",
+      "preset": "holste",
+      "mode": "ifix",
+      "params": {
+        "I_soll": 80.0,
+        "Q0_start": 2.0, "Q0_step": 0.5, "N": 3,
+        "P_max": 120.0
+      },
+      "expected": {
+        "all_converged": false,
+        "I_beam_range": [35, 55],
+        "P_at_limit": 120.0,
+        "status_pattern": "above_P_max",
+        "fail_reason_contains": "nicht erreichbar"
+      }
+    },
+    {
+      "id": "holste_i2_ifix_30_below",
+      "name": "Holste + Iod I-fix 30 mA (below_P_min)",
+      "description": "Iod-Spezifik: Durch hohe Neutraldichte und CL-Limit liefert Iod bereits bei P_min ueber 30 mA.",
+      "why": "Testet den below_P_min-Pfad und zeigt Iod-spezifisches Verhalten mit Holste-Geometrie.",
+      "chemistry": "chemistry/iodine_lafleur_v1/chemistry.json",
+      "preset": "holste",
+      "mode": "ifix",
+      "params": {
+        "I_soll": 30.0,
+        "Q0_start": 2.0, "Q0_step": 0.5, "N": 3,
+        "P_max": 120.0
+      },
+      "expected": {
+        "all_converged": false,
+        "I_beam_range": [30, 50],
+        "status_pattern": "below_P_min",
+        "has_iodine_ext": true
+      }
+    },
+    {
+      "id": "grondein_i2_sc_400",
+      "name": "Grondein + Iod SC 400 W",
+      "description": "Selbstkonsistenter Iod-Referenzfall bei Grondein-Geometrie.",
+      "why": "Validiert den SC-Pfad mit Iod-Paket. Grondein ist die Referenzgeometrie fuer Iod-Globalmodelle.",
+      "chemistry": "chemistry/iodine_lafleur_v1/chemistry.json",
+      "preset": "grondein",
+      "mode": "sc",
+      "params": {
+        "P": 400.0,
+        "Q0_start": 2.0, "Q0_step": 0.5, "N": 3
+      },
+      "expected": {
+        "all_converged": true,
+        "I_beam_range": [80, 110],
+        "Te_range": [3.8, 4.5],
+        "has_iodine_ext": true,
+        "diss_range": [0.2, 0.5],
+        "fIp_range": [0.6, 0.85]
+      }
+    },
+    {
+      "id": "npt30_i2_ifix_5_below",
+      "name": "NPT30-I2 + Iod I-fix 5 mA (below_P_min)",
+      "description": "Miniatur-Thruster: Iod liefert bereits bei P_min mehr als 5 mA (CL-gesaettigt).",
+      "why": "Validiert den below_P_min-Pfad bei NPT30 mit Iod. Zeigt dass das Modell bei niedrigem I_soll korrekt erkennt, dass der Strom schon bei minimaler Leistung ueberschritten wird.",
+      "chemistry": "chemistry/iodine_lafleur_v1/chemistry.json",
+      "preset": "npt30",
+      "mode": "ifix",
+      "params": {
+        "I_soll": 5.0,
+        "Q0_start": 0.5, "Q0_step": 0.2, "N": 3,
+        "P_max": 25.0
+      },
+      "expected": {
+        "all_converged": false,
+        "status_pattern": "below_P_min",
+        "I_beam_range": [5, 12],
+        "has_iodine_ext": true
+      }
+    },
+    {
+      "id": "chabert_xe_sc_18",
+      "name": "Chabert + Xenon SC 18 W (Paper-Referenz)",
+      "description": "Klassischer Chabert-Referenzfall: SC bei 18W mit Standardgeometrie.",
+      "why": "Grundlegender Regressionsfall fuer die Paper-Reproduktion. Xe-only, unveraendert seit Projektbeginn.",
+      "chemistry": "chemistry/xenon_simple/chemistry.json",
+      "preset": "chabert",
+      "mode": "sc",
+      "params": {
+        "P": 18.0,
+        "Q0_start": 0.4, "Q0_step": 0.05, "N": 3
+      },
+      "expected": {
+        "all_converged": true,
+        "Te_range": [3.5, 4.5],
+        "I_beam_range": [1, 8]
+      }
+    },
+    {
+      "id": "chabert_xe_ifix_999_neg",
+      "name": "Chabert + Xenon I-fix 999 mA (absurd)",
+      "description": "Absichtlich unerreichbarer Sollstrom als harter Negativtest.",
+      "why": "Prueft dass extrem unplausible Sollstroeme sauber als above_P_max erkannt werden.",
+      "chemistry": "chemistry/xenon_simple/chemistry.json",
+      "preset": "chabert",
+      "mode": "ifix",
+      "params": {
+        "I_soll": 999.0,
+        "Q0_start": 0.4, "Q0_step": 0.05, "N": 2,
+        "P_max": 80.0
+      },
+      "expected": {
+        "all_converged": false,
+        "status_pattern": "above_P_max",
+        "I_beam_range": [3, 10],
+        "delta_I_below": -900
+      }
+    }
+  ]
+}

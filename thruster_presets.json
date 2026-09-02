@@ -1,0 +1,163 @@
+{
+  "_description": "Thruster-Konfigurationspresets fuer die GUI. Jedes Preset definiert literatur- oder projektbasierte Startwerte fuer Geometrie, Grid, RF und Extraktionsparameter.",
+
+  "presets": [
+    {
+      "id": "chabert",
+      "name": "Chabert (Paper)",
+      "description": "Chabert et al. 2012 Referenzgeometrie. Xenon-optimiert.",
+      "source": "Chabert et al., Phys. Plasmas 19, 073512 (2012), Table I",
+      "recommended_gas": ["xenon"],
+      "params": {
+        "R": 0.02, "L": 0.04,
+        "Nw": 6.0, "R_ohm": 0.36,
+        "frequency": 2.5e6,
+        "lc": 0.04, "Rc": 0.02,
+        "Vgrid": 1500.0, "sgrid": 0.001,
+        "betai": 0.5, "betag": 0.05145,
+        "P_RFG": 18.0, "P_RFG_max": 80.0,
+        "Q0sccm": 0.475, "I_soll": 15.0,
+        "density_profile_factor": 1.0
+      },
+      "extraction": {
+        "eta_opt": 0.30,
+        "_note": "Kleiner Thruster (~4cm), moderate Grid-Optik"
+      },
+      "plausibility": {
+        "I_beam_typ_min_mA": 5,
+        "I_beam_typ_max_mA": 25,
+        "gas_warnings": {
+          "iodine": "Chabert-Geometrie ist nur fuer Xenon validiert. Iod-Ergebnisse sind qualitativ, nicht quantitativ belastbar."
+        },
+        "notes": "Paper-Referenzgeometrie. Validiert gegen Chabert 2012 Table I."
+      }
+    },
+    {
+      "id": "dietz",
+      "name": "Dietz / RIT-4 (KK)",
+      "description": "Dietz et al. 2021 RIT-4/KK-nahe Geometrie. Xenon-optimiert.",
+      "source": "Dietz et al. 2021, config_dietz_rit4.txt im Projekt",
+      "recommended_gas": ["xenon"],
+      "params": {
+        "R": 0.0215, "L": 0.041,
+        "Nw": 6.0, "R_ohm": 0.48,
+        "frequency": 2.53e6,
+        "lc": 0.030, "Rc": 0.025,
+        "Vgrid": 1200.0, "sgrid": 0.00075,
+        "betai": 0.4, "betag": 0.0529,
+        "P_RFG": 45.0, "P_RFG_max": 200.0,
+        "Q0sccm": 0.5, "I_soll": 30.0,
+        "density_profile_factor": 1.0
+      },
+      "extraction": {
+        "eta_opt": 0.30,
+        "_note": "RIT-4 Groesse (~4.3cm), moderate Grid-Optik"
+      },
+      "plausibility": {
+        "I_beam_typ_min_mA": 10,
+        "I_beam_typ_max_mA": 50,
+        "gas_warnings": {
+          "iodine": "RIT-4 ist nur fuer Xenon validiert."
+        },
+        "notes": "Validiert gegen Dietz et al. 2021 Benchmark."
+      }
+    },
+    {
+      "id": "grondein",
+      "name": "Grondein (I2/Xe)",
+      "description": "Grondein et al. 2016 Iod-Globalmodell. Groessere Geometrie, 13.56 MHz.",
+      "source": "Grondein et al., Phys. Plasmas 23, 033514 (2016), Table I",
+      "recommended_gas": ["xenon", "iodine"],
+      "params": {
+        "R": 0.06, "L": 0.10,
+        "Nw": 5.0, "R_ohm": 2.0,
+        "frequency": 13.56e6,
+        "lc": 0.10, "Rc": 0.07,
+        "Vgrid": 1000.0, "sgrid": 0.0015,
+        "betai": 0.7, "betag": 0.3,
+        "P_RFG": 400.0, "P_RFG_max": 1200.0,
+        "Q0sccm": 3.0, "I_soll": 50.0,
+        "density_profile_factor": 1.0
+      },
+      "extraction": {
+        "eta_opt": 0.40,
+        "_note": "Groesserer Thruster (12cm), bessere Grid-Optik"
+      },
+      "plausibility": {
+        "I_beam_typ_min_mA": 20,
+        "I_beam_typ_max_mA": 150,
+        "notes": "Referenz fuer Iod-Globalmodell. Xe und I2 validiert."
+      }
+    },
+    {
+      "id": "holste",
+      "name": "Holste / RIT-10",
+      "description": "Holste et al. 2018 RIT-10. Experimenteller Xe/I2-Vergleich.",
+      "source": "Holste et al., Eur. Phys. J. D 72, 9 (2018), Sec.2.3",
+      "recommended_gas": ["xenon", "iodine"],
+      "params": {
+        "R": 0.05, "L": 0.064,
+        "Nw": 6.0, "R_ohm": 1.0,
+        "frequency": 1.1e6,
+        "lc": 0.07, "Rc": 0.055,
+        "Vgrid": 1500.0, "sgrid": 0.004,
+        "betai": 0.6, "betag": 0.20,
+        "P_RFG": 70.0, "P_RFG_max": 120.0,
+        "Q0sccm": 3.0, "I_soll": 80.0,
+        "density_profile_factor": 1.0
+      },
+      "extraction": {
+        "eta_opt": 0.60,
+        "_note": "RIT-10 (10cm), 4mm Grid-Loecher, 243 Kanaele. Hohe Optik."
+      },
+      "plausibility": {
+        "I_beam_typ_min_mA": 30,
+        "I_beam_typ_max_mA": 100,
+        "gas_warnings": {},
+        "notes": "Experimentell: 80-95 mA bei 60-86 W (Holste 2018). sgrid=4mm ist Apertur-Durchmesser; CL-Limit kann restriktiv sein."
+      }
+    },
+    {
+      "id": "npt30",
+      "name": "NPT30-I2 (Lafleur)",
+      "description": "Lafleur et al. 2022 NPT30-I2 Miniatur-Iod-Thruster.",
+      "source": "Lafleur et al., PSST 31, 114001 (2022), Sec.3",
+      "recommended_gas": ["iodine"],
+      "params": {
+        "R": 0.015, "L": 0.023,
+        "Nw": 10.0, "R_ohm": 0.5,
+        "frequency": 3.0e6,
+        "lc": 0.025, "Rc": 0.018,
+        "Vgrid": 1000.0, "sgrid": 0.001,
+        "betai": 0.50, "betag": 0.25,
+        "P_RFG": 10.0, "P_RFG_max": 25.0,
+        "Q0sccm": 0.8, "I_soll": 15.0,
+        "density_profile_factor": 1.0
+      },
+      "extraction": {
+        "eta_opt": 0.25,
+        "_note": "Miniatur (3cm), kleine Grid-Loecher, Clausing ~25%"
+      },
+      "plausibility": {
+        "I_beam_typ_min_mA": 3,
+        "I_beam_typ_max_mA": 20,
+        "gas_warnings": {
+          "xenon": "NPT30-I2 ist fuer Iod optimiert. Xenon-Ergebnisse sind moeglich, aber nicht validiert."
+        },
+        "notes": "Miniatur-Thruster. Validiert gegen Lafleur 2022 Fig.6/7."
+      }
+    },
+    {
+      "id": "custom",
+      "name": "Custom",
+      "description": "Manuelle Parametereingabe. Keine Literaturwerte.",
+      "source": "",
+      "recommended_gas": [],
+      "params": {},
+      "extraction": {},
+      "plausibility": {
+        "notes": "Keine Plausibilitaetspruefung fuer manuelle Konfiguration."
+      }
+    }
+  ]
+}
