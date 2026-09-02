@@ -1,0 +1,18 @@
+{
+  "key": "ist_lisbon",
+  "display_name": "IST-Lisbon database",
+  "source": "IST-Lisbon database, via LXCat",
+  "reference": "www.lxcat.net/IST-Lisbon",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": false,
+    "effective": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 11,
+    "attachment": true
+  },
+  "vollstaendig": false
+}

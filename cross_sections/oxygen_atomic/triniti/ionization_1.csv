@@ -1,0 +1,13 @@
+# E + O -> E + E + O(+2D), Ionization
+# Source: LXCat, TRINITI database
+# Target: O -> O(+2D)
+# Threshold: 16.9 eV
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 5
+energy_eV,cross_section_m2
+16.9,0.0
+20.0,1.3e-21
+30.0,4e-21
+40.0,5e-21
+100.0,5.2e-21

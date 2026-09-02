@@ -7,7 +7,10 @@ die Quellen liegen unter `cross_sections/` und `chemistry/`.
 |-----|---------------------|--------------------|
 | argon | 30 | 30 |
 | iodine | 0 | 30 |
-| krypton | 0 | 0 |
+| krypton | 184 | 65 |
+| oxygen | 150 | 15 |
+| oxygen_anion | 2 | 0 |
+| oxygen_atomic | 32 | 3 |
 | xenon | 68 | 61 |
 
 Jede CSV-Datei hat eine Kopfzeile mit Prozess und Quelle und danach

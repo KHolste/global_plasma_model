@@ -1,0 +1,7 @@
+# E + O2 -> E + O2*(8.4eV), Excitation, Schwelle 8.4 eV | Morgan (Kinema Research & Software), Morgan (Kinema Research & Software), via LXCat, abgerufen 02 Sep 2026
+energy_eV,cross_section_m2
+8.4,0.000000e+00
+9.4,1.000000e-20
+30,1.200000e-20
+50,1.170000e-20
+100,9.400000e-21

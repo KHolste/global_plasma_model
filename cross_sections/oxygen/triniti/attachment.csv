@@ -1,0 +1,24 @@
+# E + O2 -> O- + O, Attachment
+# Source: LXCat, TRINITI database
+# Target: O2 -> O^- + O
+# Comment: Rapp D and Englander-Golden P 1965 J. Chem. Phys. 43 1464.
+# Updated: 2010-11-03 13:29:02
+# Data points: 17
+energy_eV,cross_section_m2
+4.2,0.0
+4.6,7e-24
+5.0,2.2e-23
+5.5,6.33e-23
+6.0,1.14e-22
+6.3,1.36e-22
+6.5,1.41e-22
+6.7,1.37e-22
+7.0,1.22e-22
+7.5,8.18e-23
+8.0,4.49e-23
+8.5,2.02e-23
+9.0,8.8e-24
+9.5,5.3e-24
+9.9,3.5e-24
+100.0,1e-24
+1000.0,0.0

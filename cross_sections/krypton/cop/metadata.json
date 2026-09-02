@@ -1,0 +1,38 @@
+{
+  "source": "LXCat, COP (Complex Optical Potential)",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "",
+      "mM": 0.0,
+      "data_points": 413,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "",
+      "mM": 0.0,
+      "data_points": 413,
+      "file": "elastic_1.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "",
+      "mM": 0.0,
+      "data_points": 394,
+      "file": "elastic_2.csv"
+    }
+  ]
+}

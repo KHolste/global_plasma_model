@@ -1,0 +1,169 @@
+{
+  "source": "LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)",
+  "origin_file": "much_more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": [
+    {
+      "type": "ATTACHMENT",
+      "target": "O2 -> O2^-",
+      "process": "E + O2 -> O2-, Attachment",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 29,
+      "file": "attachment.csv"
+    },
+    {
+      "type": "ATTACHMENT",
+      "target": "O2 -> O^- + O",
+      "process": "E + O2 -> O- + O, Attachment",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 32,
+      "file": "attachment_1.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Elastic",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 104,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( ROT)",
+      "process": "E + O2 -> E + O2( ROT), Excitation",
+      "threshold_eV": 0.02,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 32,
+      "file": "excitation/excitation_rot.csv",
+      "state": " ROT"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( VIB V1)",
+      "process": "E + O2 -> E + O2( VIB V1), Excitation",
+      "threshold_eV": 0.193,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 61,
+      "file": "excitation/excitation_vib_v1.csv",
+      "state": " VIB V1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( VIB 2V1)",
+      "process": "E + O2 -> E + O2( VIB 2V1), Excitation",
+      "threshold_eV": 0.386,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 61,
+      "file": "excitation/excitation_vib_2v1.csv",
+      "state": " VIB 2V1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( VIB 3V1)",
+      "process": "E + O2 -> E + O2( VIB 3V1), Excitation",
+      "threshold_eV": 0.579,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 61,
+      "file": "excitation/excitation_vib_3v1.csv",
+      "state": " VIB 3V1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( VIB 4V1)",
+      "process": "E + O2 -> E + O2( VIB 4V1), Excitation",
+      "threshold_eV": 0.772,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 61,
+      "file": "excitation/excitation_vib_4v1.csv",
+      "state": " VIB 4V1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC A1(DEL)G)",
+      "process": "E + O2 -> E + O2( EXC A1(DEL)G), Excitation",
+      "threshold_eV": 0.977,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 148,
+      "file": "excitation/excitation_exc_a1_del.csv",
+      "state": " EXC A1(DEL"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC B1(SIG)G)",
+      "process": "E + O2 -> E + O2( EXC B1(SIG)G), Excitation",
+      "threshold_eV": 1.627,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 134,
+      "file": "excitation/excitation_exc_b1_sig.csv",
+      "state": " EXC B1(SIG"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC C1+C3)",
+      "process": "E + O2 -> E + O2( EXC C1+C3), Excitation",
+      "threshold_eV": 4.5,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 141,
+      "file": "excitation/excitation_exc_c1_c3.csv",
+      "state": " EXC C1+C3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC A3 DISOC)",
+      "process": "E + O2 -> E + O2( EXC A3 DISOC), Excitation",
+      "threshold_eV": 6.1,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 153,
+      "file": "excitation/excitation_exc_a3_disoc.csv",
+      "state": " EXC A3 DISOC"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC B3 DISOC)",
+      "process": "E + O2 -> E + O2( EXC B3 DISOC), Excitation",
+      "threshold_eV": 8.4,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 130,
+      "file": "excitation/excitation_exc_b3_disoc.csv",
+      "state": " EXC B3 DISOC"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> O2( EXC)",
+      "process": "E + O2 -> E + O2( EXC), Excitation",
+      "threshold_eV": 9.3,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 142,
+      "file": "excitation/excitation_exc.csv",
+      "state": " EXC"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O2 -> +ionized O2",
+      "process": "E + O2 -> E + E + +ionized O2, Ionization",
+      "threshold_eV": 12.072,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 139,
+      "file": "ionization.csv"
+    }
+  ]
+}

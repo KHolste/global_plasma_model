@@ -1,0 +1,18 @@
+{
+  "key": "muroranit",
+  "display_name": "MuroranIT (MuroranIT)",
+  "source": "MuroranIT (MuroranIT), via LXCat",
+  "reference": "www.lxcat.net/MuroranIT",
+  "comment": "These rotational excitation cross sections complement the cross section set of O2. When using them in calculations, it is important to take into account for the superelastic (rotational de-excitation) transitions between rotational levels under the assumption that their populations follow a Boltzmann distribution at the given gas temperature T_g: n_J/N = p_J*exp[-E_J/(k_B * T_g)]/Z with Z = Sum_(J odd)^31 p_J*exp[-E_J/(k_B * T_g)]. k_B is the Boltzmann constant (eV/K). p_J = 2*J + 1 is the total multiplicity of the J-rotational level. E_J is the excitation energy of the J-rotational level (eV): E_1 = 3.6000E-04, E_3 = 2.1600E-03, E_5 = 5.4000E-03, E_7 = 1.0080E-02, E_9 = 1.6200E-02, E_11 = 2.3760E-02, E_13 = 3.2760E-02, E_15 = 4.3200E-02, E_17 = 5.5080E-02, E_19 = 6.8400E-02, E_21 = 8.3160E-02, E_23 = 9.9360E-02, E_25 = 1.1700E-01, E_27 = 1.3610E-01, E_29 = 1.5660E-01, E_31 = 1.7860E-01. At T_g = 300 K, n_J/N are as follows: n_1/N = 4.113E-02, n_3/N = 8.952E-02, n_5/N = 1.241E-01, n_7/N = 1.412E-01, n_9/N = 1.412E-01, n_11/N = 1.275E-01, n_13/N = 1.057E-01, n_15/N = 8.104E-02, n_17/N = 5.779E-02, n_19/N = 3.846E-02, n_21/N = 2.396E-02, n_23/N = 1.399E-02, n_25/N = 7.675E-03, n_27/N = 3.954E-03, n_29/N = 1.919E-03, n_31/N = 8.749E-04.",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 18,
+    "attachment": true
+  },
+  "vollstaendig": true
+}

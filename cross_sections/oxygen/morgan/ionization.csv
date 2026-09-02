@@ -1,0 +1,18 @@
+# E + O2 -> E + E + O2+, Ionization
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O2 -> O2^+
+# Threshold: 12.06 eV
+# Updated: 2010-09-21 14:57:03
+# Data points: 11
+energy_eV,cross_section_m2
+12.06,0.0
+13.0,2.5e-22
+18.0,2.5e-21
+28.0,1.024e-20
+38.0,1.775e-20
+48.0,2.07e-20
+58.0,2.41e-20
+68.0,2.61e-20
+78.0,2.81e-20
+88.0,2.84e-20
+1000.0,2.9e-20

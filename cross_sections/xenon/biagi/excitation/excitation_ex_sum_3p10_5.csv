@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(Ex Sum 3P10-5)(10.902eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(Ex Sum 3P10-5)(10.902eV)
 # Threshold: 10.902 eV
 # Comment: EX SUM 3P10-5 ELVL=10.9016.

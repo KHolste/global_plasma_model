@@ -1,0 +1,137 @@
+{
+  "source": "LXCat, TRINITI database",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen_atomic",
+  "processes": [
+    {
+      "type": "EFFECTIVE",
+      "target": "O",
+      "process": "E + O -> E + O, Effective",
+      "threshold_eV": null,
+      "species": "e / O",
+      "mM": 3.4038e-05,
+      "data_points": 6,
+      "file": "effective.csv",
+      "note": "Gesamter Impulsuebertrag, nicht der elastische. Nicht als elastischer Querschnitt verwendbar."
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(0.02)",
+      "process": "E + O -> E + O(0.02), Excitation",
+      "threshold_eV": 0.02,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 8,
+      "file": "excitation/excitation_0_02.csv",
+      "state": "0.02"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(0.03)",
+      "process": "E + O -> E + O(0.03), Excitation",
+      "threshold_eV": 0.028,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 8,
+      "file": "excitation/excitation_0_03.csv",
+      "state": "0.03"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(1.96)",
+      "process": "E + O -> E + O(1.96), Excitation",
+      "threshold_eV": 1.96,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 6,
+      "file": "excitation/excitation_1_96.csv",
+      "state": "1.96"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(4.18)",
+      "process": "E + O -> E + O(4.18), Excitation",
+      "threshold_eV": 4.18,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 6,
+      "file": "excitation/excitation_4_18.csv",
+      "state": "4.18"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(9.15)",
+      "process": "E + O -> E + O(9.15), Excitation",
+      "threshold_eV": 9.15,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 6,
+      "file": "excitation/excitation_9_15.csv",
+      "state": "9.15"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(10.7)",
+      "process": "E + O -> E + O(10.7), Excitation",
+      "threshold_eV": 10.7,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 5,
+      "file": "excitation/excitation_10_7.csv",
+      "state": "10.7"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(12.1)",
+      "process": "E + O -> E + O(12.1), Excitation",
+      "threshold_eV": 12.1,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 5,
+      "file": "excitation/excitation_12_1.csv",
+      "state": "12.1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(13.7)",
+      "process": "E + O -> E + O(13.7), Excitation",
+      "threshold_eV": 13.7,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 6,
+      "file": "excitation/excitation_13_7.csv",
+      "state": "13.7"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O -> O(+4S)",
+      "process": "E + O -> E + E + O(+4S), Ionization",
+      "threshold_eV": 13.6,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 6,
+      "file": "ionization.csv"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O -> O(+2D)",
+      "process": "E + O -> E + E + O(+2D), Ionization",
+      "threshold_eV": 16.9,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 5,
+      "file": "ionization_1.csv"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O -> O(+2P)",
+      "process": "E + O -> E + E + O(+2P), Ionization",
+      "threshold_eV": 18.5,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 5,
+      "file": "ionization_2.csv"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "source": "LXCat, SIGLO database",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr -> E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "e / Kr",
+      "mM": 6.5e-06,
+      "data_points": 44,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr",
+      "process": "E + Kr -> E + Kr, Excitation",
+      "threshold_eV": 9.915,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 37,
+      "file": "excitation/excitation_exc_0.csv",
+      "state": "exc_0"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(b10.033eV)",
+      "process": "E + Kr -> E + Kr(b10.033eV), Excitation",
+      "threshold_eV": 10.033,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 29,
+      "file": "excitation/excitation_exc_1.csv",
+      "state": "exc_1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(c10.563eV)",
+      "process": "E + Kr -> E + Kr(c10.563eV), Excitation",
+      "threshold_eV": 10.563,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 35,
+      "file": "excitation/excitation_exc_2.csv",
+      "state": "exc_2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(10.644eV)",
+      "process": "E + Kr -> E + Kr(10.644eV), Excitation",
+      "threshold_eV": 10.644,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 34,
+      "file": "excitation/excitation_exc_3.csv",
+      "state": "exc_3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr",
+      "process": "E + Kr -> E + Kr, Excitation",
+      "threshold_eV": 11.304,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 33,
+      "file": "excitation/excitation_exc_4.csv",
+      "state": "exc_4"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Kr -> +ionized Kr",
+      "process": "E + Kr -> E + E + +ionized Kr, Ionization",
+      "threshold_eV": 14.0,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 220,
+      "file": "ionization.csv"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "source": "LXCat, Morgan (Kinema Research & Software)",
+  "origin_file": "negative_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen_anion",
+  "processes": [
+    {
+      "type": "EFFECTIVE",
+      "target": "O^-",
+      "process": "E + O- -> E + O-, Effective",
+      "threshold_eV": null,
+      "species": "e / O^-",
+      "mM": 3.43e-05,
+      "data_points": 2,
+      "file": "effective.csv",
+      "note": "Gesamter Impulsuebertrag, nicht der elastische. Nicht als elastischer Querschnitt verwendbar."
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O^- -> O",
+      "process": "E + O- -> E + E + O, Ionization",
+      "threshold_eV": 1.46,
+      "species": "e / O^-",
+      "mM": null,
+      "data_points": 13,
+      "file": "ionization.csv"
+    }
+  ]
+}

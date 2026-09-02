@@ -1,0 +1,22 @@
+# E + O2 -> E + O2, Excitation
+# Source: LXCat, Phelps database
+# Target: O2 -> O2
+# Threshold: 0.0 eV
+# Comment: it is so flagged on LXCat.
+# Updated: 2013-11-14 14:49:15
+# Data points: 14
+energy_eV,cross_section_m2
+8.0,0.0
+13.5,2.2e-21
+18.5,5.3e-21
+21.0,5.6e-21
+23.5,5.2e-21
+28.5,5.9e-21
+33.5,6.6e-21
+38.5,6.1e-21
+48.5,5.3e-21
+58.5,4.4e-21
+73.5,3.7e-21
+98.5,3.3e-21
+148.5,3e-21
+198.5,2.9e-21

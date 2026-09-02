@@ -1,0 +1,30 @@
+# E + Kr -> E + Kr, Elastic
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: Kr
+# m/M: 6.5e-06
+# Comment: Elastic Momentum Transfer.
+# Updated: 2013-04-19 14:21:08
+# Data points: 22
+energy_eV,cross_section_m2
+0.0,1.42e-19
+0.05,1.42e-19
+0.1,7.47e-20
+0.3,9.3e-21
+0.5,1.33e-21
+0.6,1.16e-21
+0.7,2.04e-21
+0.8,3.44e-21
+0.9,5.25e-21
+1.0,7.1e-21
+1.2,1.13e-20
+1.5,1.87e-20
+2.0,3.35e-20
+3.0,6.42e-20
+4.0,1.01e-19
+5.0,1.29e-19
+6.0,1.49e-19
+8.0,1.69e-19
+10.0,1.69e-19
+12.0,1.38e-19
+15.0,9.74e-20
+20.0,6.18e-20

@@ -1,0 +1,61 @@
+{
+  "source": "LXCat, Morgan (Kinema Research & Software)",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen_atomic",
+  "processes": [
+    {
+      "type": "EFFECTIVE",
+      "target": "O",
+      "process": "E + O -> E + O, Effective",
+      "threshold_eV": null,
+      "species": "e / O",
+      "mM": 3.4262e-05,
+      "data_points": 16,
+      "file": "effective.csv",
+      "note": "Gesamter Impulsuebertrag, nicht der elastische. Nicht als elastischer Querschnitt verwendbar."
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(1D)",
+      "process": "E + O -> E + O(1D), Excitation",
+      "threshold_eV": 1.968,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 43,
+      "file": "excitation/excitation_1d.csv",
+      "state": "1D"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O -> O(1S)",
+      "process": "E + O -> E + O(1S), Excitation",
+      "threshold_eV": 4.192,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 45,
+      "file": "excitation/excitation_1s.csv",
+      "state": "1S"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O -> O^+",
+      "process": "E + O -> E + E + O+, Ionization",
+      "threshold_eV": 13.618,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 3,
+      "file": "ionization.csv"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O -> O^+",
+      "process": "E + O -> E + E + O+, Ionization",
+      "threshold_eV": 13.618,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 13,
+      "file": "ionization_1.csv"
+    }
+  ]
+}

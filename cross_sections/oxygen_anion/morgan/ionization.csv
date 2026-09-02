@@ -1,0 +1,20 @@
+# E + O- -> E + E + O, Ionization
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O^- -> O
+# Threshold: 1.46 eV
+# Updated: 2019-07-03 13:49:25
+# Data points: 13
+energy_eV,cross_section_m2
+1.46,0.0
+5.0,1.49e-20
+7.19,2.95e-20
+10.19,4.26e-20
+13.23,5.42e-20
+14.84,5.57e-20
+19.5,5.88e-20
+46.75,5.89e-20
+106.99,4.75e-20
+194.69,3.61e-20
+513.12,1.82e-20
+683.04,1.61e-20
+1004.4,1.11e-20

@@ -1,0 +1,32 @@
+# E + O2 -> E + O2(b1), Excitation
+# Source: LXCat, Phelps database
+# Target: O2 -> O2(b1)
+# Threshold: 1.627 eV
+# Comment: O2 B singlet sigma from LINDER-SCHMIDT AND TRAJMAR ET AL.
+# Updated: 2009-09-19 09:42:07
+# Data points: 24
+energy_eV,cross_section_m2
+1.627,0.0
+2.0,2.6e-23
+3.0,9.7e-23
+3.5,1.33e-22
+4.0,1.49e-22
+5.0,1.82e-22
+5.69,1.94e-22
+6.54,1.94e-22
+7.34,1.91e-22
+8.41,1.83e-22
+9.26,1.74e-22
+10.0,1.6e-22
+13.0,1.3e-22
+14.9,1.3e-22
+17.0,1.3e-22
+19.4,1.25e-22
+20.7,1.25e-22
+22.5,1.1e-22
+24.0,1e-22
+28.0,8e-23
+35.1,6.3e-23
+41.9,1.8e-23
+45.1,5e-24
+1000.0,0.0

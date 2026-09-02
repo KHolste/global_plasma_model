@@ -1,0 +1,14 @@
+# E + O2 -> E + c-1-Sigma_u-+A'-3-Delta_u+A-3-Sigma_u+, Excitation
+# Source: LXCat, FLINDERS database
+# Target: O2 -> c-1-Sigma_u-+A'-3-Delta_u+A-3-Sigma_u+
+# Threshold: 0.0 eV
+# Updated: 2014-05-29 07:59:25
+# Data points: 7
+energy_eV,cross_section_m2
+4.39396,3.162278e-23
+9.0,9.199999e-22
+10.0,1.32e-21
+12.0,1.2e-21
+15.0,1.07e-21
+20.0,9.399999e-22
+45.0,3.8e-22

@@ -1,0 +1,13 @@
+# E + O2 -> E + O2(2B), Excitation
+# Source: LXCat, Itikawa database
+# Target: O2 -> O2(2B)
+# Threshold: 6.12 eV
+# Comment: 2B.
+# Updated: 2012-10-17 14:29:57
+# Data points: 5
+energy_eV,cross_section_m2
+6.12,0.0
+15.0,7.2e-23
+20.0,9.15e-23
+30.0,8.71e-23
+50.0,4.72e-23

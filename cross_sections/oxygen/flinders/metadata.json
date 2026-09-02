@@ -1,0 +1,118 @@
+{
+  "source": "LXCat, FLINDERS database",
+  "origin_file": "much_more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": [
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> X-3-Sigma_g-(0->1)",
+      "process": "E + O2 -> E + X-3-Sigma_g-(0->1), Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 22,
+      "file": "excitation/excitation_0_to_1.csv",
+      "state": "0->1"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> X-3-Sigma_g-(0->2)",
+      "process": "E + O2 -> E + X-3-Sigma_g-(0->2), Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 20,
+      "file": "excitation/excitation_0_to_2.csv",
+      "state": "0->2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> X-3-Sigma_g-(0->3)",
+      "process": "E + O2 -> E + X-3-Sigma_g-(0->3), Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 20,
+      "file": "excitation/excitation_0_to_3.csv",
+      "state": "0->3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> X-3-Sigma_g-(0->4)",
+      "process": "E + O2 -> E + X-3-Sigma_g-(0->4), Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 20,
+      "file": "excitation/excitation_0_to_4.csv",
+      "state": "0->4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> a-1-Delta_g",
+      "process": "E + O2 -> E + a-1-Delta_g, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 14,
+      "file": "excitation/excitation_exc_4.csv",
+      "state": "exc_4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> b-1-Sigma_g+",
+      "process": "E + O2 -> E + b-1-Sigma_g+, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 14,
+      "file": "excitation/excitation_exc_5.csv",
+      "state": "exc_5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> c-1-Sigma_u-+A'-3-Delta_u+A-3-Sigma_u+",
+      "process": "E + O2 -> E + c-1-Sigma_u-+A'-3-Delta_u+A-3-Sigma_u+, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 7,
+      "file": "excitation/excitation_exc_6.csv",
+      "state": "exc_6"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> longest band",
+      "process": "E + O2 -> E + longest band, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 50,
+      "file": "excitation/excitation_exc_7.csv",
+      "state": "exc_7"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> Schumann-Runge continuum",
+      "process": "E + O2 -> E + Schumann-Runge continuum, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 40,
+      "file": "excitation/excitation_exc_8.csv",
+      "state": "exc_8"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 -> second band",
+      "process": "E + O2 -> E + second band, Excitation",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 37,
+      "file": "excitation/excitation_exc_9.csv",
+      "state": "exc_9"
+    }
+  ]
+}

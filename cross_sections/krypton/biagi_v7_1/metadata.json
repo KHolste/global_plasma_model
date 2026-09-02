@@ -1,0 +1,72 @@
+{
+  "source": "LXCat, Biagi-v7.1 (Magboltz version 7.1)",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr -> E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "e / Kr",
+      "mM": 6.5e-06,
+      "data_points": 198,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(s)(9.915eV)",
+      "process": "E + Kr -> E + Kr(s)(9.915eV), Excitation",
+      "threshold_eV": 9.915,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_s.csv",
+      "state": "s"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(p)(11.30eV)",
+      "process": "E + Kr -> E + Kr(p)(11.30eV), Excitation",
+      "threshold_eV": 11.3,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_p.csv",
+      "state": "p"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr(d+p)(11.998eV)",
+      "process": "E + Kr -> E + Kr(d+p)(11.998eV), Excitation",
+      "threshold_eV": 11.998,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_d_p.csv",
+      "state": "d+p"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr*(12.75eV)",
+      "process": "E + Kr -> E + Kr*(12.75eV), Excitation",
+      "threshold_eV": 12.75,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 201,
+      "file": "excitation/excitation_exc_3.csv",
+      "state": "exc_3"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Kr -> Kr^+",
+      "process": "E + Kr -> E + E + Kr+, Ionization",
+      "threshold_eV": 13.996,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 201,
+      "file": "ionization.csv"
+    }
+  ]
+}

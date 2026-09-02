@@ -1,0 +1,18 @@
+{
+  "key": "iaa",
+  "display_name": "IAA (IAA)",
+  "source": "IAA (IAA), via LXCat",
+  "reference": "www.lxcat.net/IAA",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen_atomic",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 12,
+    "attachment": false
+  },
+  "vollstaendig": true
+}

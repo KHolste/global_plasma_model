@@ -1,17 +1,18 @@
 {
   "key": "biagi",
-  "display_name": "Biagi (MagBoltz V8.97)",
-  "type": "theoretical",
-  "source": "S.F. Biagi, MagBoltz, transcribed by LXCat",
-  "reference": "Biagi database, www.lxcat.net/Biagi",
-  "retrieved": "2026-03-28",
-  "version": "V8.97",
+  "display_name": "Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)",
+  "source": "Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.), via LXCat",
+  "reference": "www.lxcat.net/Biagi",
+  "comment": "Extracted from MagBoltz V8.97.",
+  "retrieved": "28 Mar 2026",
   "gas": "xenon",
   "processes": {
     "elastic": true,
+    "effective": false,
     "ionization": true,
     "excitation": true,
-    "excitation_count": 50
+    "excitation_count": 50,
+    "attachment": false
   },
-  "comment": "Comprehensive Xenon cross-section set from Biagi/MagBoltz. Includes elastic momentum transfer, single ionization, and 50 excitation processes (1S5 through EX HIGH)."
+  "vollstaendig": true
 }

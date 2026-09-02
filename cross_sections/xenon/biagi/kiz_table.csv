@@ -1,5 +1,4 @@
-# Vorberechnete Xenon-Ionisationsrate (Biagi/LXCat)
-# Te in eV, Kiz in m^3/s
+# Ionisation rate (biagi)
 Te_eV,Kiz_m3s
 0.500,6.715936e-25
 0.550,6.500132e-24

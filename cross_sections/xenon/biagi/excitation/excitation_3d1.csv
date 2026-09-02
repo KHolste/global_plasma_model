@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(3D1!!)(10.158eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(3D1!!)(10.158eV)
 # Threshold: 10.158 eV
 # Comment: EX 3D1!! J=2 ELVL=10.1575.

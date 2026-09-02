@@ -1,0 +1,8 @@
+# E + O -> E + O(9.15), Excitation, Schwelle 9.15 eV | TRINITI database, TRINITI database, via LXCat, abgerufen 02 Sep 2026
+energy_eV,cross_section_m2
+9.15,0.000000e+00
+10,1.800000e-22
+15,5.600000e-22
+20,6.700000e-22
+40,7.000000e-22
+100,5.000000e-22

@@ -1,0 +1,19 @@
+# E + O2 -> E + O2*(6eV), Excitation
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O2 -> O2*(6eV)
+# Threshold: 6.0 eV
+# Updated: 2010-09-21 14:37:20
+# Data points: 12
+energy_eV,cross_section_m2
+6.0,0.0
+7.0,1.5e-21
+7.8,2.3e-21
+9.0,2.3e-21
+10.0,2.1e-21
+12.0,1.65e-21
+15.0,1.05e-21
+17.0,6.5e-22
+20.0,4.75e-22
+45.0,1.9e-22
+100.0,0.0
+1000.0,0.0

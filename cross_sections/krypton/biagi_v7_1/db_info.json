@@ -1,0 +1,18 @@
+{
+  "key": "biagi_v7_1",
+  "display_name": "Biagi-v7.1 (Magboltz version 7.1)",
+  "source": "Biagi-v7.1 (Magboltz version 7.1), via LXCat",
+  "reference": "www.lxcat.net/Biagi-v7.1",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 4,
+    "attachment": false
+  },
+  "vollstaendig": true
+}

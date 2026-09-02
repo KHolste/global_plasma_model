@@ -109,10 +109,21 @@ Quelle und zwei Spalten. Dazu je eine Abbildung pro Prozess und
 `python make_data_overview.py`; die CSV-Dateien sind mitversioniert, die
 Abbildungen nicht.
 
-Stand: Xenon 68 Querschnitte aus zwei Datenbanken und 61 Ratenkoeffizienten,
-Argon 30 Querschnitte aus zwei Datenbanken und 30 Ratenkoeffizienten, Iod 30
-Ratenkoeffizienten und **keine** Querschnitte, Krypton nichts außer den
-Stoffkonstanten im Programm.
+Stand der Querschnitte: Krypton 184 aus acht Datenbanken, Sauerstoff O₂ 150
+aus zehn, Xenon 68 aus zwei, atomarer Sauerstoff 32 aus drei, Argon 30 aus
+zwei, O⁻ zwei. Für Iod gibt es **keine** Querschnitte, nur Ratenkoeffizienten.
+
+Als **vollständig** gilt ein Satz, der elastischen Stoß, Ionisation und
+Anregungen enthält; nur dafür werden Ratentabellen gerechnet. Das sind Xenon
+(Biagi, Hayashi), Argon (Hayashi), Krypton (Biagi, Biagi-v7.1, Morgan, SIGLO),
+O₂ (Biagi, IAA, Itikawa, MuroranIT, TRINITI) und atomarer Sauerstoff (IAA).
+Sätze mit `effective` statt `elastic` sind nicht vollständig: der effektive
+Querschnitt ist der gesamte Impulsübertrag und würde den inelastischen Anteil
+doppelt zählen.
+
+Chemiepakete gibt es für Xenon (Biagi), Argon (Hayashi) und Krypton (Biagi).
+Für O₂ ist keines angelegt — ein molekularer Satz braucht eine Entscheidung
+über Spezies und Kanäle und ist keine reine Umwandlung.
 
 Neue Gase kommen über drei Aufrufe herein: `convert_lxcat.py <datei>
 cross_sections/<gas>` zerlegt eine LXCat-Datei — bei mehreren Datenbanken je

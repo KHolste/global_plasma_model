@@ -1,0 +1,18 @@
+{
+  "key": "biagi",
+  "display_name": "Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)",
+  "source": "Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.), via LXCat",
+  "reference": "www.lxcat.net/Biagi",
+  "comment": "Transcribed from S.F. Biagi's FORTRAN code Magboltz, version 8.97, Sept 2011. Data are based in part on results in BSR database on this site.",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 51,
+    "attachment": false
+  },
+  "vollstaendig": true
+}

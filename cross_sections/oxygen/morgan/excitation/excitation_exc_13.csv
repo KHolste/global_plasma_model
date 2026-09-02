@@ -1,0 +1,17 @@
+# E + O2 -> E + O2*(14.7eV), Excitation
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O2 -> O2*(14.7eV)
+# Threshold: 14.7 eV
+# Comment: Dissociative Excitation.
+# Updated: 2010-09-21 14:49:50
+# Data points: 9
+energy_eV,cross_section_m2
+14.7,0.0
+20.0,8.5e-23
+25.0,1.6e-22
+30.0,2.25e-22
+40.0,2.8e-22
+60.0,3.7e-22
+70.0,3.8e-22
+80.0,3.9e-22
+100.0,3.8e-22

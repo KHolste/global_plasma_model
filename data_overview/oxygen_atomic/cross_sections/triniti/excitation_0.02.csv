@@ -1,0 +1,10 @@
+# E + O -> E + O(0.02), Excitation, Schwelle 0.02 eV | TRINITI database, TRINITI database, via LXCat, abgerufen 02 Sep 2026
+energy_eV,cross_section_m2
+0.02,0.000000e+00
+0.1,2.900000e-21
+0.5,2.600000e-21
+1,2.800000e-21
+1.4,3.000000e-21
+1.6,3.000000e-21
+2,2.900000e-21
+2.4,2.800000e-21

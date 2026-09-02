@@ -170,6 +170,20 @@ def write_csv(block: LXCatBlock, filepath: Path):
             f.write(f"{e},{cs}\n")
 
 
+#: Zielspezies aus der LXCat-Datei auf einen Ordnernamen abbilden. Was hier
+#: nicht steht, bekommt den bereinigten Namen der Spezies.
+SPEZIES_ORDNER = {
+    "Xe": "xenon", "Ar": "argon", "Kr": "krypton", "Ne": "neon", "He": "helium",
+    "O2": "oxygen", "O": "oxygen_atomic", "O^-": "oxygen_anion",
+    "N2": "nitrogen", "N": "nitrogen_atomic",
+    "I2": "iodine", "I": "iodine_atomic",
+}
+
+
+def spezies_ordner(spezies: str) -> str:
+    return SPEZIES_ORDNER.get(spezies, sanitize_filename(spezies) or "unbekannt")
+
+
 def datenbank_kurz(name: str) -> str:
     """Aus "Hayashi database" wird "hayashi"."""
     wort = name.replace("database", "").strip().split()
@@ -204,7 +218,12 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
         "processes": [],
     }
 
-    zahl = {"ELASTIC": 0, "EXCITATION": 0, "IONIZATION": 0, "EFFECTIVE": 0, "sonst": 0}
+    zahl = {"ELASTIC": 0, "EXCITATION": 0, "IONIZATION": 0, "EFFECTIVE": 0,
+            "ATTACHMENT": 0, "sonst": 0}
+
+    def name_fuer(basis: str, n: int) -> str:
+        """Erster Block behaelt den einfachen Namen, weitere werden gezaehlt."""
+        return f"{basis}.csv" if n == 0 else f"{basis}_{n}.csv"
 
     for block in blocks:
         entry = {
@@ -212,21 +231,30 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
             "target": block.target_line,
             "process": block.process_desc,
             "threshold_eV": block.threshold_or_mM if block.block_type not in ("ELASTIC", "EFFECTIVE") else None,
+            "species": block.species,
             "mM": block.threshold_or_mM if block.block_type in ("ELASTIC", "EFFECTIVE") else None,
             "data_points": len(block.energies),
         }
 
         if block.block_type == "ELASTIC":
-            write_csv(block, out_dir / "elastic.csv")
-            entry["file"] = "elastic.csv"
+            datei = name_fuer("elastic", zahl["ELASTIC"])
+            write_csv(block, out_dir / datei)
+            entry["file"] = datei
             zahl["ELASTIC"] += 1
+
+        elif block.block_type == "ATTACHMENT":
+            datei = name_fuer("attachment", zahl["ATTACHMENT"])
+            write_csv(block, out_dir / datei)
+            entry["file"] = datei
+            zahl["ATTACHMENT"] += 1
 
         elif block.block_type == "EFFECTIVE":
             # Der effektive Querschnitt ist der gesamte Impulsuebertrag, also
             # elastisch plus inelastisch. Er wird abgelegt, damit er sichtbar
             # ist, aber nicht als elastischer Querschnitt verwendet.
-            write_csv(block, out_dir / "effective.csv")
-            entry["file"] = "effective.csv"
+            datei = name_fuer("effective", zahl["EFFECTIVE"])
+            write_csv(block, out_dir / datei)
+            entry["file"] = datei
             entry["note"] = ("Gesamter Impulsuebertrag, nicht der elastische. "
                              "Nicht als elastischer Querschnitt verwendbar.")
             zahl["EFFECTIVE"] += 1
@@ -240,9 +268,9 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
             zahl["EXCITATION"] += 1
 
         elif block.block_type == "IONIZATION":
-            name = "ionization.csv" if zahl["IONIZATION"] == 0 else f"ionization_{zahl['IONIZATION']}.csv"
-            write_csv(block, out_dir / name)
-            entry["file"] = name
+            datei = name_fuer("ionization", zahl["IONIZATION"])
+            write_csv(block, out_dir / datei)
+            entry["file"] = datei
             zahl["IONIZATION"] += 1
 
         else:
@@ -269,14 +297,18 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
             "ionization": zahl["IONIZATION"] > 0,
             "excitation": zahl["EXCITATION"] > 0,
             "excitation_count": zahl["EXCITATION"],
+            "attachment": zahl["ATTACHMENT"] > 0,
         },
+        "vollstaendig": zahl["ELASTIC"] > 0 and zahl["IONIZATION"] > 0 and zahl["EXCITATION"] > 0,
     }
     with open(out_dir / "db_info.json", "w", encoding="utf-8") as f:
         json.dump(db_info, f, indent=2, ensure_ascii=False)
 
     print(f"  {db_name:<22} -> {out_dir}")
     print(f"      elastisch {zahl['ELASTIC']}, effektiv {zahl['EFFECTIVE']}, "
-          f"Anregung {zahl['EXCITATION']}, Ionisation {zahl['IONIZATION']}"
+          f"Anregung {zahl['EXCITATION']}, Ionisation {zahl['IONIZATION']}, "
+          f"Anlagerung {zahl['ATTACHMENT']}"
+          + ("   [vollstaendig]" if db_info["vollstaendig"] else "")
           + (f", uebersprungen {zahl['sonst']}" if zahl["sonst"] else ""))
     return zahl
 
@@ -300,16 +332,43 @@ def main():
     datum = erzeugt_am(lxcat_file)
     gas_name = out_dir.name if out_dir.parent.name == "cross_sections" else out_dir.parent.name
 
-    nach_db = {}
+    # Eine Datei kann mehrere Zielspezies enthalten -- die Krypton-Datei
+    # bringt nur Kr, die Sauerstoffdateien je nach Auswahl O2, O oder O^-.
+    # Gruppiert wird deshalb nach Spezies und Datenbank.
+    # Bloecke ohne SPECIES-Zeile gehoeren zur Spezies der Datei; enthaelt die
+    # Datei mehrere, wird die zuletzt genannte angenommen.
+    namen = []
+    letzte = ""
     for b in blocks:
-        nach_db.setdefault(b.database or "", []).append(b)
+        sp = b.species.split("/")[-1].strip() if b.species else ""
+        if sp:
+            letzte = sp
+        namen.append(sp or letzte)
+    for i, b in enumerate(blocks):
+        if not namen[i]:
+            for spaeter in namen[i:]:
+                if spaeter:
+                    namen[i] = spaeter
+                    break
 
-    print(f"{lxcat_file}: {len(blocks)} Bloecke aus {len(nach_db)} Datenbank(en)"
+    nach_spezies = {}
+    for b, sp in zip(blocks, namen):
+        nach_spezies.setdefault(sp, {}).setdefault(b.database or "", []).append(b)
+
+    print(f"{lxcat_file}: {len(blocks)} Bloecke, {len(nach_spezies)} Zielspezies"
           + (f", erzeugt am {datum}" if datum else ""))
 
-    for db_name, db_blocks in nach_db.items():
-        ziel = out_dir if len(nach_db) == 1 else out_dir / datenbank_kurz(db_name)
-        schreibe_datenbank(db_blocks, ziel, gas_name, lxcat_file, datum)
+    # Der Zielordner wird immer aus der Zielspezies gebildet, und jede
+    # Datenbank bekommt ein eigenes Unterverzeichnis. Sonst ueberschreiben
+    # sich zwei Downloads gegenseitig, sobald sie dieselbe Prozessart
+    # enthalten.
+    wurzel = out_dir if out_dir.name == "cross_sections" else out_dir.parent
+    for spezies, nach_db in nach_spezies.items():
+        spezies_dir = wurzel / spezies_ordner(spezies)
+        print(f"  Spezies {spezies or '?'}: {len(nach_db)} Datenbank(en) -> {spezies_dir}")
+        for db_name, db_blocks in nach_db.items():
+            schreibe_datenbank(db_blocks, spezies_dir / datenbank_kurz(db_name),
+                               spezies_dir.name, lxcat_file, datum)
 
 
 if __name__ == "__main__":

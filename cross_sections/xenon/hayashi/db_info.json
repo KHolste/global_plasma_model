@@ -1,17 +1,18 @@
 {
   "key": "hayashi",
-  "display_name": "Hayashi (NIFS-DATA-079)",
-  "type": "experimental",
-  "source": "M. Hayashi (2003), NIFS-DATA-079, via LXCat",
-  "reference": "Hayashi database, www.lxcat.net/Hayashi",
-  "retrieved": "2026-03-29",
-  "version": "NIFS-DATA-079",
+  "display_name": "Hayashi database",
+  "source": "Hayashi database, via LXCat",
+  "reference": "www.lxcat.net/Hayashi",
+  "comment": "NIFS-DATA-079 M. Hayashi (2003), quotBibliography of Electron and Photon Cross Sections with Atoms and Molecules Published in the 20th Century - Xenonquot, See figure and data tables at end of report. Available on-line at",
+  "retrieved": "29 Mar 2026",
   "gas": "xenon",
   "processes": {
     "elastic": true,
+    "effective": false,
     "ionization": true,
     "excitation": true,
-    "excitation_count": 14
+    "excitation_count": 14,
+    "attachment": false
   },
-  "comment": "Xenon cross-section set from Hayashi. Derived by comparing calculated swarm parameters with measurements. Includes 14 excitation processes."
+  "vollstaendig": true
 }

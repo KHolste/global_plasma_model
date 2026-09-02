@@ -1,0 +1,87 @@
+LXCat, www.lxcat.net
+Generated on 02 Sep 2026. All rights reserved.
+
+RECOMMENDED REFERENCE FORMAT
+- Morgan database, www.lxcat.net, retrieved on September 2, 2026.
+
+CROSS SECTION DATA FORMAT
+In downloaded files, each collision process is defined by a block consisting of
+1st line
+Keyword in capitals indicating the type of the collision. Possible collision types are elastic, effective, excitation,
+ionization, or attachment (capital letters required, key words are case sensitive), where "elastic" is used to denote
+the elastic momentum transfer cross section and where "effective" denotes the total momentum transfer cross section (sum
+of elastic momentum transfer and total inelastic cross sections).  The latter is useful for solving the Boltzmann
+equation in the 2-term approximation.
+2nd line
+Name of the target particle species. This name is a character string, freely chosen by the user, e.g. "Ar". Optionally
+for excitation processes, the name of the corresponding excited state can be specified on the same line, separated from
+the first name either by arrow "->" (dash + greater than) or by double-head arrow "<->" (less than + dash +
+greater than), e.g. "Ar -> Ar*" and "Ar <-> Ar*", respectively. In the later case BOLSIG+ will automatically
+define the inverse superelastic process, constructing the superelastic cross-section by detailed balancing, and
+considering the indicated excited state as the target. In this case, the ratio of statistical weights must be input in
+the 3rd line (see below).
+3rd line
+For elastic and effective collisions, the ratio of the electron mass to the target particle mass. For excitation or
+ionization collisions, the electron energy loss (nominally the threshold energy) in eV. For attachment, the 3rd line is
+missing. In case of an excitation process where an excited state has been indicated on the 2nd line using double-head
+arrow "<->", the 3rd line must specify also ratio of the statistical weights of the final state to the initial state
+as the second parameter in 3rd line; this is needed by BOLSIG+ to calculate the de-excitation cross-section. The
+statistical weight ratio, if given, will also be used by the automatic superelastics option in BOLSIG+. If this ratio is
+not provided then BOLSIG+ will assume it unity.
+from 4th line (optionally)
+User comments and reference information, maximum 100 lines. The only constraint on format is that these comment lines
+must not start with a number.
+Finally
+Table of the cross section as a function of energy. The table starts and ends by a line of dashes "------" (at least 5),
+and has otherwise two numbers per line: the energy in eV and the cross section in m2.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE:         Morgan (Kinema Research & Software)
+PERMLINK:         www.lxcat.net/Morgan
+DESCRIPTION:      Assembled over the course of 30 years WL Morgan and suitable for use with 2-term Boltzmann solvers.
+CONTACT:          W. Lowell Morgan, Kinema Research & Software
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+************************************************************************************************************************
+
+COMMENT: These cross sections are suitable calculations in gas mixtures where the species is a minor component.
+
+********************************************************** O^- **********************************************************
+
+EFFECTIVE
+O^-
+ 3.430000e-5
+SPECIES: e / O^-
+PROCESS: E + O- -> E + O-, Effective
+PARAM.:  m/M = 0.0000343
+UPDATED: 2019-07-03 13:49:41
+COLUMNS: Energy (eV) | Cross section (m2)
+-----------------------------
+ 0.000000e+0	1.000000e-18
+ 1.000000e+2	1.000000e-18
+-----------------------------
+
+IONIZATION
+O^- -> O
+ 1.460000e+0
+SPECIES: e / O^-
+PROCESS: E + O- -> E + E + O, Ionization
+PARAM.:  E = 1.46 eV
+UPDATED: 2019-07-03 13:49:25
+COLUMNS: Energy (eV) | Cross section (m2)
+-----------------------------
+ 1.460000e+0	0.000000e+0
+ 5.000000e+0	1.490000e-20
+ 7.190000e+0	2.950000e-20
+ 1.019000e+1	4.260000e-20
+ 1.323000e+1	5.420000e-20
+ 1.484000e+1	5.570000e-20
+ 1.950000e+1	5.880000e-20
+ 4.675000e+1	5.890000e-20
+ 1.069900e+2	4.750000e-20
+ 1.946900e+2	3.610000e-20
+ 5.131200e+2	1.820000e-20
+ 6.830400e+2	1.610000e-20
+ 1.004400e+3	1.110000e-20
+-----------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

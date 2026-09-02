@@ -1,0 +1,170 @@
+{
+  "source": "LXCat, IAA (IAA)",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen_atomic",
+  "processes": [
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((2p4)1D)",
+      "process": "E + O <-> E + O*((2p4)1D), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2p4.csv",
+      "state": "(2p4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((2p4)1S)",
+      "process": "E + O <-> E + O*((2p4)1S), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2p4_1.csv",
+      "state": "(2p4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3s)5SÂ°)",
+      "process": "E + O <-> E + O*((3s)5SÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s.csv",
+      "state": "(3s"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3s)3SÂ°)",
+      "process": "E + O <-> E + O*((3s)3SÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s_1.csv",
+      "state": "(3s"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3p)5P)",
+      "process": "E + O <-> E + O*((3p)5P), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3p.csv",
+      "state": "(3p"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3p)3P)",
+      "process": "E + O <-> E + O*((3p)3P), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3p_1.csv",
+      "state": "(3p"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((nd)3DÂ°)",
+      "process": "E + O <-> E + O*((nd)3DÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_nd.csv",
+      "state": "(nd"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3s')3DÂ°)",
+      "process": "E + O <-> E + O*((3s')3DÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s_2.csv",
+      "state": "(3s'"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*(nf)",
+      "process": "E + O <-> E + O*(nf), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_nf.csv",
+      "state": "nf"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((3s\")3PÂ°)",
+      "process": "E + O <-> E + O*((3s\")3PÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_3s_3.csv",
+      "state": "(3s\""
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((2s2p5)3PÂ°)",
+      "process": "E + O <-> E + O*((2s2p5)3PÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2s2p5.csv",
+      "state": "(2s2p5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O <-> O*((4d')3PÂ°)",
+      "process": "E + O <-> E + O*((4d')3PÂ°), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_4d.csv",
+      "state": "(4d'"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O <-> O+",
+      "process": "E + O <-> E + E + O+, Ionization",
+      "threshold_eV": 0.0,
+      "species": "e / O",
+      "mM": null,
+      "data_points": 200,
+      "file": "ionization.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O",
+      "process": "E + O -> E + O, Elastic",
+      "threshold_eV": null,
+      "species": "e / O",
+      "mM": 3.4286e-05,
+      "data_points": 102,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O",
+      "process": "E + O -> E + O, Elastic",
+      "threshold_eV": null,
+      "species": "e / O",
+      "mM": 3.4286e-05,
+      "data_points": 102,
+      "file": "elastic_1.csv"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# E + O -> E + O, Effective
+# Source: LXCat, TRINITI database
+# Target: O
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 6
+energy_eV,cross_section_m2
+0.0,5.4e-20
+5.0,7.5e-20
+7.0,8.2e-20
+13.0,8e-20
+20.0,7e-20
+100.0,5.6e-20

@@ -1,0 +1,8 @@
+# E + O- -> E + O-, Effective
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O^-
+# Updated: 2019-07-03 13:49:41
+# Data points: 2
+energy_eV,cross_section_m2
+0.0,1e-18
+100.0,1e-18

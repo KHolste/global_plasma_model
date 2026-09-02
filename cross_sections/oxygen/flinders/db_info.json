@@ -1,0 +1,18 @@
+{
+  "key": "flinders",
+  "display_name": "FLINDERS database",
+  "source": "FLINDERS database, via LXCat",
+  "reference": "www.lxcat.net/FLINDERS",
+  "comment": "Electron impact excitation cross sections for vibrational levels 1-4 of the ground state of O2, as described in \"D. B. Jones, L. Campbell, M. J. Bottema, P. J. O. Teubner, D. C. Cartwright, W. R. Newell and M. J. Brunger, Planet. Space Sci. 54, 45 (2006)\".",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": false,
+    "effective": false,
+    "ionization": false,
+    "excitation": true,
+    "excitation_count": 10,
+    "attachment": false
+  },
+  "vollstaendig": false
+}

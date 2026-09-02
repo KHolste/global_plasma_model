@@ -1,0 +1,11 @@
+# E + O2 -> E + O2(v3res), Excitation
+# Source: LXCat, Itikawa database
+# Target: O2 -> O2(v3res)
+# Threshold: 0.57 eV
+# Comment: Resonance cross section for Vibrational excitation v=0->3.
+# Updated: 2012-10-17 14:29:32
+# Data points: 3
+energy_eV,cross_section_m2
+0.57,0.0
+0.696,1e-23
+0.703,0.0

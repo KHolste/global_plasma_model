@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(7D5)(11.807eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(7D5)(11.807eV)
 # Threshold: 11.807 eV
 # Comment: EX 7D5 J=1 R ELVL=11.8068.

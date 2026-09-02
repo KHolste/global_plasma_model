@@ -1,0 +1,13 @@
+# E + O -> E + O(12.1), Excitation
+# Source: LXCat, TRINITI database
+# Target: O -> O(12.1)
+# Threshold: 12.1 eV
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 5
+energy_eV,cross_section_m2
+12.1,0.0
+15.0,4.3e-22
+20.0,7.9e-22
+30.0,9.2e-22
+100.0,6.3e-22

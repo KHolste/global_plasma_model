@@ -1,0 +1,18 @@
+{
+  "key": "phelps",
+  "display_name": "Phelps database",
+  "source": "Phelps database, via LXCat",
+  "reference": "www.lxcat.net/Phelps",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": false,
+    "effective": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 14,
+    "attachment": true
+  },
+  "vollstaendig": false
+}

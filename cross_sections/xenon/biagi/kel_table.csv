@@ -1,5 +1,4 @@
-# Vorberechnete Xenon-elastische Stossrate (Biagi/LXCat)
-# Te in eV, Kel in m^3/s
+# Elastic rate (biagi)
 Te_eV,Kel_m3s
 0.500,2.016530e-14
 0.550,2.256905e-14

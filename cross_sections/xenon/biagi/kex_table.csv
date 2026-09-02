@@ -1,7 +1,4 @@
-# Vorberechnete Xenon-Anregungsraten (Biagi/LXCat, 48 Prozesse)
-# Kex_total = Summe_i Kex_i(Te)
-# Pexc_coeff = Summe_i [Kex_i(Te) * Eexc_i]  (multipliziere mit n*ng fuer W/m^3)
-# Te in eV, Kex in m^3/s, Pexc_coeff in J*m^3/s
+# Excitation rates (biagi, 50 Prozesse)
 Te_eV,Kex_total_m3s,Pexc_coeff_Jm3s
 0.500,5.892162e-22,8.060042e-40
 0.550,2.809968e-21,3.866887e-39

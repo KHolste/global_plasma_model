@@ -1,0 +1,22 @@
+# E + O2 -> E + O2(4.5), Excitation
+# Source: LXCat, TRINITI database
+# Target: O2 -> O2(4.5)
+# Threshold: 4.5 eV
+# Comment: corresponding non-dissociative excitation of the c1, C3 and A3 electronic states of O2.
+# Updated: 2010-11-03 13:34:09
+# Data points: 14
+energy_eV,cross_section_m2
+4.48,0.0
+4.68,1.5e-22
+4.72,3e-22
+6.21,1.63e-21
+6.37,1.74e-21
+6.6,1.77e-21
+6.84,1.67e-21
+7.12,1.55e-21
+7.39,1.41e-21
+9.91,4.2e-22
+10.4,3.1e-22
+11.5,1e-23
+40.0,0.0
+100.0,0.0

@@ -1,0 +1,156 @@
+{
+  "source": "LXCat, IAA (IAA)",
+  "origin_file": "much_more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": [
+    {
+      "type": "ATTACHMENT",
+      "target": "O2 <-> O2*(O-+O)",
+      "process": "E + O2 <-> O2*(O-+O), Attachment",
+      "threshold_eV": 0.0,
+      "species": "",
+      "mM": null,
+      "data_points": 1799,
+      "file": "attachment.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(a1Î”g)",
+      "process": "E + O2 <-> E + O2*(a1Î”g), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_a1_g.csv",
+      "state": "a1Î”g"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(b1Î£g+)",
+      "process": "E + O2 <-> E + O2*(b1Î£g+), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_b1_g.csv",
+      "state": "b1Î£g+"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(HC)",
+      "process": "E + O2 <-> E + O2*(HC), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_hc.csv",
+      "state": "HC"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(SR)",
+      "process": "E + O2 <-> E + O2*(SR), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_sr.csv",
+      "state": "SR"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(LB)",
+      "process": "E + O2 <-> E + O2*(LB), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_lb.csv",
+      "state": "LB"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(2B)",
+      "process": "E + O2 <-> E + O2*(2B), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_2b.csv",
+      "state": "2B"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "O2 <-> O2*(?)",
+      "process": "E + O2 <-> E + O2*(?), Excitation",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "excitation/excitation_.csv",
+      "state": "?"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "O2 <-> O2+",
+      "process": "E + O2 <-> E + E + O2+, Ionization",
+      "threshold_eV": 0.0,
+      "species": "e / O2",
+      "mM": null,
+      "data_points": 200,
+      "file": "ionization.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Elastic",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 75,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EFFECTIVE",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Effective",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 180,
+      "file": "effective.csv",
+      "note": "Gesamter Impulsuebertrag, nicht der elastische. Nicht als elastischer Querschnitt verwendbar."
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Elastic",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 180,
+      "file": "elastic_1.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Elastic",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 75,
+      "file": "elastic_2.csv"
+    },
+    {
+      "type": "ELASTIC",
+      "target": "O2",
+      "process": "E + O2 -> E + O2, Elastic",
+      "threshold_eV": null,
+      "species": "e / O2",
+      "mM": 1.7e-05,
+      "data_points": 180,
+      "file": "elastic_3.csv"
+    }
+  ]
+}

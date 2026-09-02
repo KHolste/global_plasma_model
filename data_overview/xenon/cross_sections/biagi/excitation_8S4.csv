@@ -1,4 +1,4 @@
-# E + Xe -> E + Xe(8S4)(11.962eV), Excitation, Schwelle 11.962 eV | Biagi (MagBoltz V8.97), S.F. Biagi, MagBoltz, transcribed by LXCat, abgerufen 2026-03-28
+# E + Xe -> E + Xe(8S4)(11.962eV), Excitation, Schwelle 11.962 eV | Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.), Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.), via LXCat, abgerufen 28 Mar 2026
 energy_eV,cross_section_m2
 11.9622,0.000000e+00
 11.9972,1.005890e-25

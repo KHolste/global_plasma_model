@@ -1,0 +1,18 @@
+{
+  "key": "morgan",
+  "display_name": "Morgan (Kinema Research & Software)",
+  "source": "Morgan (Kinema Research & Software), via LXCat",
+  "reference": "www.lxcat.net/Morgan",
+  "comment": "CAR:- 1.78e-4 1.8 4.",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": false,
+    "effective": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 14,
+    "attachment": true
+  },
+  "vollstaendig": false
+}

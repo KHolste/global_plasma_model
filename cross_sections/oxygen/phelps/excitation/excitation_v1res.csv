@@ -1,0 +1,22 @@
+# E + O2 -> E + O2(v1res), Excitation
+# Source: LXCat, Phelps database
+# Target: O2 -> O2(v1res)
+# Threshold: 0.19 eV
+# Comment: O2 v=1, 9V resonance of WONG ET AL NORM TO TRAJMAR ET AL.
+# Updated: 2010-03-13 11:34:45
+# Data points: 14
+energy_eV,cross_section_m2
+4.0,0.0
+5.0,4.2e-22
+6.0,1e-21
+7.0,1.76e-21
+8.0,2.31e-21
+9.0,2.47e-21
+10.0,2.34e-21
+11.0,1.86e-21
+12.0,1.43e-21
+13.0,1.02e-21
+14.0,7.1e-22
+15.0,4e-22
+20.0,1e-22
+45.0,0.0

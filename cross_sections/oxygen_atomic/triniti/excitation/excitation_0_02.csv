@@ -1,0 +1,16 @@
+# E + O -> E + O(0.02), Excitation
+# Source: LXCat, TRINITI database
+# Target: O -> O(0.02)
+# Threshold: 0.02 eV
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 8
+energy_eV,cross_section_m2
+0.02,0.0
+0.1,2.9e-21
+0.5,2.6e-21
+1.0,2.8e-21
+1.4,3e-21
+1.6,3e-21
+2.0,2.9e-21
+2.4,2.8e-21

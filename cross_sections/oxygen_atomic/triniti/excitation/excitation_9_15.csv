@@ -1,0 +1,14 @@
+# E + O -> E + O(9.15), Excitation
+# Source: LXCat, TRINITI database
+# Target: O -> O(9.15)
+# Threshold: 9.15 eV
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 6
+energy_eV,cross_section_m2
+9.15,0.0
+10.0,1.8e-22
+15.0,5.6e-22
+20.0,6.7e-22
+40.0,7e-22
+100.0,5e-22

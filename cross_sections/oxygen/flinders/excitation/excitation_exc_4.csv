@@ -1,0 +1,21 @@
+# E + O2 -> E + a-1-Delta_g, Excitation
+# Source: LXCat, FLINDERS database
+# Target: O2 -> a-1-Delta_g
+# Threshold: 0.0 eV
+# Updated: 2014-05-29 08:34:58
+# Data points: 14
+energy_eV,cross_section_m2
+1.07487,3.162278e-23
+2.0,3.4e-22
+3.0,6.1e-22
+4.0,7.5e-22
+5.0,8e-22
+6.0,7.3e-22
+7.0,5.7e-22
+8.0,7.8e-22
+9.0,9.799999e-22
+9.5,1.11e-21
+10.0,1.17e-21
+11.0,8.1e-22
+15.0,6.3e-22
+20.0,5.7e-22

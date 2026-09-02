@@ -1,0 +1,18 @@
+{
+  "key": "quantemol",
+  "display_name": "QUANTEMOL database",
+  "source": "QUANTEMOL database, via LXCat",
+  "reference": "www.lxcat.net/QUANTEMOL",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": {
+    "elastic": false,
+    "effective": false,
+    "ionization": true,
+    "excitation": false,
+    "excitation_count": 0,
+    "attachment": false
+  },
+  "vollstaendig": false
+}

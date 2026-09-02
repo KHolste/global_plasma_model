@@ -1,0 +1,14 @@
+# E + O2 -> E + O2*(6eV), Excitation, Schwelle 6.0 eV | Morgan (Kinema Research & Software), Morgan (Kinema Research & Software), via LXCat, abgerufen 02 Sep 2026
+energy_eV,cross_section_m2
+6,0.000000e+00
+7,1.500000e-21
+7.8,2.300000e-21
+9,2.300000e-21
+10,2.100000e-21
+12,1.650000e-21
+15,1.050000e-21
+17,6.500000e-22
+20,4.750000e-22
+45,1.900000e-22
+100,0.000000e+00
+1000,0.000000e+00

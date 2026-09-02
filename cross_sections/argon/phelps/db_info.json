@@ -11,6 +11,8 @@
     "effective": true,
     "ionization": true,
     "excitation": true,
-    "excitation_count": 1
-  }
+    "excitation_count": 1,
+    "attachment": false
+  },
+  "vollstaendig": false
 }

@@ -1,4 +1,4 @@
-# Hayashi Xenon excitation rates (14 processes)
+# Excitation rates (hayashi, 14 Prozesse)
 Te_eV,Kex_total_m3s,Pexc_coeff_Jm3s
 0.500,2.481699e-22,3.502065e-40
 0.550,1.297210e-21,1.849639e-39

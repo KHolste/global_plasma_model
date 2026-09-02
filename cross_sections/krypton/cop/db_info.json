@@ -1,0 +1,18 @@
+{
+  "key": "cop",
+  "display_name": "COP (Complex Optical Potential)",
+  "source": "COP (Complex Optical Potential), via LXCat",
+  "reference": "www.lxcat.net/COP",
+  "comment": "R.P. McEachran and A.D. Stauffer, 2014, Eur. Phys. J. D 68 153 R.P. McEachran and A.D. Stauffer, 2015, Eur. Phys. J. D 69 106.",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": false,
+    "excitation": false,
+    "excitation_count": 0,
+    "attachment": false
+  },
+  "vollstaendig": false
+}

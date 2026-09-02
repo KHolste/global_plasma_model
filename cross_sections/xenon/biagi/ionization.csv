@@ -1,5 +1,5 @@
 # E + Xe -> E + E + Xe+, Ionization
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe^+
 # Threshold: 12.13 eV
 # Updated: 2013-06-05 16:31:25

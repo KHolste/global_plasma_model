@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(EX HIGH)(12.00eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(EX HIGH)(12.00eV)
 # Threshold: 12.0 eV
 # Comment: EX HIGH J=1 R ELVL=12.0.

@@ -1,0 +1,23 @@
+# E + O2 -> E + O2(V)(0.38eV), Excitation
+# Source: LXCat, Morgan (Kinema Research & Software)
+# Target: O2 -> O2(V)(0.38eV)
+# Threshold: 0.38 eV
+# Comment: Rotational Vibration.
+# Updated: 2010-09-21 13:44:14
+# Data points: 15
+energy_eV,cross_section_m2
+4.0,0.0
+5.0,2.8e-22
+6.0,4e-22
+7.0,7.3e-22
+8.0,9.4e-22
+9.0,1.1e-21
+10.0,1.09e-21
+11.0,9.3e-22
+12.0,7.3e-22
+13.0,5.1e-22
+14.0,2.8e-22
+15.0,1.3e-22
+20.0,5e-23
+45.0,0.0
+1000.0,0.0

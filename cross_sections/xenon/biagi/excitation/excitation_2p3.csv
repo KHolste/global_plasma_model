@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(2P3)(11.055ev), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(2P3)(11.055ev)
 # Threshold: 11.055 eV
 # Comment: EX 2P3 J=2 ELVL=11.0547.

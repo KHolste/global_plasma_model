@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(2P1)(11.141eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(2P1)(11.141eV)
 # Threshold: 11.141 eV
 # Comment: EX 2P1 J=0 ELVL=11.1412.

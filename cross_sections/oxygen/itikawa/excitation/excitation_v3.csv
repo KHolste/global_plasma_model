@@ -1,0 +1,12 @@
+# E + O2 -> E + O2(v3), Excitation
+# Source: LXCat, Itikawa database
+# Target: O2 -> O2(v3)
+# Threshold: 0.57 eV
+# Comment: Vibrational Excitations v'=3.
+# Updated: 2012-10-17 14:27:42
+# Data points: 4
+energy_eV,cross_section_m2
+0.57,0.0
+7.0,4.5e-22
+10.0,7.5e-22
+15.0,6.5e-23

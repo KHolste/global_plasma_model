@@ -1,0 +1,20 @@
+# E + O2 -> E + O2(A1), Excitation
+# Source: LXCat, Itikawa database
+# Target: O2 -> O2(A1)
+# Threshold: 0.977 eV
+# Comment: Excitation of the electronic state a1DELTA.
+# Updated: 2012-10-17 14:27:58
+# Data points: 12
+energy_eV,cross_section_m2
+0.977,0.0
+1.11083,3.03376e-23
+1.46404,8.30292e-23
+1.82237,1.6063e-22
+2.22165,2.49407e-22
+2.48784,3.24133e-22
+3.02022,3.99179e-22
+5.0,7.6e-22
+7.0,1.04e-21
+10.0,7.7e-22
+15.0,4.2e-22
+20.0,2.3e-22

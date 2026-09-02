@@ -1,0 +1,22 @@
+# E + O2 -> E + O2(B1), Excitation
+# Source: LXCat, Itikawa database
+# Target: O2 -> O2(B1)
+# Threshold: 1.627 eV
+# Comment: Excitation of the electronic state b 1SIGMA.
+# Updated: 2012-10-17 14:26:35
+# Data points: 14
+energy_eV,cross_section_m2
+1.627,0.0
+1.64547,9.53254e-24
+2.03441,2.96975e-23
+2.55298,6.14727e-23
+3.11643,9.337e-23
+3.635,1.24045e-22
+4.15358,1.55943e-22
+4.50262,1.76108e-22
+4.80678,1.93095e-22
+5.0,2e-22
+7.0,3.3e-22
+10.0,1.9e-22
+15.0,7.8e-23
+20.0,5.5e-23

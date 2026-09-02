@@ -1,0 +1,21 @@
+# E + O2 -> E + O2(4.5eV), Excitation
+# Source: LXCat, Phelps database
+# Target: O2 -> O2(4.5eV)
+# Threshold: 4.5 eV
+# Comment: O2 4.5 eV energy loss.
+# Updated: 2010-03-13 11:47:11
+# Data points: 13
+energy_eV,cross_section_m2
+4.5,0.0
+4.8,3e-23
+5.0,9e-23
+5.5,3e-22
+6.0,6.5e-22
+6.5,8.5e-22
+7.0,9.5e-22
+7.5,1e-21
+8.0,1e-21
+9.0,8.5e-22
+10.0,7e-22
+12.0,4.5e-22
+15.0,0.0

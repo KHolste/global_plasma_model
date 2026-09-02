@@ -1,0 +1,18 @@
+{
+  "key": "triniti",
+  "display_name": "TRINITI database",
+  "source": "TRINITI database, via LXCat",
+  "reference": "www.lxcat.net/TRINITI",
+  "comment": "A A Ionin, I V Kochetov, A P Napartovich and N N Yuryshev, Physics and engineering of singlet delta oxygen production in low-temperature plasma, J. Phys. D: Appl. Phys. 40 (2007) R25-R61.",
+  "retrieved": "02 Sep 2026",
+  "gas": "oxygen",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 6,
+    "attachment": true
+  },
+  "vollstaendig": true
+}

@@ -1,5 +1,5 @@
 # E + Xe -> E + Xe(Ex Sum 4D)(10.972eV), Excitation
-# Source: LXCat / Biagi database (MagBoltz V8.97)
+# Source: LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.)
 # Target: Xe -> Xe(Ex Sum 4D)(10.972eV)
 # Threshold: 10.972 eV
 # Comment: EX SUM 4D ELVL=10.9715.

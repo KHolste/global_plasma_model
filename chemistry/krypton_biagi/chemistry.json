@@ -1,0 +1,1046 @@
+{
+  "name": "Krypton (biagi)",
+  "description": "Krypton aus LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.). Elastischer Stoss, Einfachionisation und 51 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Kr",
+      "name": "Krypton",
+      "type": "neutral_atom",
+      "mass_kg": 1.3914984e-25,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0094
+    },
+    {
+      "id": "Kr+",
+      "name": "Kr+",
+      "type": "positive_ion",
+      "mass_kg": 1.3914984e-25,
+      "charge": 1,
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Kr": 1
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "el_Kr",
+      "name": "Elastisch: e + Kr -> e + Kr",
+      "type": "elastic",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kel_Kr.csv"
+      },
+      "energy_eV": 0.0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    },
+    {
+      "id": "iz_Kr",
+      "name": "Ionisation: e + Kr -> 2e + Kr+",
+      "type": "ionization",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 2,
+        "Kr+": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kiz_Kr.csv"
+      },
+      "energy_eV": 13.9996,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_1s5",
+      "name": "Anregung: e + Kr -> e + Kr(1S5) bei 9.9152 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_1s5.csv"
+      },
+      "energy_eV": 9.9152,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_1s4",
+      "name": "Anregung: e + Kr -> e + Kr(1S4) bei 10.0324 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_1s4.csv"
+      },
+      "energy_eV": 10.0324,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_1s3",
+      "name": "Anregung: e + Kr -> e + Kr(1S3) bei 10.5624 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_1s3.csv"
+      },
+      "energy_eV": 10.5624,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_1s2",
+      "name": "Anregung: e + Kr -> e + Kr(1S2) bei 10.6436 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_1s2.csv"
+      },
+      "energy_eV": 10.6436,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p10",
+      "name": "Anregung: e + Kr -> e + Kr(2P10) bei 11.3035 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p10.csv"
+      },
+      "energy_eV": 11.3035,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p9",
+      "name": "Anregung: e + Kr -> e + Kr(2P9) bei 11.443 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p9.csv"
+      },
+      "energy_eV": 11.443,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p8",
+      "name": "Anregung: e + Kr -> e + Kr(2P8) bei 11.4447 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p8.csv"
+      },
+      "energy_eV": 11.4447,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p7",
+      "name": "Anregung: e + Kr -> e + Kr(2P7) bei 11.5261 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p7.csv"
+      },
+      "energy_eV": 11.5261,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p6",
+      "name": "Anregung: e + Kr -> e + Kr(2P6) bei 11.5458 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p6.csv"
+      },
+      "energy_eV": 11.5458,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p5",
+      "name": "Anregung: e + Kr -> e + Kr(2P5) bei 11.666 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p5.csv"
+      },
+      "energy_eV": 11.666,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d6",
+      "name": "Anregung: e + Kr -> e + Kr(3D6) bei 11.9981 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d6.csv"
+      },
+      "energy_eV": 11.9981,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d5",
+      "name": "Anregung: e + Kr -> e + Kr(3D5) bei 12.037 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d5.csv"
+      },
+      "energy_eV": 12.037,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p4",
+      "name": "Anregung: e + Kr -> e + Kr(2P4) bei 12.1004 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p4.csv"
+      },
+      "energy_eV": 12.1004,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d3",
+      "name": "Anregung: e + Kr -> e + Kr(3D3) bei 12.1117 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d3.csv"
+      },
+      "energy_eV": 12.1117,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d4!",
+      "name": "Anregung: e + Kr -> e + Kr(3D4!) bei 12.1253 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d4!.csv"
+      },
+      "energy_eV": 12.1253,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p3",
+      "name": "Anregung: e + Kr -> e + Kr(2P3) bei 12.1404 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p3.csv"
+      },
+      "energy_eV": 12.1404,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p2",
+      "name": "Anregung: e + Kr -> e + Kr(2P2) bei 12.1437 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p2.csv"
+      },
+      "energy_eV": 12.1437,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d4",
+      "name": "Anregung: e + Kr -> e + Kr(3D4) bei 12.1785 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d4.csv"
+      },
+      "energy_eV": 12.1785,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2p1",
+      "name": "Anregung: e + Kr -> e + Kr(2P1) bei 12.2565 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2p1.csv"
+      },
+      "energy_eV": 12.2565,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d1!!",
+      "name": "Anregung: e + Kr -> e + Kr(3D1!!) bei 12.258 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d1!!.csv"
+      },
+      "energy_eV": 12.258,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d1!",
+      "name": "Anregung: e + Kr -> e + Kr(3D1!) bei 12.2843 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d1!.csv"
+      },
+      "energy_eV": 12.2843,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2s5",
+      "name": "Anregung: e + Kr -> e + Kr(2S5) bei 12.3522 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2s5.csv"
+      },
+      "energy_eV": 12.3522,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3d2",
+      "name": "Anregung: e + Kr -> e + Kr(3D2) bei 12.3546 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3d2.csv"
+      },
+      "energy_eV": 12.3546,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2s4",
+      "name": "Anregung: e + Kr -> e + Kr(2S4) bei 12.3853 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2s4.csv"
+      },
+      "energy_eV": 12.3853,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p10",
+      "name": "Anregung: e + Kr -> e + Kr(3P10) bei 12.7564 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p10.csv"
+      },
+      "energy_eV": 12.7564,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p9",
+      "name": "Anregung: e + Kr -> e + Kr(3P9) bei 12.7847 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p9.csv"
+      },
+      "energy_eV": 12.7847,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p8",
+      "name": "Anregung: e + Kr -> e + Kr(3P8) bei 12.7854 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p8.csv"
+      },
+      "energy_eV": 12.7854,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s1!!",
+      "name": "Anregung: e + Kr -> e + Kr(3S1!!) bei 12.8034 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s1!!.csv"
+      },
+      "energy_eV": 12.8034,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p7",
+      "name": "Anregung: e + Kr -> e + Kr(3P7) bei 12.8092 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p7.csv"
+      },
+      "energy_eV": 12.8092,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p6",
+      "name": "Anregung: e + Kr -> e + Kr(3P6) bei 12.8153 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p6.csv"
+      },
+      "energy_eV": 12.8153,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_30",
+      "name": "Anregung: e + Kr -> e + Kr(exc_30) bei 12.8253 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_30.csv"
+      },
+      "energy_eV": 12.8253,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s1!!!",
+      "name": "Anregung: e + Kr -> e + Kr(3S1!!!) bei 12.8573 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s1!!!.csv"
+      },
+      "energy_eV": 12.8573,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3p5",
+      "name": "Anregung: e + Kr -> e + Kr(3P5) bei 12.8648 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3p5.csv"
+      },
+      "energy_eV": 12.8648,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d5",
+      "name": "Anregung: e + Kr -> e + Kr(4D5) bei 12.8698 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d5.csv"
+      },
+      "energy_eV": 12.8698,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d6",
+      "name": "Anregung: e + Kr -> e + Kr(4D6) bei 12.9035 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d6.csv"
+      },
+      "energy_eV": 12.9035,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d4!",
+      "name": "Anregung: e + Kr -> e + Kr(4D4!) bei 12.9725 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d4!.csv"
+      },
+      "energy_eV": 12.9725,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s1!",
+      "name": "Anregung: e + Kr -> e + Kr(3S1!) bei 13.0044 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s1!.csv"
+      },
+      "energy_eV": 13.0044,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d4",
+      "name": "Anregung: e + Kr -> e + Kr(4D4) bei 13.008 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d4.csv"
+      },
+      "energy_eV": 13.008,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d3",
+      "name": "Anregung: e + Kr -> e + Kr(4D3) bei 13.0192 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d3.csv"
+      },
+      "energy_eV": 13.0192,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_2s3",
+      "name": "Anregung: e + Kr -> e + Kr(2S3) bei 13.0297 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_2s3.csv"
+      },
+      "energy_eV": 13.0297,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s2",
+      "name": "Anregung: e + Kr -> e + Kr(3S2) bei 13.0365 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s2.csv"
+      },
+      "energy_eV": 13.0365,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d1!!",
+      "name": "Anregung: e + Kr -> e + Kr(4D1!!) bei 13.0386 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d1!!.csv"
+      },
+      "energy_eV": 13.0386,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d1!",
+      "name": "Anregung: e + Kr -> e + Kr(4D1!) bei 13.0442 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d1!.csv"
+      },
+      "energy_eV": 13.0442,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s5",
+      "name": "Anregung: e + Kr -> e + Kr(3S5) bei 13.0986 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s5.csv"
+      },
+      "energy_eV": 13.0986,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4d2",
+      "name": "Anregung: e + Kr -> e + Kr(4D2) bei 13.0987 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4d2.csv"
+      },
+      "energy_eV": 13.0987,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_3s4",
+      "name": "Anregung: e + Kr -> e + Kr(3S4) bei 13.1139 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_3s4.csv"
+      },
+      "energy_eV": 13.1139,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_46",
+      "name": "Anregung: e + Kr -> e + Kr(exc_46) bei 13.14 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_46.csv"
+      },
+      "energy_eV": 13.14,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_5d5",
+      "name": "Anregung: e + Kr -> e + Kr(5D5) bei 13.3501 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_5d5.csv"
+      },
+      "energy_eV": 13.3501,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_5d2",
+      "name": "Anregung: e + Kr -> e + Kr(5D2) bei 13.4224 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_5d2.csv"
+      },
+      "energy_eV": 13.4224,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_4s4",
+      "name": "Anregung: e + Kr -> e + Kr(4S4) bei 13.4365 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_4s4.csv"
+      },
+      "energy_eV": 13.4365,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_high",
+      "name": "Anregung: e + Kr -> e + Kr(HIGH) bei 13.6 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_high.csv"
+      },
+      "energy_eV": 13.6,
+      "is_electron_impact": true
+    }
+  ]
+}

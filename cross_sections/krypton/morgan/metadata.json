@@ -1,0 +1,50 @@
+{
+  "source": "LXCat, Morgan (Kinema Research & Software)",
+  "origin_file": "more_oxygen.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "krypton",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Kr",
+      "process": "E + Kr -> E + Kr, Elastic",
+      "threshold_eV": null,
+      "species": "e / Kr",
+      "mM": 6.5e-06,
+      "data_points": 22,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr*(9.92eV)",
+      "process": "E + Kr -> E + Kr*(9.92eV), Excitation",
+      "threshold_eV": 9.92,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 19,
+      "file": "excitation/excitation_exc_0.csv",
+      "state": "exc_0"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Kr -> Kr*(9.92eV)",
+      "process": "E + Kr -> E + Kr*(9.92eV), Excitation",
+      "threshold_eV": 9.92,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 19,
+      "file": "excitation/excitation_exc_1.csv",
+      "state": "exc_1"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Kr -> Kr^+",
+      "process": "E + Kr -> E + E + Kr+, Ionization",
+      "threshold_eV": 13.999,
+      "species": "e / Kr",
+      "mM": null,
+      "data_points": 36,
+      "file": "ionization.csv"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# E + O2 -> E + O2(9.97eV), Excitation
+# Source: LXCat, Phelps database
+# Target: O2 -> O2(9.97eV)
+# Threshold: 9.97 eV
+# Comment: O2 9.97 eV energy loss, Trajmar.
+# Updated: 2010-03-13 11:49:16
+# Data points: 18
+energy_eV,cross_section_m2
+10.0,0.0
+20.0,1.3e-22
+30.0,2.6e-22
+40.0,4e-22
+50.0,5e-22
+60.0,6e-22
+70.0,6.5e-22
+80.0,7e-22
+100.0,7e-22
+120.0,5e-22
+150.0,4e-22
+170.0,3.5e-22
+200.0,3e-22
+300.0,2e-22
+500.0,1.2e-22
+700.0,8e-23
+1000.0,5e-23
+1500.0,0.0

@@ -1,0 +1,14 @@
+# E + O -> E + O(1.96), Excitation
+# Source: LXCat, TRINITI database
+# Target: O -> O(1.96)
+# Threshold: 1.96 eV
+# Comment: M.M.Vlasov et al, Preprint IZMERAN, #25(338), Troitsk, 1981.
+# Updated: 2017-01-18 17:50:58
+# Data points: 6
+energy_eV,cross_section_m2
+1.96,0.0
+4.0,2.7e-21
+5.0,2.8e-21
+10.0,2.2e-21
+20.0,1.4e-21
+100.0,3e-22
