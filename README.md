@@ -49,34 +49,57 @@ RF coupling is modeled via the complex plasma permittivity with cylindrical Bess
 
 ```
 global-xenon-model/
-  chabert_modified.cpp      C++ solver (main program, ~2400 lines)
-  bessel_wrapper.cpp/hpp    Bessel functions (separate compilation unit)
-  bessel-library.hpp        Template Bessel library
+  C++ core (six translation units + entry point)
+    main.cpp                Entry point, sweep loop
+    sim_context.hpp         Single mutable context, replaces all globals
+    sim_config.cpp/hpp      Config file parsing
+    phys_const.hpp          Physical constants
+    rates.cpp/hpp           Rate coefficients, table lookup
+    physics.cpp/hpp         RF coupling, residuals, derived quantities
+    solver.cpp/hpp          LM, PTC, multi-start, I-fix, SC mode
+    sim_logging.cpp/hpp     Run logging
+    beam_extraction_cpp.hpp Bohm / Child-Langmuir extraction model
+    bessel_wrapper.cpp/hpp  Bessel functions (separate compilation unit)
+    bessel-library.hpp      Template Bessel library
+  build.py                  Build definition, used by CLI and GUI alike
+  run_tests.py              Runs the whole test suite, reports pass/fail
   gui.py                    PyQt6 GUI with real-time streaming
   style.qss                 Dark theme stylesheet
   log_viewer.py             Standalone log viewer with pyqtgraph
+  physics_data_viewer.py    Cross sections and rate coefficients inspector
+  run_config.py             Single source of truth for run parameters
+  package_registry.py       Discovers chemistry packages, routes backends
+  Generic chemistry layer (not yet wired into the production path)
+    plasma_chemistry.py     Species, reactions, balance assembler
+    generic_solver.py       LM solver over the dynamic state vector
+    chem_system.hpp         C++ counterpart
+    generic_lm.hpp          C++ generic LM solver
   rate_coefficients.py      Maxwell-Boltzmann integration, legacy fits
   convert_lxcat.py          LXCat raw data to CSV converter
   precompute_rates.py       Generate lookup tables from cross-sections
-  test_solver.py            Test suite (5 tests)
   dietz_validation.py       RIT-4 benchmark validation (Dietz 2021)
   config_dietz_rit4.txt     RIT-4 configuration file
   param_study.py            P x Q0 parameter study
   rate_model_comparison.py  Compare all 3 rate model presets
   audit_kel.py              Kel implementation audit
   cross_sections/
-    xenon/                  Complete Biagi cross-section data
-      elastic.csv           199 data points (momentum transfer)
-      ionization.csv        54 data points
-      excitation/           50 individual process files
-      kel_table.csv         Pre-integrated Kel(Te), 391 points
-      kiz_table.csv         Pre-integrated Kiz(Te), 391 points
-      kex_table.csv         Pre-integrated Kex(Te), 391 points
-      metadata.json         Process overview
+    xenon/
+      biagi/                Biagi/LXCat data (elastic, ionization, 50 excitations)
+        elastic.csv         Momentum transfer
+        ionization.csv
+        excitation/         Individual process files
+        kel_table.csv       Pre-integrated Kel(Te)
+        kiz_table.csv       Pre-integrated Kiz(Te)
+        kex_table.csv       Pre-integrated Kex(Te)
+        db_info.json        Database identification
+        metadata.json       Process overview
+      hayashi/              Second database, same layout
     krypton/                Placeholder (README only)
     argon/                  Placeholder (README only)
-    tests/
-      xenon_all.txt         LXCat source file (Biagi V8.97)
+    tests/                  LXCat source files
+  chemistry/                Chemistry packages (xenon_simple, two iodine sets)
+  Iodmodell/                Legacy iodine model (2019), reference only
+  archive/                  Pre-split monolith, for reference
   docs/
     Global_Plasma_Model_Documentation_Current.docx
     validation_report_rit4_kk.docx
@@ -97,18 +120,15 @@ pip install PyQt6 pyqtgraph numpy scipy python-docx
 ## Build
 
 ```bash
-# Compile Bessel wrapper (separate unit for faster rebuilds)
-g++ -O3 -march=native -std=c++17 -c bessel_wrapper.cpp -o bessel_wrapper.o
-
-# Compile solver
-g++ -O3 -march=native -std=c++17 chabert_modified.cpp bessel_wrapper.o -o chabert
+python build.py            # compile the C++ core
+python build.py --clean    # remove objects and binary first
+python build.py --tests    # also build the C++ test programs
 ```
 
-On Windows with WSL:
-```bash
-wsl g++ -O3 -march=native -std=c++17 -c bessel_wrapper.cpp -o bessel_wrapper.o
-wsl g++ -O3 -march=native -std=c++17 chabert_modified.cpp bessel_wrapper.o -o chabert
-```
+`build.py` holds the single definition of which translation units are built
+with which flags. The GUI's "Kompilieren" button uses the same definition, so
+there is no second place that can drift. On Windows the GUI prefers WSL when
+available and falls back to a native g++.
 
 ## Run
 
@@ -172,7 +192,20 @@ The `cross_sections/xenon/` directory contains Biagi/LXCat data for Xenon. To ad
 
 - **Chabert 2012**: Legacy mode reproduces paper results
 - **Dietz et al. 2021**: RIT-4 benchmark comparison available via `dietz_validation.py`
-- **Test suite**: `python test_solver.py` runs 5 automated tests (reference, convergence, unphysical params, regression, self-consistent mode)
+- **Test suite**: `python run_tests.py` runs the whole test bestand — 17 Python
+  tests plus the two compiled C++ test programs — and reports pass/fail per test.
+
+```bash
+python run_tests.py              # everything
+python run_tests.py --build      # compile the core first, then test
+python run_tests.py --only ifix  # only tests whose name contains "ifix"
+python run_tests.py --list       # just list what would run
+```
+
+The runner uses the interpreter it was started with and names it in the header.
+Several tests import PyQt6; if the interpreter lacks it, those tests are
+reported as an incomplete environment rather than as a failure. Last full run:
+19 of 19 pass.
 
 ## Known Limitations
 

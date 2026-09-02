@@ -49,7 +49,8 @@ import pyqtgraph as pg
 SCRIPT_DIR = Path(__file__).resolve().parent
 os.chdir(SCRIPT_DIR)
 
-CPP_SOURCE = "main.cpp"
+import build as cpp_build
+
 CONFIG_FILE = "params.txt"
 OUTPUT_FILE = "output_kh.txt"
 
@@ -1562,33 +1563,18 @@ class SimulatorWindow(QMainWindow):
             return
         self.set_status("Kompiliere ...")
         self.log_msg("Kompilierung ...")
-        # Modulare Kompilierung: 6 Objekte + main -> chabert
-        CPP_MODULES = ["bessel_wrapper", "sim_config", "rates", "physics", "solver", "sim_logging"]
+        # Welche Einheiten mit welchen Schaltern uebersetzt werden, steht in
+        # build.py -- hier wird nur noch die passende Prozesszeile geholt.
         if self.wsl_available():
-            cwd = self.win_to_wsl(str(SCRIPT_DIR))
-            compile_steps = " && ".join(
-                f'g++ -O3 -march=native -std=c++17 -c {m}.cpp -o {m}.o 2>&1'
-                for m in CPP_MODULES)
-            link_objs = " ".join(f'{m}.o' for m in CPP_MODULES)
-            prog, args = "wsl", ["bash", "-c",
-                f'cd "{cwd}" && {compile_steps} && '
-                f'g++ -O3 -march=native -std=c++17 {CPP_SOURCE} {link_objs} -o chabert 2>&1']
+            prog, args = cpp_build.build_command(
+                self.win_to_wsl(str(SCRIPT_DIR)), "g++", use_wsl=True)
         else:
             cc = shutil.which("g++")
             if not cc:
                 QMessageBox.critical(self, "Fehler", "g++ nicht gefunden.")
                 return
-            out = "chabert.exe" if sys.platform == "win32" else "chabert"
-            ext = ".obj" if sys.platform == "win32" else ".o"
-            shell = "cmd" if sys.platform == "win32" else "bash"
-            flag = "/c" if sys.platform == "win32" else "-c"
-            compile_steps = " && ".join(
-                f'"{cc}" -O3 -march=native -std=c++17 -c {m}.cpp -o {m}{ext}'
-                for m in CPP_MODULES)
-            link_objs = " ".join(f'{m}{ext}' for m in CPP_MODULES)
-            prog, args = shell, [flag,
-                f'{compile_steps} && '
-                f'"{cc}" -O3 -march=native -std=c++17 {CPP_SOURCE} {link_objs} -o {out}']
+            prog, args = cpp_build.build_command(
+                str(SCRIPT_DIR), cc, use_wsl=False)
         self._cp = QProcess(self)
         self._cp.setWorkingDirectory(str(SCRIPT_DIR))
         self._cp.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
