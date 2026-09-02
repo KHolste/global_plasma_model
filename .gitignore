@@ -38,3 +38,10 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Python-Solver-Laeufe (strukturierte Logs, pro Lauf neu)
+python_run_*.jsonl
+iodine_sweep_results.csv
+
+# Fremdes Repository, nur als Referenz danebengelegt (eigene Lizenz)
+Global_Model_GIT-main/
