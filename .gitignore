@@ -65,3 +65,6 @@ chem_run_params.txt
 xenon_package_params.txt
 power_range_params.txt
 gas_guard_params.txt
+
+# Datenuebersicht: die CSV-Dateien kommen mit, die Bilder nicht
+data_overview/**/figures/

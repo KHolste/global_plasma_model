@@ -100,6 +100,19 @@ JSON-Bibliothek wird ausschließlich vom Chemielader eingebunden.
 `Global_Model_GIT-main/` ist ein fremdes Repository mit eigener Lizenz und wird
 bewusst nicht mitversioniert.
 
+## Datenbestand
+
+`data_overview/` ordnet alle vorhandenen Wirkungsquerschnitte und
+Ratenkoeffizienten nach Gassorte, als CSV mit einer Kopfzeile für Prozess und
+Quelle und zwei Spalten. Dazu je eine Abbildung pro Prozess und
+Übersichtsbilder je Gas und Datenbank. Erzeugt mit
+`python make_data_overview.py`; die CSV-Dateien sind mitversioniert, die
+Abbildungen nicht.
+
+Stand: Xenon 68 Querschnitte aus zwei Datenbanken und 61 Ratenkoeffizienten,
+Iod 30 Ratenkoeffizienten und **keine** Querschnitte, Argon und Krypton nichts
+außer den Stoffkonstanten im Programm.
+
 ## Offene Physikbefunde
 
 Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
