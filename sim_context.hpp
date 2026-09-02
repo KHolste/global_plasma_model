@@ -167,6 +167,9 @@ struct SimContext {
     SolverParams solver;
 
     std::string  cs_database     = "biagi";
+    // Chemiepaket fuer den generischen Rechenweg. Leer heisst: fest
+    // verdrahtete Xenon-Physik wie bisher.
+    std::string  chem_package    = "";
     std::string  meta_preset_id  = "custom";
     int          rate_model   = 0;
     int          debug_level  = 2;

@@ -184,6 +184,33 @@ struct ChemSystem {
 };
 
 // ═════════════════════════════════════════════════════════════
+// Stossfrequenz aus dem Reaktionsnetz
+//
+// Summiert ueber alle Reaktionen, die als Beitrag zur Stossfrequenz
+// gekennzeichnet sind: nu_m = sum_r K_r(Te) * n(Stosspartner). Ist keine
+// Reaktion gekennzeichnet, kommt -1 zurueck; der Aufrufer faellt dann auf
+// den bisherigen Weg mit dem einen elastischen Ratenkoeffizienten zurueck.
+// ═════════════════════════════════════════════════════════════
+
+inline double chem_nu_m(const ChemSystem& sys, const std::vector<double>& state,
+                        const SimContext& ctx, double Te) {
+    bool markiert = false;
+    double nu = 0;
+    for (const auto& rxn : sys.reactions) {
+        if (!rxn.contributes_nu_m) continue;
+        markiert = true;
+        double K = rxn.rate.evaluate(ctx, Te);
+        if (K <= 0) continue;
+        for (const auto& kv : rxn.reactants) {
+            if (kv.first == "e") continue;
+            int idx = sys.species_index(kv.first);
+            if (idx >= 0) nu += K * state[idx];
+        }
+    }
+    return markiert ? nu : -1.0;
+}
+
+// ═════════════════════════════════════════════════════════════
 // Generischer Residual-Assembler
 // ═════════════════════════════════════════════════════════════
 
@@ -416,6 +443,7 @@ inline ChemSystem build_xenon_system(const SimContext& ctx) {
     elastic.products = {{"e", 1}, {"Xe", 1}};
     elastic.energy_eV = 0;
     elastic.contributes_elastic = true;
+    elastic.contributes_nu_m = true;
     elastic.rate.type = RateType::CTX_KEL;
     sys.reactions.push_back(elastic);
 

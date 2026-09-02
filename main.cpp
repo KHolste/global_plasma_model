@@ -11,6 +11,8 @@
 #include "solver.hpp"
 #include "sim_logging.hpp"
 #include "sim_config.hpp"
+#include "chem_loader.hpp"
+#include "generic_lm.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -20,6 +22,149 @@
 
 using namespace std;
 
+// ═════════════════════════════════════════════════════════════
+// Generischer Rechenweg ueber ein geladenes Chemiepaket
+// ═════════════════════════════════════════════════════════════
+
+// Zusammengefasster Zustand fuer die abgeleiteten Groessen. Diese rechnen
+// weiterhin mit einer Ionensorte und einer Masse; die Verallgemeinerung auf
+// Ladungszahl und mehrere Sorten steht noch aus.
+static PlasmaState lumped_state(const ChemSystem& sys, const vector<double>& st) {
+    PlasmaState ps{};
+    for (int i = 0; i < (int)sys.species.size(); ++i) {
+        if (sys.species[i].is_positive_ion()) ps.n += st[i];
+        else if (sys.species[i].is_neutral()) ps.ng += st[i];
+    }
+    ps.Te = st[sys.Te_idx()];
+    ps.Tg = st[sys.Tg_idx()];
+    return ps;
+}
+
+// Stoffwerte aus dem Paket in den Kontext uebernehmen, soweit die abgeleiteten
+// Groessen sie brauchen: Masse aus dem extrahierten Ion, Waermeleitfaehigkeit
+// aus der zugefuehrten Sorte, Stossquerschnitt aus dem Paketkopf.
+static void adopt_package_properties(SimContext& ctx, const ChemSystem& sys) {
+    const ChemSpecies* ion = nullptr;
+    for (const auto& sp : sys.species) {
+        if (!sp.is_positive_ion()) continue;
+        if (!ion) ion = &sp;
+        if (sp.is_beam_extracted) { ion = &sp; break; }
+    }
+    const ChemSpecies* feed = sys.feedstock();
+    if (ion) ctx.gas.M = ion->mass_kg;
+    if (feed && feed->thermal_cond > 0) ctx.gas.kappa = feed->thermal_cond;
+    ctx.gas.sigma_i = sys.sigma_i;
+    ctx.recompute();
+}
+
+static void run_generic_sweep(SimContext& ctx, const ChemSystem& sys, ofstream& datei,
+                              vector<SimLogRow>& log_rows, vector<SimLogEvent>& log_events,
+                              int& count_ok, int& count_nophys, int& count_numfail) {
+    auto& t = ctx.thruster;
+    auto& sp = ctx.solver;
+    const double P_RFG_start = t.P_RFG;
+
+    vector<double> prev, last_good;
+    bool have_prev = false, have_good = false;
+    double last_good_q0 = 0;
+
+    for (int jj = 0; jj < sp.jjmax; ++jj) {
+        t.Q0sccm = sp.Q0sccm_start + jj * sp.Q0sccm_step;
+        t.Q0 = t.Q0sccm * PhysConst::SCCM_TO_PPS;
+        cout << "Q0_STEP " << fixed << setprecision(4) << t.Q0sccm << " "
+             << (jj + 1) << " " << sp.jjmax << endl;
+
+        vector<double> guess;
+        if (have_good && fabs(t.Q0sccm - last_good_q0) <= 20 * sp.Q0sccm_step) guess = last_good;
+        else if (have_prev) guess = prev;
+        else guess = gen_default_state(sys, t.Q0, t.V);
+
+        GenPowerResult ps = (sp.solve_mode == 2)
+            ? gen_solve_at_fixed_power(sys, ctx, t.P_RFG, guess)
+            : gen_solve_for_target_current(sys, ctx, guess);
+
+        if (sp.solve_mode == 1) {
+            double I_found = isfinite(ps.I_mA) ? ps.I_mA : 0;
+            double P_found = isfinite(ps.P_RFG_sol) ? ps.P_RFG_sol : 0;
+            string status_str = ps.converged ? "converged" :
+                (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION ? "above_P_max" : "numerical_fail");
+            cout << "IFIX_RESULT " << fixed << setprecision(4) << t.Q0sccm << " "
+                 << setprecision(2) << P_found << " " << sp.I_soll << " "
+                 << I_found << " " << (I_found - sp.I_soll) << " " << status_str << endl;
+        }
+
+        bool brauchbar = ps.converged && (int)ps.state.size() == sys.state_size()
+                         && ps.rf.valid && isfinite(ps.P_RFG_sol) && ps.P_RFG_sol > 0;
+        if (!brauchbar) {
+            string ft = (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION)
+                        ? "NO_PHYSICAL_SOLUTION" : "NUMERICAL_FAIL";
+            if (ps.fail_type == SolveFailType::NO_PHYSICAL_SOLUTION) {
+                count_nophys++;
+                cout << "NO_PHYSICAL_SOLUTION " << jj << " " << fixed << setprecision(4)
+                     << t.Q0sccm << " " << ps.reason
+                     << " I_best=" << (isfinite(ps.I_mA) ? ps.I_mA : -1)
+                     << " P_max_tried=" << (isfinite(ps.P_trial_last) ? ps.P_trial_last : -1) << endl;
+            } else {
+                count_numfail++;
+                cout << "NUMERICAL_FAIL " << jj << " " << fixed << setprecision(4)
+                     << t.Q0sccm << " " << ps.reason << endl;
+            }
+            log_rows.push_back({jj, t.Q0sccm, ft, ft,
+                isfinite(ps.P_trial_last) ? ps.P_trial_last : 0, isfinite(ps.I_mA) ? ps.I_mA : 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                ps.reason, false});
+            log_events.push_back({jj, t.Q0sccm, ft + ": " + ps.reason});
+            continue;
+        }
+
+        count_ok++;
+        prev = ps.state; have_prev = true;
+        if (isfinite(ps.inner_resid_norm) && ps.inner_resid_norm < sp.newton_tol) {
+            last_good = ps.state; have_good = true; last_good_q0 = t.Q0sccm;
+        }
+        t.P_RFG = ps.P_RFG_sol;
+
+        PlasmaState st = lumped_state(sys, ps.state);
+        DerivedQuantities dq = compute_derived(ctx, st.n, st.ng, st.Te, st.Tg,
+                                                ps.rf.R_ind, ps.rf.I_coil, ps.rf.P_abs);
+        dq.I_extr_mA = gen_beam_current_mA(sys, ctx, ps.state);
+
+        if (sp.solve_mode == 2) {
+            cout << "PID_DONE " << fixed << setprecision(4) << ps.I_mA << " 0.0000 "
+                 << ps.P_RFG_sol << " " << st.Te << " " << st.Tg << endl;
+            cout << "CONVERGED " << ps.iterations << endl;
+        }
+
+        cout << "RESULT " << scientific << setprecision(4) << st.n << " " << st.ng << " "
+             << fixed << setprecision(3) << st.Te << " " << st.Tg << " "
+             << dq.I_extr_mA << " " << t.P_RFG << endl;
+
+        // Aufgeschluesselt, was der zusammengefasste Zustand verdeckt
+        for (int i = 0; i < (int)sys.species.size(); ++i)
+            cout << "SPECIES_DENSITY " << sys.species[i].id << " "
+                 << scientific << setprecision(4) << ps.state[i] << endl;
+
+        cout << "RESULT_EXT " << fixed << setprecision(6) << t.Q0sccm << " " << t.P_RFG << " "
+             << scientific << setprecision(4) << st.n << " " << st.ng << " " << st.n << " "
+             << fixed << setprecision(4)
+             << dq.T_i_N * 1e3 << " " << dq.T_n_N * 1e3 << " " << dq.T_total_N * 1e3 << " "
+             << dq.icp_eff << " " << dq.gamma_eff << " " << dq.xi_mN_kW << " " << dq.eta_mass << endl;
+
+        log_rows.push_back({jj, t.Q0sccm, "CONVERGED", "NONE",
+            t.P_RFG, dq.I_extr_mA, st.Te, st.Tg, st.n, st.ng, ps.inner_resid_norm,
+            dq.iondeg, ps.rf.P_abs, dq.cf, ps.rf.R_ind, ps.rf.I_coil,
+            dq.eps_p_real, dq.eps_p_imag, dq.u_Bohm, dq.J_i, dq.pf, dq.P_RF,
+            dq.T_i_N * 1e3, dq.T_n_N * 1e3, dq.T_total_N * 1e3,
+            dq.icp_eff, dq.gamma_eff, dq.xi_mN_kW, dq.eta_mass,
+            "ok", true});
+
+        emit_csv_row(datei, "Generic", t.Q0sccm, st.n, st.ng, st.Te, st.Tg,
+                     t.P_RFG, ps.rf.P_abs, ps.rf.R_ind, ps.rf.I_coil, ctx, dq);
+
+        t.P_RFG = P_RFG_start;
+    }
+}
+
 int main(int argc, char** argv) {
     string configFile = "params.txt";
     if (argc >= 2) configFile = argv[1];
@@ -28,6 +173,25 @@ int main(int argc, char** argv) {
     SimContext ctx;
     auto cd = loadConfig(configFile);
     applyConfig(ctx, cd);
+
+    // Chemiepaket, falls die Konfiguration eines nennt. Scheitert das Laden,
+    // laeuft der bisherige fest verdrahtete Weg weiter: ein fehlerhaftes Paket
+    // darf einen Lauf nicht verhindern, muss aber auffallen.
+    ChemSystem chem_sys;
+    bool chem_geladen = false;
+    if (!ctx.chem_package.empty()) {
+        const string chem_pfad = resolve_chem_package(ctx.chem_package);
+        ChemLoadResult cr = load_chem_package(chem_pfad);
+        if (cr.ok) {
+            chem_sys = cr.system;
+            chem_geladen = true;
+            adopt_package_properties(ctx, chem_sys);
+        } else {
+            cerr << "WARNUNG: Chemiepaket " << chem_pfad << " nicht geladen:" << endl
+                 << cr.error_text() << endl
+                 << "Falle auf die fest verdrahtete Physik zurueck." << endl;
+        }
+    }
 
     auto start_time = chrono::high_resolution_clock::now();
     int count_ok = 0, count_nophys = 0, count_numfail = 0;
@@ -49,6 +213,18 @@ int main(int argc, char** argv) {
              << "#   Solver: Newton (stationaer)                    #\n"
              << "####################################################\n"
              << reset << endl;
+
+        if (chem_geladen) {
+            cout << "CHEM_PACKAGE " << chem_sys.source_path << " (" << chem_sys.name << ")" << endl;
+            cout << "CHEM_SPECIES " << chem_sys.species.size()
+                 << " CHEM_REACTIONS " << chem_sys.reactions.size() << endl;
+            for (const auto& csp : chem_sys.species)
+                cout << "CHEM_SPECIES_ITEM " << csp.id << " Ladung " << csp.charge
+                     << " Masse " << scientific << setprecision(6) << csp.mass_kg << endl;
+            cout << "SOLVER_PATH generic" << endl;
+        } else {
+            cout << "SOLVER_PATH legacy" << endl;
+        }
 
         cout << "GAS_SPECIES " << g.species << endl;
         cout << "GAS_MASS " << scientific << setprecision(6) << g.M << " kg" << endl;
@@ -105,6 +281,10 @@ int main(int argc, char** argv) {
         double last_good_q0 = 0;
 
         // ═══ Q0-Sweep ══════════════════════════════════════
+        if (chem_geladen) {
+            run_generic_sweep(ctx, chem_sys, datei, log_rows, log_events,
+                              count_ok, count_nophys, count_numfail);
+        } else
         for (int jj = 0; jj < sp.jjmax; ++jj) {
             t.Q0sccm = sp.Q0sccm_start + jj * sp.Q0sccm_step;
             t.Q0 = t.Q0sccm * PhysConst::SCCM_TO_PPS;

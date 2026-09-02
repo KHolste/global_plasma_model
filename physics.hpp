@@ -75,6 +75,10 @@ inline PlasmaState safe_defaults(const SimContext& ctx) {
 // ═══ Groessere Funktionen (deklariert, impl in physics.cpp) ═
 
 RFState compute_rf(const SimContext& ctx, double n, double ng, double Te, double P_RFG);
+// Gleiche Rechnung, aber mit von aussen bestimmter Stossfrequenz. Der
+// generische Weg bildet sie aus den Reaktionen des Chemiepakets; der feste
+// Weg laesst sie aus dem einen elastischen Ratenkoeffizienten bilden.
+RFState compute_rf_nu(const SimContext& ctx, double n, double nu_m, double P_RFG);
 std::array<double,4> residual_raw(const SimContext& ctx, const PlasmaState& s, double P_RFG, RFState* rf_out = nullptr);
 std::array<double,4> residual_scaled(const SimContext& ctx, const PlasmaState& s, double P_RFG, RFState* rf_out = nullptr);
 DerivedQuantities compute_derived(const SimContext& ctx, double n, double ng, double Te, double Tg, double R_ind, double I_coil, double P_abs);

@@ -11,15 +11,20 @@ using namespace PhysConst;
 // ═══ RF-Kopplung (Bessel-BVP) ══════════════════════════════
 
 RFState compute_rf(const SimContext& ctx, double n, double ng, double Te, double P_RFG_local) {
+    if (!(std::isfinite(ng) && std::isfinite(Te)) || ng <= 0 || Te <= 0) return RFState{};
+    return compute_rf_nu(ctx, n, coll_freq(ctx, ng, Te), P_RFG_local);
+}
+
+RFState compute_rf_nu(const SimContext& ctx, double n, double nu_m, double P_RFG_local) {
     const auto& t = ctx.thruster;
     RFState out{};
-    if (!(std::isfinite(n) && std::isfinite(ng) && std::isfinite(Te) && std::isfinite(P_RFG_local))
-        || n<=0 || ng<=0 || Te<=0 || P_RFG_local<=0)
+    if (!(std::isfinite(n) && std::isfinite(nu_m) && std::isfinite(P_RFG_local))
+        || n<=0 || nu_m<=0 || P_RFG_local<=0)
         return out;
 
-    double a = plasma_freq(n), b = t.omega, cf = coll_freq(ctx, ng, Te);
+    double a = plasma_freq(n), b = t.omega, cf = nu_m;
     double den = b*b + cf*cf;
-    if (!std::isfinite(a) || !std::isfinite(cf) || den <= 0) return out;
+    if (!std::isfinite(a) || den <= 0) return out;
 
     double it = a*a*cf/(b*den);
     double rt = 1.0 - a*a/den;

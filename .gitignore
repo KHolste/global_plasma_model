@@ -55,3 +55,6 @@ test_generic_lm
 test_generic_lm.exe
 test_chem_loader
 test_chem_loader.exe
+
+# Von den Tests erzeugte Konfigurationen
+chem_run_params.txt

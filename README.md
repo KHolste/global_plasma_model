@@ -10,7 +10,7 @@ Based on **Chabert et al., Phys. Plasmas 19, 073512 (2012)**, extended with tabu
 - **3 rate model presets**: Legacy (paper-compatible), Conservative tabulated, Full tabulated
 - **2 operating modes**: fixed beam current (I-fix) and self-consistent (SC)
 - **Multi-gas architecture**: Xenon fully integrated, Krypton/Argon structurally prepared
-- **Chemistry packages**: species/reactions/rate tables read from JSON by both the Python and the C++ side
+- **Chemistry packages**: species/reactions/rate tables read from JSON by both the Python and the C++ side; select one with `chemistry_package` to run the generic solver over it
 - **PyQt6 GUI** with real-time streaming, live plots, and parameter sweeps
 - **Levenberg-Marquardt solver** with Pseudo-Transient Continuation (PTC) warm-start
 - **Adaptive power bracketing** for robust fixed-current operation across all rate models
@@ -172,6 +172,11 @@ rate_model 2
 use_paper_kel 1
 ```
 
+Add `chemistry_package xenon_simple` (or any directory under `chemistry/`) to
+run the generic solver over that package instead of the hard-wired physics.
+If the package cannot be loaded, the run falls back to the hard-wired path and
+says so on stderr.
+
 ## Example Workflow
 
 1. Start the GUI: `python gui.py`
@@ -196,7 +201,7 @@ The `cross_sections/xenon/` directory contains Biagi/LXCat data for Xenon. To ad
 
 - **Chabert 2012**: Legacy mode reproduces paper results
 - **Dietz et al. 2021**: RIT-4 benchmark comparison available via `dietz_validation.py`
-- **Test suite**: `python run_tests.py` runs the whole test bestand — 18 Python
+- **Test suite**: `python run_tests.py` runs the whole test bestand — 19 Python
   tests plus the three compiled C++ test programs — and reports pass/fail per test.
 
 ```bash
@@ -209,7 +214,7 @@ python run_tests.py --list       # just list what would run
 The runner uses the interpreter it was started with and names it in the header.
 Several tests import PyQt6; if the interpreter lacks it, those tests are
 reported as an incomplete environment rather than as a failure. Last full run:
-21 of 21 pass.
+22 of 22 pass.
 
 ## Known Limitations
 

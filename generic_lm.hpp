@@ -147,7 +147,11 @@ static std::vector<double> gen_residual_scaled(
         if (sys.species[i].is_neutral()) ng += state[i];
     double Te = state[sys.Te_idx()];
 
-    RFState rf = compute_rf(ctx, n_ion, ng, Te, P_RFG);
+    // Stossfrequenz aus dem Reaktionsnetz; ist dort nichts gekennzeichnet,
+    // bleibt es beim bisherigen Weg ueber den einen elastischen Koeffizienten.
+    double nu_m = chem_nu_m(sys, state, ctx, Te);
+    RFState rf = (nu_m >= 0) ? compute_rf_nu(ctx, n_ion, nu_m, P_RFG)
+                             : compute_rf(ctx, n_ion, ng, Te, P_RFG);
     if (rf_out) *rf_out = rf;
     if (!rf.valid) return std::vector<double>(N, std::numeric_limits<double>::quiet_NaN());
 
@@ -305,9 +309,22 @@ inline GenSolveResult gen_solve_lm(
             for (double v : Ft) { if (!std::isfinite(v)) { ok=false; break; } ct += v*v; } ct *= 0.5;
             if (!ok || !std::isfinite(ct)) { lambda = std::min(lambda*4, lam_max); if (lambda >= lam_max) break; continue; }
 
-            if (cost - ct > 0) {
+            // Guete des Schritts: tatsaechliche gegen vorhergesagte Senkung.
+            // Beides vor dem Uebernehmen bilden -- sonst ist das Verhaeltnis
+            // immer null und die Daempfung waechst bei jedem Schritt.
+            double act = cost - ct;
+            if (act > 0) {
+                double quad = 0, damp = 0;
+                for (int i = 0; i < N; ++i) {
+                    double jd = 0;
+                    for (int j = 0; j < N; ++j) jd += JtJ[i][j] * dx[j];
+                    quad += dx[i] * jd;
+                    damp += lambda * std::max(JtJ[i][i], 1e-10*std::max(dmax, 1e-20)) * dx[i] * dx[i];
+                }
+                double pred = 0.5*quad + damp;
+                if (pred <= 0) pred = 1e-30;
+                double rho = act / pred;
                 x = xt; state = st; rf = rft; F = Ft; cost = ct; accepted = true;
-                double rho = (cost - ct) / std::max(1e-30, cost);
                 if (rho > 0.75) lambda = std::max(lambda/3, lam_min);
                 else if (rho < 0.25) lambda = std::min(lambda*2, lam_max);
                 break;
@@ -383,6 +400,189 @@ inline double gen_beam_current_mA(const ChemSystem& sys, const SimContext& ctx,
     ps.Te = state[sys.Te_idx()];
     ps.Tg = state[sys.Tg_idx()];
     return beam_current_mA(ctx, ps);
+}
+
+// ═════════════════════════════════════════════════════════════
+// Betriebsarten: feste Leistung und fester Strahlstrom
+//
+// Gegenstueck zu solve_at_fixed_power/solve_for_target_current des fest
+// verdrahteten Pfades, aber ueber dem generischen Zustandsvektor. Die
+// Ausgabezeilen sind dieselben, damit Oberflaeche und Protokoll den
+// Unterschied nicht bemerken muessen.
+// ═════════════════════════════════════════════════════════════
+
+struct GenPowerResult {
+    bool converged = false;
+    SolveFailType fail_type = SolveFailType::NONE;
+    std::vector<double> state;
+    RFState rf;
+    double P_RFG_sol = 0, P_trial_last = 0;
+    double I_mA = 0, err_mA = 0;
+    double inner_resid_norm = 1e30;
+    int iterations = 0;
+    std::string reason;
+};
+
+// Startzustaende: uebergebener Warmstart, Vorgabezustand, und deren
+// geometrisches Mittel. Dieselbe Staffelung wie im festen Pfad.
+inline std::vector<std::vector<double>> gen_starts(
+    const ChemSystem& sys, const SimContext& ctx, const std::vector<double>& guess)
+{
+    const int N = sys.state_size();
+    auto def = gen_default_state(sys, ctx.thruster.Q0, ctx.thruster.V);
+    std::vector<std::vector<double>> starts;
+    if ((int)guess.size() == N) starts.push_back(guess);
+    starts.push_back(def);
+    if ((int)guess.size() == N) {
+        std::vector<double> mid(N);
+        for (int i = 0; i < (int)sys.species.size(); ++i)
+            mid[i] = std::sqrt(std::max(1.0, guess[i] * def[i]));
+        mid[sys.Te_idx()] = 0.5 * (guess[sys.Te_idx()] + def[sys.Te_idx()]);
+        mid[sys.Tg_idx()] = 0.5 * (guess[sys.Tg_idx()] + def[sys.Tg_idx()]);
+        starts.push_back(mid);
+    }
+    return starts;
+}
+
+inline GenPowerResult gen_solve_at_fixed_power(
+    const ChemSystem& sys, const SimContext& ctx,
+    double P_RFG, const std::vector<double>& guess)
+{
+    GenPowerResult out;
+    GenSolveResult r = gen_solve_multistart(sys, ctx, P_RFG, gen_starts(sys, ctx, guess));
+    out.state = r.state;
+    out.rf = r.rf;
+    out.iterations = r.iterations;
+    out.inner_resid_norm = r.resid_norm;
+    out.P_RFG_sol = P_RFG;
+    out.P_trial_last = P_RFG;
+    if (r.converged && (int)r.state.size() == sys.state_size()) {
+        out.converged = true;
+        out.I_mA = gen_beam_current_mA(sys, ctx, r.state);
+        out.reason = r.reason;
+    } else {
+        out.fail_type = SolveFailType::NUMERICAL_FAIL;
+        out.reason = "generisch gescheitert: " + r.reason;
+    }
+    return out;
+}
+
+inline GenPowerResult gen_solve_for_target_current(
+    const ChemSystem& sys, const SimContext& ctx, const std::vector<double>& guess)
+{
+    const auto& sp = ctx.solver;
+    const double P_max = std::max(sp.P_RFG_max, 200.0);
+    GenPowerResult out;
+
+    // Untere Schranke
+    double p_lo = std::max(1.0, sp.power_min);
+    GenPowerResult lo = gen_solve_at_fixed_power(sys, ctx, p_lo, guess);
+    double f_lo = (lo.converged ? lo.I_mA : 0.0) - sp.I_soll;
+    std::vector<double> warm = lo.converged ? lo.state : guess;
+
+    // Obere Schranke suchen: verdoppeln, bis der Zielstrom ueberschritten ist
+    double p_hi = 2.0 * p_lo, f_hi = -sp.I_soll, p_last_good = p_lo;
+    GenPowerResult hi;
+    bool bracket = false;
+    for (int k = 0; k < 20 && p_hi <= P_max; ++k) {
+        hi = gen_solve_at_fixed_power(sys, ctx, p_hi, warm);
+        std::cout << "POWER_BRACKET " << std::fixed << std::setprecision(4)
+                  << p_lo << " " << p_hi << " " << f_lo << " "
+                  << (hi.converged ? hi.I_mA - sp.I_soll : 0.0)
+                  << " hi_conv=" << hi.converged << std::endl;
+        if (hi.converged) {
+            f_hi = hi.I_mA - sp.I_soll;
+            warm = hi.state;
+            p_last_good = p_hi;
+            if (f_lo * f_hi < 0) { bracket = true; break; }
+            p_hi = std::min(p_hi * 2.0, P_max + 1.0);
+        } else {
+            // Oberhalb liegt keine Loesung mehr: zwischen dem letzten guten
+            // Punkt und hier weiter einschachteln, sonst aufgeben.
+            double mitte = 0.5 * (p_last_good + p_hi);
+            if (mitte - p_last_good < 0.25) break;
+            p_hi = mitte;
+        }
+    }
+
+    if (!bracket) {
+        const GenPowerResult& best = (std::fabs(f_lo) <= std::fabs(f_hi)) ? lo : hi;
+        out = best;
+        out.converged = false;
+        out.P_trial_last = p_hi;
+        out.I_mA = best.converged ? best.I_mA : 0.0;
+        out.err_mA = sp.I_soll - out.I_mA;
+        out.fail_type = (lo.converged && hi.converged)
+                        ? SolveFailType::NO_PHYSICAL_SOLUTION
+                        : SolveFailType::NUMERICAL_FAIL;
+        out.reason = "keine Einschachtelung (I_lo=" + std::to_string(lo.I_mA) +
+                     " I_hi=" + std::to_string(hi.I_mA) + ")";
+        return out;
+    }
+
+    // Regula falsi mit Rueckfall auf Bisektion
+    GenPowerResult best; double best_err = 1e30;
+    int inner_fail = 0;
+    for (int it = 0; it < 60; ++it) {
+        double pm, ds = f_hi - f_lo;
+        if (std::fabs(ds) > 1e-12) {
+            pm = p_lo - f_lo * (p_hi - p_lo) / ds;
+            if (!std::isfinite(pm) || pm <= p_lo || pm >= p_hi) pm = 0.5 * (p_lo + p_hi);
+        } else {
+            pm = 0.5 * (p_lo + p_hi);
+        }
+        std::cout << "PID_START " << it << " " << std::fixed << std::setprecision(4) << pm << std::endl;
+
+        GenPowerResult m = gen_solve_at_fixed_power(sys, ctx, pm, warm);
+        if (!m.converged) {
+            if (++inner_fail >= 5) {
+                out = (best_err < 1e30) ? best : m;
+                out.converged = false;
+                out.fail_type = SolveFailType::NUMERICAL_FAIL;
+                out.reason = "innerer Loeser " + std::to_string(inner_fail) + "x gescheitert";
+                return out;
+            }
+            p_hi = pm; f_hi = f_lo;  // Fenster verkleinern und erneut versuchen
+            continue;
+        }
+        warm = m.state;
+        double fm = m.I_mA - sp.I_soll, ae = std::fabs(fm);
+        std::cout << "PID_DONE " << std::fixed << std::setprecision(4) << m.I_mA << " "
+                  << -fm << " " << pm << " " << m.state[sys.Te_idx()] << " "
+                  << m.state[sys.Tg_idx()] << std::endl;
+
+        m.P_RFG_sol = pm; m.P_trial_last = pm; m.err_mA = -fm; m.iterations = it;
+        if (ae < best_err) { best_err = ae; best = m; }
+
+        if (ae < sp.power_tol_mA) {
+            best.converged = true; best.reason = "ok";
+            std::cout << "CONVERGED " << it << std::endl;
+            return best;
+        }
+        double fenster = p_hi - p_lo;
+        if (fenster < 0.01) {
+            if (best_err < 1.0) {
+                best.converged = true; best.reason = "Plateau angenommen";
+                std::cout << "CONVERGED " << it << std::endl;
+            } else {
+                best.converged = false;
+                best.fail_type = SolveFailType::NO_PHYSICAL_SOLUTION;
+                best.reason = "Plateau";
+            }
+            return best;
+        }
+        if (f_lo * fm <= 0) { p_hi = pm; f_hi = fm; } else { p_lo = pm; f_lo = fm; }
+    }
+
+    if (best_err < 10 * sp.power_tol_mA) {
+        best.converged = true; best.reason = "nach Hoechstzahl angenommen";
+        std::cout << "CONVERGED 60" << std::endl;
+        return best;
+    }
+    best.converged = false;
+    best.fail_type = SolveFailType::NUMERICAL_FAIL;
+    best.reason = "Bisektion ohne Treffer";
+    return best;
 }
 
 #endif // GENERIC_LM_HPP

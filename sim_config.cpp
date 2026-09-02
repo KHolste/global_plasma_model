@@ -126,7 +126,7 @@ static ConfigData parseJsonConfig(const std::string& text) {
 
 static ConfigData parseParamsTxt(const std::string& text) {
     ConfigData cd;
-    static const std::set<std::string> STR = {"gas_species", "cs_database"};
+    static const std::set<std::string> STR = {"gas_species", "cs_database", "chemistry_package"};
     std::istringstream stream(text);
     std::string line;
     while (std::getline(stream, line)) {
@@ -191,6 +191,7 @@ void applyConfig(SimContext& ctx, const ConfigData& cd) {
             std::cerr << "FEHLER: Unbekanntes Gas '" << gs << "'" << std::endl;
     }
     if (cd.strings.count("cs_database")) ctx.cs_database = cd.strings.at("cs_database");
+    if (cd.strings.count("chemistry_package")) ctx.chem_package = cd.strings.at("chemistry_package");
     if (cd.strings.count("preset_id")) ctx.meta_preset_id = cd.strings.at("preset_id");
 
     // Thruster

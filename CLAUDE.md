@@ -39,7 +39,7 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **21 von 21 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **22 von 22 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
@@ -58,9 +58,15 @@ mitversioniert, weil jeder Testlauf sie überschreibt.
 Daneben liegt eine **generische Chemieschicht** mit Spezies, Reaktionen und
 einem Bilanz-Assembler, in Python und in C++, jeweils mit eigenem Test. Beide
 Seiten lesen dieselben Chemiepakete aus `chemistry/<name>/chemistry.json`; ein
-Test stellt die geladenen Inhalte Wert für Wert gegenüber. Angeschlossen an das
-Hauptprogramm ist die Schicht **noch nicht** — der Produktivpfad rechnet weiter
-die fest verdrahtete Xenon-Physik.
+Test stellt die geladenen Inhalte Wert für Wert gegenüber.
+
+Der Rechenkern wählt seinen Weg über den Konfigurationsschlüssel
+`chemistry_package`: ist er gesetzt und das Paket ladbar, rechnet der
+generische Löser darüber, sonst die fest verdrahtete Xenon-Physik. Ein
+fehlerhaftes Paket führt zu einer Warnung und zum Rückfall, nicht zum Abbruch.
+Die abgeleiteten Größen — Schub, Strahlstrom, Wirkungsgrade — rechnen auf
+beiden Wegen noch mit einer Ionensorte und einfacher Ladung; das ist der
+nächste Umbau.
 
 Fremde Kopfdateien liegen unverändert in `third_party/` mit eigener Lizenz; die
 JSON-Bibliothek wird ausschließlich vom Chemielader eingebunden.
