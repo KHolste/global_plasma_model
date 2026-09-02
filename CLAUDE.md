@@ -39,7 +39,7 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **22 von 22 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **23 von 23 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
@@ -64,9 +64,12 @@ Der Rechenkern wählt seinen Weg über den Konfigurationsschlüssel
 `chemistry_package`: ist er gesetzt und das Paket ladbar, rechnet der
 generische Löser darüber, sonst die fest verdrahtete Xenon-Physik. Ein
 fehlerhaftes Paket führt zu einer Warnung und zum Rückfall, nicht zum Abbruch.
-Die abgeleiteten Größen — Schub, Strahlstrom, Wirkungsgrade — rechnen auf
-beiden Wegen noch mit einer Ionensorte und einfacher Ladung; das ist der
-nächste Umbau.
+Strahlstrom, Schub und Wirkungsgrade kommen auf beiden Wegen aus **einer**
+Rechnung, die über die Ionensorten summiert und die Ladungszahl in
+Bohm-Geschwindigkeit, Strom, Austrittsgeschwindigkeit und Raumladungsgrenze
+mitführt. Der Massenwirkungsgrad ist ein Massenverhältnis, nicht mehr ein
+Teilchenverhältnis. Greift die Raumladungsgrenze, wird der ganze Strahl mit
+demselben Faktor gedrosselt; die Zusammensetzung bleibt erhalten.
 
 Fremde Kopfdateien liegen unverändert in `third_party/` mit eigener Lizenz; die
 JSON-Bibliothek wird ausschließlich vom Chemielader eingebunden.
@@ -82,9 +85,6 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 - Der Dichteprofil-Faktor wirkt uneinheitlich zwischen Erzeugung und Verlust und
   zwischen den Bilanzgleichungen; Teilchen- und Energiebuchhaltung stimmen nicht
   überein, sobald er von eins abweicht.
-- Schub und Massenwirkungsgrad kommen aus dem reinen Bohm-Fluss, der Strahlstrom
-  aus dem vollen Extraktionsmodell mit Raumladungsgrenze — die Ausgaben
-  widersprechen sich bei begrenzter Extraktion.
 - Der Energieverlust der Elektronen an der Wand ist eine feste Zahl statt aus
   dem Randschichtpotential gerechnet.
 - Die Legacy-Ratenanpassungen sind Xenon-Polynome ohne Absicherung gegen die

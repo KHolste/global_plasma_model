@@ -125,9 +125,9 @@ static void run_generic_sweep(SimContext& ctx, const ChemSystem& sys, ofstream& 
         t.P_RFG = ps.P_RFG_sol;
 
         PlasmaState st = lumped_state(sys, ps.state);
-        DerivedQuantities dq = compute_derived(ctx, st.n, st.ng, st.Te, st.Tg,
-                                                ps.rf.R_ind, ps.rf.I_coil, ps.rf.P_abs);
-        dq.I_extr_mA = gen_beam_current_mA(sys, ctx, ps.state);
+        ExtractionResult ex = gen_extraction(sys, ctx, ps.state);
+        DerivedQuantities dq = compute_derived_from(ctx, ex, st.n, st.ng, st.Te, st.Tg,
+                                                     ps.rf.R_ind, ps.rf.I_coil, ps.rf.P_abs);
 
         if (sp.solve_mode == 2) {
             cout << "PID_DONE " << fixed << setprecision(4) << ps.I_mA << " 0.0000 "
@@ -143,6 +143,14 @@ static void run_generic_sweep(SimContext& ctx, const ChemSystem& sys, ofstream& 
         for (int i = 0; i < (int)sys.species.size(); ++i)
             cout << "SPECIES_DENSITY " << sys.species[i].id << " "
                  << scientific << setprecision(4) << ps.state[i] << endl;
+        for (const auto& sh : ex.ions)
+            cout << "BEAM_SHARE " << sh.id << " Z " << sh.Z
+                 << " I_mA " << fixed << setprecision(4) << sh.I_mA
+                 << " Schub_mN " << sh.thrust_N * 1e3
+                 << " v_aus " << sh.v_exhaust << endl;
+        if (ex.limiting == "space_charge")
+            cout << "BEAM_LIMIT space_charge Drosselung " << fixed << setprecision(4)
+                 << ex.throttle << endl;
 
         cout << "RESULT_EXT " << fixed << setprecision(6) << t.Q0sccm << " " << t.P_RFG << " "
              << scientific << setprecision(4) << st.n << " " << st.ng << " " << st.n << " "

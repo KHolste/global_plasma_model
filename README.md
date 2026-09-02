@@ -60,7 +60,7 @@ global-xenon-model/
     solver.cpp/hpp          LM, PTC, multi-start, I-fix, SC mode
     sim_logging.cpp/hpp     Run logging
     chem_loader.cpp/hpp     Loads chemistry packages (JSON + rate tables)
-    beam_extraction_cpp.hpp Bohm / Child-Langmuir extraction model
+    beam_extraction_cpp.hpp Extraction, thrust and efficiencies, summed over ion species
     bessel_wrapper.cpp/hpp  Bessel functions (separate compilation unit)
     bessel-library.hpp      Template Bessel library
   build.py                  Build definition, used by CLI and GUI alike
@@ -202,7 +202,7 @@ The `cross_sections/xenon/` directory contains Biagi/LXCat data for Xenon. To ad
 - **Chabert 2012**: Legacy mode reproduces paper results
 - **Dietz et al. 2021**: RIT-4 benchmark comparison available via `dietz_validation.py`
 - **Test suite**: `python run_tests.py` runs the whole test bestand — 19 Python
-  tests plus the three compiled C++ test programs — and reports pass/fail per test.
+  tests plus the four compiled C++ test programs — and reports pass/fail per test.
 
 ```bash
 python run_tests.py              # everything
@@ -214,12 +214,13 @@ python run_tests.py --list       # just list what would run
 The runner uses the interpreter it was started with and names it in the header.
 Several tests import PyQt6; if the interpreter lacks it, those tests are
 reported as an incomplete environment rather than as a failure. Last full run:
-22 of 22 pass.
+23 of 23 pass.
 
 ## Known Limitations
 
 - 0D assumption: homogeneous density profile (correctable via `density_profile_factor`)
-- No doubly-charged ions (Xe++)
+- Multiply charged ions are carried by the extraction and by the chemistry
+  layer, but no cross-section data for the second ionization stage is shipped
 - No separate metastable state balance
 - Solver convergence limit at very high power (>60-70 W for Full tabulated Xe)
 - Krypton/Argon: physical constants available but no tabulated cross-sections yet

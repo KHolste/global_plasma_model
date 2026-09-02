@@ -385,21 +385,39 @@ inline std::vector<double> gen_default_state(const ChemSystem& sys, double Q0_pp
 }
 
 // ═════════════════════════════════════════════════════════════
-// Beam-Strom aus generischem Zustand
+// Extraktion aus dem generischen Zustand
+//
+// Jede positive Ionensorte geht mit ihrer eigenen Masse und Ladungszahl ein,
+// jede neutrale Sorte mit ihrer eigenen Masse in den Neutralschub. Der
+// zugefuehrte Massenstrom ist der Teilchenstrom mal der Masse der zugefuehrten
+// Sorte -- bei molekularem Treibstoff also die Molekuelmasse.
 // ═════════════════════════════════════════════════════════════
+inline ExtractionInput gen_extraction_input(const ChemSystem& sys, const SimContext& ctx,
+                                             const std::vector<double>& state) {
+    ExtractionInput in;
+    for (int i = 0; i < (int)sys.species.size(); ++i) {
+        const ChemSpecies& sp = sys.species[i];
+        if (sp.is_positive_ion())
+            in.ions.push_back({sp.id, state[i], sp.mass_kg, sp.charge});
+        else if (sp.is_neutral())
+            in.neutrals.push_back({sp.id, state[i], sp.mass_kg});
+    }
+    in.Te_eV = state[sys.Te_idx()];
+    in.Tg_K = state[sys.Tg_idx()];
+    in.sigma_i = sys.sigma_i;
+    const ChemSpecies* feed = sys.feedstock();
+    in.mdot_in_kg_s = feed ? ctx.thruster.Q0 * feed->mass_kg : 0.0;
+    return in;
+}
+
+inline ExtractionResult gen_extraction(const ChemSystem& sys, const SimContext& ctx,
+                                        const std::vector<double>& state) {
+    return compute_extraction(gen_extraction_input(sys, ctx, state), ctx.thruster);
+}
+
 inline double gen_beam_current_mA(const ChemSystem& sys, const SimContext& ctx,
                                     const std::vector<double>& state) {
-    PlasmaState ps;
-    // Summe aller positiven Ionen als n
-    ps.n = 0;
-    for (int i = 0; i < (int)sys.species.size(); ++i)
-        if (sys.species[i].is_positive_ion()) ps.n += state[i];
-    // Feedstock als ng
-    for (int i = 0; i < (int)sys.species.size(); ++i)
-        if (sys.species[i].is_feedstock) { ps.ng = state[i]; break; }
-    ps.Te = state[sys.Te_idx()];
-    ps.Tg = state[sys.Tg_idx()];
-    return beam_current_mA(ctx, ps);
+    return gen_extraction(sys, ctx, state).I_beam_mA;
 }
 
 // ═════════════════════════════════════════════════════════════

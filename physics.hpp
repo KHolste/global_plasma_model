@@ -83,6 +83,14 @@ std::array<double,4> residual_raw(const SimContext& ctx, const PlasmaState& s, d
 std::array<double,4> residual_scaled(const SimContext& ctx, const PlasmaState& s, double P_RFG, RFState* rf_out = nullptr);
 DerivedQuantities compute_derived(const SimContext& ctx, double n, double ng, double Te, double Tg, double R_ind, double I_coil, double P_abs);
 
+// Gleiche Groessen, aber mit bereits gerechneter Extraktion. Der generische
+// Weg reicht hier die Rechnung ueber alle Ionensorten herein; der feste Weg
+// laesst sie aus dem Einsortenzustand bilden. Strahlstrom, Schub und
+// Wirkungsgrade stammen so in beiden Faellen aus derselben Quelle.
+DerivedQuantities compute_derived_from(const SimContext& ctx, const ExtractionResult& ex,
+                                        double n, double ng, double Te, double Tg,
+                                        double R_ind, double I_coil, double P_abs);
+
 void emit_csv_row(std::ofstream& datei, const std::string& method, double Q0sccm,
                    double n, double ng, double Te, double Tg,
                    double P_RFG, double P_abs, double R_ind, double I_coil,

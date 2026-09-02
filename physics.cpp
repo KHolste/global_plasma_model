@@ -124,25 +124,33 @@ std::array<double,4> residual_scaled(const SimContext& ctx, const PlasmaState& s
 
 DerivedQuantities compute_derived(const SimContext& ctx, double n, double ng, double Te, double Tg,
                                    double R_ind, double I_coil_val, double P_abs_val) {
-    const auto& t = ctx.thruster;
-    const auto& g = ctx.gas;
-    DerivedQuantities d{};
-
-    double lam = lambda_i(ng, g.sigma_i);
-    double Gi = Gamma_i_func(t, lam, Te, n, g.M);
-
-    // Volles Extraktionsmodell (Bohm + CL + eta_opt)
     PlasmaState ps{n, ng, Te, Tg};
     ExtractionResult ex = compute_beam_extraction(ctx, ps);
+    return compute_derived_from(ctx, ex, n, ng, Te, Tg, R_ind, I_coil_val, P_abs_val);
+}
+
+DerivedQuantities compute_derived_from(const SimContext& ctx, const ExtractionResult& ex,
+                                        double n, double ng, double Te, double Tg,
+                                        double R_ind, double I_coil_val, double P_abs_val) {
+    const auto& t = ctx.thruster;
+    DerivedQuantities d{};
+
+    // ── Alles, was mit dem Strahl zu tun hat, aus einer Rechnung ──
     d.I_extr_mA = ex.I_beam_mA;
     d.I_CL_limit_mA = ex.I_CL_limit_mA;
     d.I_Bohm_limit_mA = ex.I_Bohm_limit_mA;
     d.eta_opt_used = ex.eta_opt;
     d.beam_limiting = ex.limiting;
+    d.J_i = ex.J_Bohm_total;
+    d.u_Bohm = ex.ions.empty() ? 0.0 : ex.ions.front().u_B;
+    d.T_i_N = ex.thrust_ions_N;
+    d.T_n_N = ex.thrust_neutrals_N;
+    d.T_total_N = ex.thrust_total_N;
+    d.eta_mass = ex.eta_mass;
+
+    // ── Plasma- und Kopplungsgroessen ──
     d.iondeg = n / std::max(ng, 1.0) * 100;
     d.cf = coll_freq(ctx, ng, Te);
-    d.u_Bohm = uB(g.M, Te);
-    d.J_i = e * Gi;
     d.pf = plasma_freq(n);
 
     double a = d.pf, b = t.omega, cf = d.cf;
@@ -152,20 +160,10 @@ DerivedQuantities compute_derived(const SimContext& ctx, double n, double ng, do
 
     d.zeta = (R_ind > 1e-10) ? R_ind/(R_ind + t.R_ohm) : 0;
     d.icp_eff = d.zeta;
-
-    double vgf = vg(g.M, Tg);
-    double Gn = 0.25 * ng * vgf;
-    d.T_i_N = Gi * g.M * t.Ai * std::sqrt(2*e*t.Vgrid/g.M);
-    d.T_n_N = Gn * g.M * vgf * t.Ag;
-    d.T_total_N = d.T_i_N + d.T_n_N;
     d.P_RF = 0.5 * (R_ind + t.R_ohm) * I_coil_val * I_coil_val;
 
-    double ve = std::sqrt(2*e*t.Vgrid/g.M);
-    double pi_ = 0.5*g.M*ve*ve*Gi*t.Ai;
-    double pn_ = 0.5*g.M*vgf*vgf*Gn*t.Ag;
-    d.gamma_eff = (d.P_RF > 1e-10) ? (pi_+pn_)/(pi_+pn_+d.P_RF) : 0;
+    d.gamma_eff = (d.P_RF > 1e-10) ? ex.P_beam_W/(ex.P_beam_W + d.P_RF) : 0;
     d.xi_mN_kW = (d.P_RF > 1e-10) ? 1000*d.T_total_N/d.P_RF : 0;
-    d.eta_mass = (t.Q0 > 0) ? Gi*t.Ai/t.Q0 : 0;
 
     return d;
 }

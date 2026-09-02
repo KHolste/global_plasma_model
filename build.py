@@ -35,7 +35,8 @@ CPP_SOURCE = "main.cpp"
 CXXFLAGS = ["-O3", "-march=native", "-std=c++17"]
 
 #: Eigenstaendige C++-Testprogramme. Jedes bindet gegen dieselben Objekte.
-CPP_TESTS = ["test_chem_system", "test_generic_lm", "test_chem_loader"]
+CPP_TESTS = ["test_chem_system", "test_generic_lm", "test_chem_loader",
+             "test_extraction"]
 
 
 def object_suffix(platform: str = sys.platform) -> str:
