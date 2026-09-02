@@ -127,7 +127,7 @@ ConfigData loadConfig(const std::string& filename) {
         return cd;
     }
     // String-Parameter, die nicht als double geparsed werden
-    static const std::set<std::string> STRING_KEYS = {"gas_species"};
+    static const std::set<std::string> STRING_KEYS = {"gas_species", "cs_database"};
     std::string line;
     while (std::getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
@@ -311,10 +311,11 @@ namespace Const {
     int    use_paper_kel = 0;
     double kel_constant  = 1.0e-13;  // Konstanter Kel-Wert [m^3/s] wenn use_paper_kel=1
 
-    // Gasspezies fuer Cross-Section-Pfadaufloesung
-    // Bestimmt: cross_sections/<gas_species>/{kel,kiz,kex}_table.csv
-    // und die physikalischen Konstanten (M, Eiz, Eexc, kappa)
+    // Gasspezies und Cross-Section-Datenbank fuer Pfadaufloesung
+    // Pfad: cross_sections/<gas_species>/<cs_database>/{kel,kiz,kex}_table.csv
+    // gas_species bestimmt auch die physikalischen Konstanten (M, Eiz, Eexc, kappa)
     std::string gas_species = "xenon";
+    std::string cs_database = "biagi";  // z.B. "biagi", "hayashi"
 
     // Ratenmodell-Preset (bequeme Gesamtsteuerung):
     // 0 = legacy (alle Raten aus Chabert-Fits, paper-kompatibel)
@@ -381,6 +382,10 @@ namespace Const {
             gas_species = cd.strings.at("gas_species");
             PhysConst::set_gas(gas_species);
             g_thruster.recompute_derived();  // M hat sich ggf. geaendert (J_CL)
+        }
+        // cs_database → Cross-Section-Datenquelle (z.B. "biagi", "hayashi")
+        if (cd.strings.count("cs_database")) {
+            cs_database = cd.strings.at("cs_database");
         }
 
         // Triebwerksparameter → ThrusterParams-Struct
@@ -1953,8 +1958,9 @@ int main(int argc, char** argv) {
                                     :                     "Legacy (paper-compatible)";
         cout << "RATE_MODEL " << rate_model << " " << rate_model_name << endl;
 
-        // Cross-section Basispfad fuer das gewaehlte Gas
-        std::string cs_base = "cross_sections/" + gas_species + "/";
+        // Cross-section Basispfad: cross_sections/<gas>/<database>/
+        std::string cs_base = "cross_sections/" + gas_species + "/" + cs_database + "/";
+        cout << "CS_DATABASE " << cs_database << " (" << cs_base << ")" << endl;
 
         // Kel-Tabelle laden falls tabellierter Modus aktiv
         if (elastic_model == 1) {
@@ -2244,8 +2250,10 @@ int main(int argc, char** argv) {
             pp("newton_tol",                     newton_tol,"rel",  "newton_tol");
             lf << std::left << std::setw(35) << "gas_species"
                << "| " << gas_species << "\n";
+            lf << std::left << std::setw(35) << "cs_database"
+               << "| " << cs_database << "\n";
             lf << std::left << std::setw(35) << "Kel-Modell"
-               << "| " << (elastic_model == 1 ? "tabulated (Biagi/LXCat)" : "constant (legacy)")
+               << "| " << (elastic_model == 1 ? "tabulated" : "constant (legacy)")
                << ", kel_constant=" << kel_constant
                << "\n";
             lf << "\n";
