@@ -168,11 +168,17 @@ def test_rf_vs_direct():
     if conv_d and conv_r:
         P_abs_direct = conv_d[0]["P"]
         P_RFG_rf = conv_r[0]["P"]
-        check("rf: P_RFG > P_abs_direct",
-              P_RFG_rf > P_abs_direct,
-              f"P_RFG={P_RFG_rf:.1f}, P_abs_direct={P_abs_direct:.1f}")
         if rf_r:
             P_abs_rf = rf_r[0].get("P_abs", 0)
+            # Zwingend ist nur: der Generator muss mehr liefern, als das Plasma
+            # im selben Lauf aufnimmt. Der Vergleich mit dem Lauf, dem P_abs
+            # direkt vorgegeben wird, gilt nur, soweit beide Laeufe denselben
+            # Betriebspunkt finden -- und die duerfen sich laut der Pruefung
+            # darunter um bis zu 30 Prozent unterscheiden. Als scharfe
+            # Ungleichung war er deshalb nicht haltbar.
+            check("rf: P_RFG > P_abs im selben Lauf",
+                  P_RFG_rf > P_abs_rf,
+                  f"P_RFG={P_RFG_rf:.2f}, P_abs_rf={P_abs_rf:.2f}")
             check("rf: P_abs_rf ~ P_abs_direct (within 30%)",
                   abs(P_abs_rf - P_abs_direct) / max(P_abs_direct, 1) < 0.30,
                   f"P_abs_rf={P_abs_rf:.1f}, P_abs_direct={P_abs_direct:.1f}")

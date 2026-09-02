@@ -49,9 +49,9 @@
       "charge": 1,
       "is_beam_extracted": true,
       "wall_products": {
-        "I2": 1
+        "I": 2
       },
-      "_wall_products_note": "Annahme: das Molekuelion bleibt an der Wand als Molekuel erhalten. Fuer dissoziative Neutralisation stattdessen {\"I\": 2} eintragen."
+      "_wall_products_note": "Dissoziative Neutralisation: bei der Neutralisation nimmt das Molekuelion rund 9.3 eV auf, waehrend zum Aufbrechen 1.54 eV genuegen. Fuer die Annahme, dass das Molekuel erhalten bleibt, stattdessen {\"I2\": 1} eintragen."
     },
     {
       "id": "I-",
