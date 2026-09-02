@@ -462,12 +462,48 @@ inline std::vector<std::vector<double>> gen_starts(
     return starts;
 }
 
+// Fortsetzung in der Leistung, wie im fest verdrahteten Weg: von unten
+// hochfahren, jede Sprosse als Startwert der naechsten. Nur ein Ergebnis bei
+// der Zielleistung zaehlt.
+inline GenSolveResult gen_power_ramp(const ChemSystem& sys, const SimContext& ctx,
+                                      double P_ziel, const std::vector<double>& guess) {
+    const double P_start = std::max(1.0, std::min(5.0, 0.1 * P_ziel));
+    if (!(P_ziel > P_start)) return GenSolveResult{};
+
+    std::vector<double> warm = guess;
+    double p = P_start, p_gut = 0.0, faktor = 1.6;
+
+    for (int schritt = 0; schritt < 40; ++schritt) {
+        GenSolveResult r = gen_solve_multistart(sys, ctx, p, gen_starts(sys, ctx, warm));
+        if (r.converged && (int)r.state.size() == sys.state_size()) {
+            warm = r.state;
+            p_gut = p;
+            if (p >= P_ziel * (1.0 - 1e-12)) return r;
+            p = std::min(p * faktor, P_ziel);
+        } else {
+            if (p_gut <= 0.0) return GenSolveResult{};
+            faktor = 1.0 + 0.5 * (faktor - 1.0);
+            if (faktor < 1.02) break;
+            p = std::min(p_gut * faktor, P_ziel);
+        }
+    }
+    return GenSolveResult{};
+}
+
 inline GenPowerResult gen_solve_at_fixed_power(
     const ChemSystem& sys, const SimContext& ctx,
     double P_RFG, const std::vector<double>& guess)
 {
     GenPowerResult out;
     GenSolveResult r = gen_solve_multistart(sys, ctx, P_RFG, gen_starts(sys, ctx, guess));
+    if (!(r.converged && (int)r.state.size() == sys.state_size())) {
+        GenSolveResult ramp = gen_power_ramp(sys, ctx, P_RFG, guess);
+        if (ramp.converged && (int)ramp.state.size() == sys.state_size()) {
+            std::cout << "POWER_RAMP " << std::fixed << std::setprecision(4)
+                      << P_RFG << " erreicht" << std::endl;
+            r = ramp;
+        }
+    }
     out.state = r.state;
     out.rf = r.rf;
     out.iterations = r.iterations;

@@ -63,3 +63,4 @@ chem_run_params.txt
 
 # Von den Tests erzeugte Konfigurationen
 xenon_package_params.txt
+power_range_params.txt

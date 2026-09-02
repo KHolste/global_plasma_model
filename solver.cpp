@@ -204,9 +204,51 @@ static SolveResult multi_start_solve(const SimContext& ctx, double P_RFG, const 
 
 // ═══ SC-Modus ═════════════════════════════════════════════
 
+// Fortsetzung in der Leistung: von einem niedrigen, gutmuetigen Betriebspunkt
+// aus schrittweise hochfahren und jede Sprosse als Startwert der naechsten
+// verwenden. Bei hoher Leistung liegt die Loesung so weit von jedem kalten
+// Startwert entfernt, dass der Loeser sie sonst nicht findet, obwohl es sie
+// gibt. Der Betrieb mit festem Strahlstrom faehrt diese Leiter beim
+// Einschachteln ohnehin; im selbstkonsistenten Betrieb fehlte sie.
+//
+// Rueckgabe nur, wenn die Zielleistung tatsaechlich erreicht wurde -- eine
+// Loesung bei kleinerer Leistung waere die Antwort auf eine andere Frage.
+static SolveResult power_ramp_solve(const SimContext& ctx, double P_ziel,
+                                     const PlasmaState& guess) {
+    const double P_start = std::max(1.0, std::min(5.0, 0.1 * P_ziel));
+    if (!(P_ziel > P_start)) return SolveResult{};
+
+    PlasmaState warm = state_in_bounds(ctx.solver, guess) ? guess : safe_defaults(ctx);
+    double p = P_start, p_gut = 0.0, faktor = 1.6;
+
+    for (int schritt = 0; schritt < 40; ++schritt) {
+        SolveResult r = multi_start_solve(ctx, p, warm, true);
+        if (r.converged && state_finite_positive(r.state)) {
+            warm = r.state;
+            p_gut = p;
+            if (p >= P_ziel * (1.0 - 1e-12)) return r;
+            p = std::min(p * faktor, P_ziel);
+        } else {
+            if (p_gut <= 0.0) return SolveResult{};   // schon die erste Sprosse traegt nicht
+            faktor = 1.0 + 0.5 * (faktor - 1.0);      // kleinere Schritte versuchen
+            if (faktor < 1.02) break;
+            p = std::min(p_gut * faktor, P_ziel);
+        }
+    }
+    return SolveResult{};
+}
+
 PowerSolveResult solve_at_fixed_power(const SimContext& ctx, double P_RFG_fixed, const PlasmaState& guess) {
     PowerSolveResult out;
     SolveResult best = multi_start_solve(ctx, P_RFG_fixed, guess, true);
+    if (!(best.converged && state_finite_positive(best.state))) {
+        SolveResult ramp = power_ramp_solve(ctx, P_RFG_fixed, guess);
+        if (ramp.converged && state_finite_positive(ramp.state)) {
+            std::cout << "POWER_RAMP " << std::fixed << std::setprecision(4)
+                      << P_RFG_fixed << " erreicht" << std::endl;
+            best = ramp;
+        }
+    }
     out.iterations = best.iterations; out.inner_resid_norm = best.resid_norm;
     out.P_RFG_sol = P_RFG_fixed; out.P_trial_last = P_RFG_fixed;
     if (best.converged && state_finite_positive(best.state)) {

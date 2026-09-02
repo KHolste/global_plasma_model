@@ -39,7 +39,7 @@ Sonst melden vier Tests eine unvollständige Umgebung statt eines Ergebnisses.
 Der Starter unterscheidet das und weist es getrennt aus; ein Sachfehler ist es
 nicht.
 
-Basislinie: **24 von 24 bestehen**, auch nach vollständigem Neubau von Null.
+Basislinie: **25 von 25 bestehen**, auch nach vollständigem Neubau von Null.
 Jede Änderung wird gegen diesen Stand gemessen.
 
 ## Aufbau
@@ -106,10 +106,23 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 - Die Legacy-Ratenanpassungen sind Xenon-Polynome ohne Absicherung gegen die
   Gasauswahl; Argon und Krypton rechnen still mit Xenon-Raten.
-- Konvergenzabbruch oberhalb etwa 60 bis 70 W, Ursache nicht untersucht. Er
-  hängt nicht an der Abbruchschranke: bei 80 W scheitern alle Punkte mit 1e-2
-  wie mit 1e-4. Bei 60 W bestand einer von fünf Punkten nur mit der lockeren
-  Schranke; er war also nie eine Lösung.
+
+## Erledigte Befunde
+
+Der **Konvergenzabbruch oberhalb 60 bis 70 W** war kein physikalischer Befund,
+sondern ein Startwertproblem: Bei hoher Leistung liegt die Lösung zu weit von
+jedem kalten Startwert entfernt. Der Löser fährt die Leistung deshalb als
+Rückfall von unten hoch und übernimmt jede Sprosse als Startwert der nächsten
+— dieselbe Leiter, die der Betrieb mit festem Strahlstrom beim Einschachteln
+ohnehin fährt. Danach konvergiert der selbstkonsistente Betrieb bis mindestens
+200 W, also mehr als das Zehnfache der Auslegungsleistung.
+
+**Nicht verwechseln:** `P_RFG_max` ist die Leistungsgrenze des Generators und
+wirkt nur im Betrieb mit festem Strahlstrom. Wird der Zielstrom bis dorthin
+nicht erreicht, meldet das Programm `above_P_max` und zählt den Punkt als
+fehlende physikalische Lösung. Das ist meist eine Aussage über den Treibstoff:
+Bei 0.40 sccm sind höchstens 28.7 mA möglich, wenn jedes zugeführte Atom
+einfach geladen extrahiert wird. Ein Test hält diese Grenze fest.
 
 ## Arbeitsweise
 
