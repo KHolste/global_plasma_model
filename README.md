@@ -43,9 +43,10 @@ RF coupling is modeled via the complex plasma permittivity with cylindrical Bess
 
 | Gas | Status | Cross-sections |
 |-----|--------|---------------|
-| Xenon (Xe) | Fully integrated | Biagi/LXCat (elastic, ionization, 50 excitation processes) |
+| Xenon (Xe) | Fully integrated | Biagi and Hayashi via LXCat (elastic, ionization, 50 / 14 excitations) |
+| Argon (Ar) | Fully integrated | Hayashi via LXCat (elastic, ionization, 25 excitations); Phelps set also converted |
+| Iodine (I) | Rate coefficients only | No cross sections in the project; tabulated rates from the Lafleur review |
 | Krypton (Kr) | Structurally prepared | Physical constants set, cross-section data needed |
-| Argon (Ar) | Structurally prepared | Physical constants set, cross-section data needed |
 
 ## Project Structure
 
@@ -103,7 +104,8 @@ global-xenon-model/
     argon/                  Placeholder (README only)
     tests/                  LXCat source files
   chemistry/                Chemistry packages (xenon_simple, xenon_biagi, two iodine sets)
-  make_xenon_package.py     Builds a chemistry package from cross-section data
+  make_gas_package.py       Builds a chemistry package from cross-section data
+  make_data_overview.py     Per-gas overview of all cross sections and rates
   Iodmodell/                Legacy iodine model (2019), reference only
   archive/                  Pre-split monolith, for reference
   docs/

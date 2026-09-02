@@ -1,0 +1,276 @@
+{
+  "source": "LXCat, Hayashi database",
+  "origin_file": "argon.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Ar",
+      "process": "E + Ar -> E + Ar, Elastic",
+      "threshold_eV": null,
+      "mM": 1.36e-05,
+      "data_points": 63,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.55eV)",
+      "process": "E + Ar -> E + Ar*(11.55eV), Excitation",
+      "threshold_eV": 11.55,
+      "mM": null,
+      "data_points": 77,
+      "file": "excitation/excitation_exc_0.csv",
+      "state": "exc_0"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.62ev)",
+      "process": "E + Ar -> E + Ar*(11.62ev), Excitation",
+      "threshold_eV": 11.62,
+      "mM": null,
+      "data_points": 63,
+      "file": "excitation/excitation_11_62ev.csv",
+      "state": "11.62ev"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.72eV)",
+      "process": "E + Ar -> E + Ar*(11.72eV), Excitation",
+      "threshold_eV": 11.72,
+      "mM": null,
+      "data_points": 65,
+      "file": "excitation/excitation_exc_2.csv",
+      "state": "exc_2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.83eV)",
+      "process": "E + Ar -> E + Ar*(11.83eV), Excitation",
+      "threshold_eV": 11.83,
+      "mM": null,
+      "data_points": 58,
+      "file": "excitation/excitation_exc_3.csv",
+      "state": "exc_3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(12.91ev)",
+      "process": "E + Ar -> E + Ar*(12.91ev), Excitation",
+      "threshold_eV": 12.91,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_12_91ev.csv",
+      "state": "12.91ev"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.08eV)",
+      "process": "E + Ar -> E + Ar*(13.08eV), Excitation",
+      "threshold_eV": 13.08,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_5.csv",
+      "state": "exc_5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.09eV)",
+      "process": "E + Ar -> E + Ar*(13.09eV), Excitation",
+      "threshold_eV": 13.09,
+      "mM": null,
+      "data_points": 22,
+      "file": "excitation/excitation_exc_6.csv",
+      "state": "exc_6"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.15eV)",
+      "process": "E + Ar -> E + Ar*(13.15eV), Excitation",
+      "threshold_eV": 13.15,
+      "mM": null,
+      "data_points": 23,
+      "file": "excitation/excitation_exc_7.csv",
+      "state": "exc_7"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.17ev)",
+      "process": "E + Ar -> E + Ar*(13.17ev), Excitation",
+      "threshold_eV": 13.17,
+      "mM": null,
+      "data_points": 23,
+      "file": "excitation/excitation_13_17ev.csv",
+      "state": "13.17ev"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.27eV)",
+      "process": "E + Ar -> E + Ar*(13.27eV), Excitation",
+      "threshold_eV": 13.27,
+      "mM": null,
+      "data_points": 23,
+      "file": "excitation/excitation_exc_9.csv",
+      "state": "exc_9"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.30eV)",
+      "process": "E + Ar -> E + Ar*(13.30eV), Excitation",
+      "threshold_eV": 13.3,
+      "mM": null,
+      "data_points": 24,
+      "file": "excitation/excitation_exc_10.csv",
+      "state": "exc_10"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.33eV)",
+      "process": "E + Ar -> E + Ar*(13.33eV), Excitation",
+      "threshold_eV": 13.33,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_11.csv",
+      "state": "exc_11"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.48ev)",
+      "process": "E + Ar -> E + Ar*(13.48ev), Excitation",
+      "threshold_eV": 13.48,
+      "mM": null,
+      "data_points": 24,
+      "file": "excitation/excitation_13_48ev.csv",
+      "state": "13.48ev"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.84eV)",
+      "process": "E + Ar -> E + Ar*(13.84eV), Excitation",
+      "threshold_eV": 13.84,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_13.csv",
+      "state": "exc_13"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.90eV)",
+      "process": "E + Ar -> E + Ar*(13.90eV), Excitation",
+      "threshold_eV": 13.9,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_14.csv",
+      "state": "exc_14"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(13.98eV)",
+      "process": "E + Ar -> E + Ar*(13.98eV), Excitation",
+      "threshold_eV": 13.98,
+      "mM": null,
+      "data_points": 20,
+      "file": "excitation/excitation_exc_15.csv",
+      "state": "exc_15"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.01eV)",
+      "process": "E + Ar -> E + Ar*(14.01eV), Excitation",
+      "threshold_eV": 14.01,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_16.csv",
+      "state": "exc_16"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.06eV)",
+      "process": "E + Ar -> E + Ar*(14.06eV), Excitation",
+      "threshold_eV": 14.06,
+      "mM": null,
+      "data_points": 23,
+      "file": "excitation/excitation_exc_17.csv",
+      "state": "exc_17"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.09eV)",
+      "process": "E + Ar -> E + Ar*(14.09eV), Excitation",
+      "threshold_eV": 14.09,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_18.csv",
+      "state": "exc_18"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.15eV)",
+      "process": "E + Ar -> E + Ar*(14.15eV), Excitation",
+      "threshold_eV": 14.15,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_19.csv",
+      "state": "exc_19"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.21eV)",
+      "process": "E + Ar -> E + Ar*(14.21eV), Excitation",
+      "threshold_eV": 14.21,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_20.csv",
+      "state": "exc_20"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.23eV)",
+      "process": "E + Ar -> E + Ar*(14.23eV), Excitation",
+      "threshold_eV": 14.23,
+      "mM": null,
+      "data_points": 22,
+      "file": "excitation/excitation_exc_21.csv",
+      "state": "exc_21"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.30eV)",
+      "process": "E + Ar -> E + Ar*(14.30eV), Excitation",
+      "threshold_eV": 14.3,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_22.csv",
+      "state": "exc_22"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(14.71eV)",
+      "process": "E + Ar -> E + Ar*(14.71eV), Excitation",
+      "threshold_eV": 14.71,
+      "mM": null,
+      "data_points": 21,
+      "file": "excitation/excitation_exc_23.csv",
+      "state": "exc_23"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(15.20eV)",
+      "process": "E + Ar -> E + Ar*(15.20eV), Excitation",
+      "threshold_eV": 15.2,
+      "mM": null,
+      "data_points": 20,
+      "file": "excitation/excitation_exc_24.csv",
+      "state": "exc_24"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Ar -> Ar^+",
+      "process": "E + Ar -> E + E + Ar+, Ionization",
+      "threshold_eV": 15.76,
+      "mM": null,
+      "data_points": 47,
+      "file": "ionization.csv"
+    }
+  ]
+}

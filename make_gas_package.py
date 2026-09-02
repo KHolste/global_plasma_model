@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-make_xenon_package.py -- Erzeugt aus den Biagi-Querschnitten ein Chemiepaket.
+make_gas_package.py -- Erzeugt aus Querschnittsdaten ein Chemiepaket.
 
-Der bisherige Weg fasst die Anregung zu einem einzigen Term zusammen. Die
-Querschnittsdaten enthalten aber fünfzig einzelne Anregungsprozesse mit je
+Der fest verdrahtete Weg fasst die Anregung zu einem einzigen Term zusammen.
+Die Querschnittsdaten enthalten aber viele einzelne Anregungsprozesse mit je
 eigener Schwelle. Dieses Skript integriert jeden Prozess einzeln über eine
 Maxwell-Verteilung und schreibt daraus ein Chemiepaket, in dem jeder Prozess
 eine eigene Reaktion mit eigener Ratentabelle ist.
 
 Erzeugt:
-    chemistry/xenon_biagi/chemistry.json
-    chemistry/xenon_biagi/rates/*.csv
+    chemistry/<gas>_<datenbank>/chemistry.json
+    chemistry/<gas>_<datenbank>/rates/*.csv
 
 Zur Kontrolle wird die Summe der Einzelprozesse gegen die bereits vorhandene
 zusammengefasste Tabelle gestellt: sowohl die Summe der Ratenkoeffizienten als
 auch die Summe der Energieverluste müssen übereinstimmen.
 
 Aufruf:
-    python make_xenon_package.py
-    python make_xenon_package.py --db hayashi --out chemistry/xenon_hayashi
+    python make_gas_package.py
+    python make_gas_package.py --gas argon --db hayashi
 """
 from __future__ import annotations
 
@@ -35,9 +35,15 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from rate_coefficients import CrossSectionData, compute_rate_coefficient  # noqa: E402
 
 E_CH = 1.602176487e-19
-M_XE = 2.1801711e-25
-KAPPA_XE = 0.0057
 SIGMA_I = 1e-18
+
+#: Stoffwerte je Gas: Symbol, Masse [kg], Waermeleitfaehigkeit [W/(m K)].
+#: Dieselben Werte wie im Rechenkern.
+GASE = {
+    "xenon":   ("Xe", 2.1801711e-25, 0.0057),
+    "krypton": ("Kr", 1.3914984e-25, 0.0094),
+    "argon":   ("Ar", 6.6335209e-26, 0.0177),
+}
 
 #: Dasselbe Gitter wie die vorhandenen zusammengefassten Tabellen.
 TE_GRID = np.arange(0.5, 20.05, 0.05)
@@ -56,12 +62,14 @@ def schreibe_tabelle(pfad: Path, kopf: str, werte: np.ndarray) -> None:
             f.write(f"{Te:.3f},{K:.6e}\n")
 
 
-def kennung(state: str) -> str:
+def kennung(symbol: str, state: str) -> str:
     """Reaktionskennung aus dem Zustandsnamen, z.B. 1S5 -> exc_Xe_1s5."""
-    return "exc_Xe_" + state.lower().replace(" ", "").replace("/", "_")
+    return f"exc_{symbol}_" + state.lower().replace(" ", "").replace("/", "_")
 
 
-def baue(cs_dir: Path, out_dir: Path) -> int:
+def baue(gas: str, cs_dir: Path, out_dir: Path) -> int:
+    symbol, masse, kappa = GASE[gas]
+    ion = f"{symbol}+"
     meta = json.loads((cs_dir / "metadata.json").read_text(encoding="utf-8"))
     prozesse = meta["processes"]
 
@@ -85,14 +93,15 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
         print("FEHLER: elastische Querschnitte nicht lesbar.", file=sys.stderr)
         return 1
     K_el = rate_table(cs_el)
-    schreibe_tabelle(rates_dir / "Kel_Xe.csv", "Elastischer Impulsuebertrag, Biagi", K_el)
+    schreibe_tabelle(rates_dir / f"Kel_{symbol}.csv",
+                     f"Elastischer Impulsuebertrag, {cs_dir.name}", K_el)
     reaktionen.append({
-        "id": "el_Xe",
-        "name": "Elastisch: e + Xe -> e + Xe",
+        "id": f"el_{symbol}",
+        "name": f"Elastisch: e + {symbol} -> e + {symbol}",
         "type": "elastic",
-        "reactants": {"e": 1, "Xe": 1},
-        "products": {"e": 1, "Xe": 1},
-        "rate": {"model": "tabulated", "file": "rates/Kel_Xe.csv"},
+        "reactants": {"e": 1, symbol: 1},
+        "products": {"e": 1, symbol: 1},
+        "rate": {"model": "tabulated", "file": f"rates/Kel_{symbol}.csv"},
         "energy_eV": 0.0,
         "is_electron_impact": True,
         "elastic_heating": True,
@@ -105,15 +114,16 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
         print("FEHLER: Ionisationsquerschnitte nicht lesbar.", file=sys.stderr)
         return 1
     K_iz = rate_table(cs_iz)
-    schreibe_tabelle(rates_dir / "Kiz_Xe.csv", "Einfachionisation, Biagi", K_iz)
+    schreibe_tabelle(rates_dir / f"Kiz_{symbol}.csv",
+                     f"Einfachionisation, {cs_dir.name}", K_iz)
     E_iz = float(cs_iz.threshold_eV or ionisation["threshold_eV"])
     reaktionen.append({
-        "id": "iz_Xe",
-        "name": "Ionisation: e + Xe -> 2e + Xe+",
+        "id": f"iz_{symbol}",
+        "name": f"Ionisation: e + {symbol} -> 2e + {ion}",
         "type": "ionization",
-        "reactants": {"e": 1, "Xe": 1},
-        "products": {"e": 2, "Xe+": 1},
-        "rate": {"model": "tabulated", "file": "rates/Kiz_Xe.csv"},
+        "reactants": {"e": 1, symbol: 1},
+        "products": {"e": 2, ion: 1},
+        "rate": {"model": "tabulated", "file": f"rates/Kiz_{symbol}.csv"},
         "energy_eV": E_iz,
         "is_electron_impact": True,
     })
@@ -133,15 +143,16 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
             continue
         schwelle = float(cs.threshold_eV or p["threshold_eV"])
         state = p.get("state") or Path(p["file"]).stem
-        rid = kennung(state)
+        rid = kennung(symbol, state)
         datei = f"rates/K_{rid}.csv"
-        schreibe_tabelle(out_dir / datei, f"Anregung Xe({state}), Schwelle {schwelle} eV, Biagi", K)
+        schreibe_tabelle(out_dir / datei,
+                         f"Anregung {symbol}({state}), Schwelle {schwelle} eV, {cs_dir.name}", K)
         reaktionen.append({
             "id": rid,
-            "name": f"Anregung: e + Xe -> e + Xe({state}) bei {schwelle} eV",
+            "name": f"Anregung: e + {symbol} -> e + {symbol}({state}) bei {schwelle} eV",
             "type": "excitation",
-            "reactants": {"e": 1, "Xe": 1},
-            "products": {"e": 1, "Xe": 1},
+            "reactants": {"e": 1, symbol: 1},
+            "products": {"e": 1, symbol: 1},
             "rate": {"model": "tabulated", "file": datei},
             "energy_eV": schwelle,
             "is_electron_impact": True,
@@ -154,9 +165,9 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
 
     # ── Chemiepaket schreiben ────────────────────────────────────
     paket = {
-        "name": f"Xenon ({meta.get('gas', 'xenon')}, {cs_dir.name})",
+        "name": f"{gas.capitalize()} ({cs_dir.name})",
         "description": (
-            f"Xenon aus {meta.get('source', 'LXCat')}. Elastischer Stoss, Einfachionisation "
+            f"{gas.capitalize()} aus {meta.get('source', 'LXCat')}. Elastischer Stoss, Einfachionisation "
             f"und {len(reaktionen) - 2} einzelne Anregungsprozesse mit je eigener Schwelle "
             f"und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung."
         ),
@@ -165,12 +176,12 @@ def baue(cs_dir: Path, out_dir: Path) -> int:
         "species": [
             {"id": "e", "name": "Elektron", "type": "electron",
              "mass_kg": 9.10938215e-31, "charge": -1},
-            {"id": "Xe", "name": "Xenon", "type": "neutral_atom",
-             "mass_kg": M_XE, "charge": 0, "is_feedstock": True,
-             "thermal_conductivity": KAPPA_XE},
-            {"id": "Xe+", "name": "Xe+", "type": "positive_ion",
-             "mass_kg": M_XE, "charge": 1, "is_beam_extracted": True,
-             "wall_products": {"Xe": 1}},
+            {"id": symbol, "name": gas.capitalize(), "type": "neutral_atom",
+             "mass_kg": masse, "charge": 0, "is_feedstock": True,
+             "thermal_conductivity": kappa},
+            {"id": ion, "name": ion, "type": "positive_ion",
+             "mass_kg": masse, "charge": 1, "is_beam_extracted": True,
+             "wall_products": {symbol: 1}},
         ],
         "reactions": reaktionen,
     }
@@ -217,7 +228,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"FEHLER: {cs_dir} nicht gefunden.", file=sys.stderr)
         return 1
     out_dir = Path(args.out) if args.out else SCRIPT_DIR / "chemistry" / f"{args.gas}_{args.db}"
-    return baue(cs_dir, out_dir)
+    if args.gas not in GASE:
+        print(f"FEHLER: fuer {args.gas} sind keine Stoffwerte hinterlegt.", file=sys.stderr)
+        return 1
+    return baue(args.gas, cs_dir, out_dir)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+{
+  "key": "hayashi",
+  "display_name": "Hayashi database",
+  "source": "Hayashi database, via LXCat",
+  "reference": "www.lxcat.net/Hayashi",
+  "comment": "M. Hayashi (2003) \"Bibliography of electron and photon cross sections with atoms and molecules published in the 20th century - argon\", report NIFS-DAT-72 of the National Institute for Fusion Science of Japan. See Fig 1 and data tables at end of the report. Available on line at",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": true,
+    "effective": false,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 25
+  }
+}

@@ -110,8 +110,16 @@ Quelle und zwei Spalten. Dazu je eine Abbildung pro Prozess und
 Abbildungen nicht.
 
 Stand: Xenon 68 Querschnitte aus zwei Datenbanken und 61 Ratenkoeffizienten,
-Iod 30 Ratenkoeffizienten und **keine** Querschnitte, Argon und Krypton nichts
-außer den Stoffkonstanten im Programm.
+Argon 30 Querschnitte aus zwei Datenbanken und 30 Ratenkoeffizienten, Iod 30
+Ratenkoeffizienten und **keine** Querschnitte, Krypton nichts außer den
+Stoffkonstanten im Programm.
+
+Neue Gase kommen über drei Aufrufe herein: `convert_lxcat.py <datei>
+cross_sections/<gas>` zerlegt eine LXCat-Datei — bei mehreren Datenbanken je
+eine in einen eigenen Unterordner —, `precompute_rates.py
+cross_sections/<gas>/<db>` rechnet die Sammeltabellen, und `make_gas_package.py
+--gas <gas> --db <db>` baut das Chemiepaket mit jedem Anregungsprozess einzeln.
+Stoffwerte für ein neues Gas stehen in `make_gas_package.py`.
 
 ## Offene Physikbefunde
 

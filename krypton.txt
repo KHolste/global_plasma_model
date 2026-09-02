@@ -1,0 +1,596 @@
+LXCat, www.lxcat.net
+Generated on 02 Sep 2026. All rights reserved.
+
+RECOMMENDED REFERENCE FORMAT
+- QUANTEMOL database, www.lxcat.net, retrieved on September 2, 2026.
+Be aware that some databases and solvers can additionally have instructions how to reference corresponding data.
+Please check below in the headers of databases.
+
+CROSS SECTION DATA FORMAT
+In downloaded files, each collision process is defined by a block consisting of
+1st line
+Keyword in capitals indicating the type of the collision. Possible collision types are elastic, effective, excitation,
+ionization, or attachment (capital letters required, key words are case sensitive), where "elastic" is used to denote
+the elastic momentum transfer cross section and where "effective" denotes the total momentum transfer cross section (sum
+of elastic momentum transfer and total inelastic cross sections).  The latter is useful for solving the Boltzmann
+equation in the 2-term approximation.
+2nd line
+Name of the target particle species. This name is a character string, freely chosen by the user, e.g. "Ar". Optionally
+for excitation processes, the name of the corresponding excited state can be specified on the same line, separated from
+the first name either by arrow "->" (dash + greater than) or by double-head arrow "<->" (less than + dash +
+greater than), e.g. "Ar -> Ar*" and "Ar <-> Ar*", respectively. In the later case BOLSIG+ will automatically
+define the inverse superelastic process, constructing the superelastic cross-section by detailed balancing, and
+considering the indicated excited state as the target. In this case, the ratio of statistical weights must be input in
+the 3rd line (see below).
+3rd line
+For elastic and effective collisions, the ratio of the electron mass to the target particle mass. For excitation or
+ionization collisions, the electron energy loss (nominally the threshold energy) in eV. For attachment, the 3rd line is
+missing. In case of an excitation process where an excited state has been indicated on the 2nd line using double-head
+arrow "<->", the 3rd line must specify also ratio of the statistical weights of the final state to the initial state
+as the second parameter in 3rd line; this is needed by BOLSIG+ to calculate the de-excitation cross-section. The
+statistical weight ratio, if given, will also be used by the automatic superelastics option in BOLSIG+. If this ratio is
+not provided then BOLSIG+ will assume it unity.
+from 4th line (optionally)
+User comments and reference information, maximum 100 lines. The only constraint on format is that these comment lines
+must not start with a number.
+Finally
+Table of the cross section as a function of energy. The table starts and ends by a line of dashes "------" (at least 5),
+and has otherwise two numbers per line: the energy in eV and the cross section in m2.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE:         QUANTEMOL database
+PERMLINK:         www.lxcat.net/QUANTEMOL
+DESCRIPTION:      Data calculated and published by Quantemol Ltd. and associated researchers using Quantemol-N
+                  software/expert system.
+                  Quantemol Ltd is based in University College London initiated by Professor Jonathan Tennyson FRS and
+                  Dr. Daniel Brown in 2004. The company initially developed a unique software tool that brings full
+                  accessibility to the highly sophisticated UK molecular R-matrix code, which is used to model electron
+                  polyatomic molecule interactions. What makes the software unique is that it requires no expertise in
+                  quantum scattering theory, and very accurate calculations can be performed on a simple desktop machine
+                  or laptop. Since then Quantemol has widened to further types of simulations with plasmas and
+                  industrial plasma tools.
+HOW TO REFERENCE: http://quantemol.com
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+************************************************************************************************************************
+
+
+********************************************************** Kr **********************************************************
+
+IONIZATION
+Kr
+ 1.425000e+1
+SPECIES: e / Kr
+PROCESS: E + Kr, Ionization
+PARAM.:  E = 14.25 eV
+COMMENT: ================================================ e-Kr Scattering using the R-matrix method
+COMMENT: Quantemol-N (EE) Version 3.7 Date and time: Fri Jan 28 13:43:18 GMT 2011
+COMMENT: ================================================ Point group employed: D2h Molecular
+COMMENT: charge is 0 Geometry employed (quoted in Angstroms in the centre of mass frame): Kr 0.0000
+COMMENT: 0.0000 0.0000 Basis set employed: cc-pVTZ Ground state electron configuration: 1(ag)^2,
+COMMENT: 2(ag)^2, 1(b3u)^2, 1(b1u)^2, 1(b2u)^2, 3(ag)^2, 2(b3u)^2, 2(b1u)^2, 2(b2u)^2, 1(b3g)^2,
+COMMENT: 1(b1g)^2, 1(b2g)^2, 4(ag)^2, 5(ag)^2, 6(ag)^2, 3(b2u)^2, 3(b3u)^2, 3(b1u)^2, Quantum
+COMMENT: chemistry method employed: Hartree Fock All electrons frozen in the ground state
+COMMENT: configuration Virtual molecular orbitals allocation for augmentation to the continuum
+COMMENT: orbitals. This is required for the construction of the N+1 trial eigenkets. 2 virtual MOs
+COMMENT: of Ag symmetry retained 1 virtual MOs of B2u symmetry retained 1 virtual MOs of B3u
+COMMENT: symmetry retained 1 virtual MOs of B1g symmetry retained 1 virtual MOs of B1u symmetry
+COMMENT: retained 1 virtual MOs of B3g symmetry retained 1 virtual MOs of B2g symmetry retained 0
+COMMENT: virtual MOs of Au symmetry retained Scattering method employed: static exchange Continuum
+COMMENT: orbitals: orbitals which represent the scattering electron. A partial wave expansion of up
+COMMENT: to and including g-wave is employed (see Faure et. al. (2002)). R-matrix sphere radius: 10
+COMMENT: a_0 R-matrix propagated to 100.1a_0 Assumptions of the BEB ionisation cross section
+COMMENT: calculations: the ionisation energy of 0 is 14.25 eV by Koopmans theorem Q=1 for all the
+COMMENT: bound orbitals. bound orbitals used in the computation of the BEB cross section (binding
+COMMENT: energies B and kinetic energies U are given in eV): n=1 IR=ag occ=2 B=14154.48 U=27.212
+COMMENT: n=2 IR=ag occ=2 B=1902.12 U=54.424 n=3 IR=ag occ=2 B=295.2 U=81.636 n=4 IR=ag occ=2
+COMMENT: B=104.06 U=108.848 n=5 IR=ag occ=2 B=104.06 U=136.06 n=6 IR=ag occ=2 B=31.36 U=163.272 n=1
+COMMENT: IR=b2u occ=2 B=1714.54 U=27.212 n=2 IR=b2u occ=2 B=226.68 U=54.424 n=3 IR=b2u occ=2
+COMMENT: B=14.25 U=81.636 n=1 IR=b3u occ=2 B=1714.54 U=27.212 n=2 IR=b3u occ=2 B=226.68 U=54.424
+COMMENT: n=3 IR=b3u occ=2 B=14.25 U=81.636 n=1 IR=b1g occ=2 B=104.06 U=27.212 n=1 IR=b1u occ=2
+COMMENT: B=1714.54 U=27.212 n=2 IR=b1u occ=2 B=226.68 U=54.424 n=3 IR=b1u occ=2 B=14.25 U=81.636
+COMMENT: n=1 IR=b3g occ=2 B=104.06 U=27.212 n=1 IR=b2g occ=2 B=104.06 U=27.212.
+UPDATED: 2011-04-18 17:40:33
+COLUMNS: Energy (eV) | Cross section (m2)
+-----------------------------
+ 1.425000e+1	0.000000e+0
+ 2.425000e+1	8.901753e-21
+ 3.425000e+1	1.461849e-20
+ 4.425000e+1	1.822619e-20
+ 5.425000e+1	2.044645e-20
+ 6.425000e+1	2.180752e-20
+ 7.425000e+1	2.261802e-20
+ 8.425000e+1	2.306454e-20
+ 9.425000e+1	2.326460e-20
+ 1.042500e+2	2.329707e-20
+ 1.142500e+2	2.332635e-20
+ 1.242500e+2	2.327290e-20
+ 1.342500e+2	2.315531e-20
+ 1.442500e+2	2.298874e-20
+ 1.542500e+2	2.278525e-20
+ 1.642500e+2	2.255434e-20
+ 1.742500e+2	2.230344e-20
+ 1.842500e+2	2.203836e-20
+ 1.942500e+2	2.176365e-20
+ 2.042500e+2	2.148286e-20
+ 2.142500e+2	2.119874e-20
+ 2.242500e+2	2.091346e-20
+ 2.342500e+2	2.063444e-20
+ 2.442500e+2	2.035925e-20
+ 2.542500e+2	2.008688e-20
+ 2.642500e+2	1.981799e-20
+ 2.742500e+2	1.955307e-20
+ 2.842500e+2	1.929250e-20
+ 2.942500e+2	1.903654e-20
+ 3.042500e+2	1.878641e-20
+ 3.142500e+2	1.854136e-20
+ 3.242500e+2	1.830133e-20
+ 3.342500e+2	1.806635e-20
+ 3.442500e+2	1.783641e-20
+ 3.542500e+2	1.761147e-20
+ 3.642500e+2	1.739149e-20
+ 3.742500e+2	1.717639e-20
+ 3.842500e+2	1.696610e-20
+ 3.942500e+2	1.676051e-20
+ 4.042500e+2	1.655954e-20
+ 4.142500e+2	1.636309e-20
+ 4.242500e+2	1.617105e-20
+ 4.342500e+2	1.598330e-20
+ 4.442500e+2	1.579975e-20
+ 4.542500e+2	1.562028e-20
+ 4.642500e+2	1.544478e-20
+ 4.742500e+2	1.527316e-20
+ 4.842500e+2	1.510529e-20
+ 4.942500e+2	1.494108e-20
+ 5.042500e+2	1.478042e-20
+ 5.142500e+2	1.462321e-20
+ 5.242500e+2	1.446936e-20
+ 5.342500e+2	1.431877e-20
+ 5.442500e+2	1.417135e-20
+ 5.542500e+2	1.402700e-20
+ 5.642500e+2	1.388563e-20
+ 5.742500e+2	1.374717e-20
+ 5.842500e+2	1.361153e-20
+ 5.942500e+2	1.347863e-20
+ 6.042500e+2	1.334839e-20
+ 6.142500e+2	1.322074e-20
+ 6.242500e+2	1.309560e-20
+ 6.342500e+2	1.297291e-20
+ 6.442500e+2	1.285259e-20
+ 6.542500e+2	1.273458e-20
+ 6.642500e+2	1.261881e-20
+ 6.742500e+2	1.250523e-20
+ 6.842500e+2	1.239378e-20
+ 6.942500e+2	1.228439e-20
+ 7.042500e+2	1.217701e-20
+ 7.142500e+2	1.207159e-20
+ 7.242500e+2	1.196807e-20
+ 7.342500e+2	1.186641e-20
+ 7.442500e+2	1.176655e-20
+ 7.542500e+2	1.166846e-20
+ 7.642500e+2	1.157207e-20
+ 7.742500e+2	1.147736e-20
+ 7.842500e+2	1.138427e-20
+ 7.942500e+2	1.129277e-20
+ 8.042500e+2	1.120281e-20
+ 8.142500e+2	1.111436e-20
+ 8.242500e+2	1.102738e-20
+ 8.342500e+2	1.094183e-20
+ 8.442500e+2	1.085768e-20
+ 8.542500e+2	1.077490e-20
+ 8.642500e+2	1.069344e-20
+ 8.742500e+2	1.061329e-20
+ 8.842500e+2	1.053440e-20
+ 8.942500e+2	1.045675e-20
+ 9.042500e+2	1.038031e-20
+ 9.142500e+2	1.030504e-20
+ 9.242500e+2	1.023094e-20
+ 9.342500e+2	1.015796e-20
+ 9.442500e+2	1.008608e-20
+ 9.542500e+2	1.001528e-20
+ 9.642500e+2	9.945527e-21
+ 9.742500e+2	9.876806e-21
+ 9.842500e+2	9.809091e-21
+ 9.942500e+2	9.742359e-21
+ 1.004250e+3	9.676590e-21
+ 1.014250e+3	9.611762e-21
+ 1.024250e+3	9.547855e-21
+ 1.034250e+3	9.484850e-21
+ 1.044250e+3	9.422726e-21
+ 1.054250e+3	9.361466e-21
+ 1.064250e+3	9.301052e-21
+ 1.074250e+3	9.241465e-21
+ 1.084250e+3	9.182689e-21
+ 1.094250e+3	9.124707e-21
+ 1.104250e+3	9.067503e-21
+ 1.114250e+3	9.011060e-21
+ 1.124250e+3	8.955365e-21
+ 1.134250e+3	8.900401e-21
+ 1.144250e+3	8.846154e-21
+ 1.154250e+3	8.792611e-21
+ 1.164250e+3	8.739756e-21
+ 1.174250e+3	8.687577e-21
+ 1.184250e+3	8.636061e-21
+ 1.194250e+3	8.585195e-21
+ 1.204250e+3	8.534966e-21
+ 1.214250e+3	8.485363e-21
+ 1.224250e+3	8.436373e-21
+ 1.234250e+3	8.387985e-21
+ 1.244250e+3	8.340188e-21
+ 1.254250e+3	8.292971e-21
+ 1.264250e+3	8.246323e-21
+ 1.274250e+3	8.200234e-21
+ 1.284250e+3	8.154693e-21
+ 1.294250e+3	8.109691e-21
+ 1.304250e+3	8.065219e-21
+ 1.314250e+3	8.021265e-21
+ 1.324250e+3	7.977822e-21
+ 1.334250e+3	7.934880e-21
+ 1.344250e+3	7.892431e-21
+ 1.354250e+3	7.850466e-21
+ 1.364250e+3	7.808976e-21
+ 1.374250e+3	7.767953e-21
+ 1.384250e+3	7.727390e-21
+ 1.394250e+3	7.687278e-21
+ 1.404250e+3	7.647610e-21
+ 1.414250e+3	7.608379e-21
+ 1.424250e+3	7.569577e-21
+ 1.434250e+3	7.531196e-21
+ 1.444250e+3	7.493230e-21
+ 1.454250e+3	7.455673e-21
+ 1.464250e+3	7.418517e-21
+ 1.474250e+3	7.381756e-21
+ 1.484250e+3	7.345383e-21
+ 1.494250e+3	7.309392e-21
+ 1.504250e+3	7.273778e-21
+ 1.514250e+3	7.238534e-21
+ 1.524250e+3	7.203654e-21
+ 1.534250e+3	7.169132e-21
+ 1.544250e+3	7.134964e-21
+ 1.554250e+3	7.101142e-21
+ 1.564250e+3	7.067663e-21
+ 1.574250e+3	7.034521e-21
+ 1.584250e+3	7.001710e-21
+ 1.594250e+3	6.969225e-21
+ 1.604250e+3	6.937063e-21
+ 1.614250e+3	6.905217e-21
+ 1.624250e+3	6.873682e-21
+ 1.634250e+3	6.842455e-21
+ 1.644250e+3	6.811531e-21
+ 1.654250e+3	6.780905e-21
+ 1.664250e+3	6.750573e-21
+ 1.674250e+3	6.720531e-21
+ 1.684250e+3	6.690773e-21
+ 1.694250e+3	6.661297e-21
+ 1.704250e+3	6.632098e-21
+ 1.714250e+3	6.603172e-21
+ 1.724250e+3	6.574535e-21
+ 1.734250e+3	6.546163e-21
+ 1.744250e+3	6.518053e-21
+ 1.754250e+3	6.490201e-21
+ 1.764250e+3	6.462603e-21
+ 1.774250e+3	6.435257e-21
+ 1.784250e+3	6.408158e-21
+ 1.794250e+3	6.381302e-21
+ 1.804250e+3	6.354688e-21
+ 1.814250e+3	6.328311e-21
+ 1.824250e+3	6.302167e-21
+ 1.834250e+3	6.276255e-21
+ 1.844250e+3	6.250570e-21
+ 1.854250e+3	6.225111e-21
+ 1.864250e+3	6.199873e-21
+ 1.874250e+3	6.174853e-21
+ 1.884250e+3	6.150050e-21
+ 1.894250e+3	6.125459e-21
+ 1.904250e+3	6.101080e-21
+ 1.914250e+3	6.076912e-21
+ 1.924250e+3	6.052948e-21
+ 1.934250e+3	6.029187e-21
+ 1.944250e+3	6.005625e-21
+ 1.954250e+3	5.982260e-21
+ 1.964250e+3	5.959090e-21
+ 1.974250e+3	5.936111e-21
+ 1.984250e+3	5.913322e-21
+ 1.994250e+3	5.890721e-21
+ 2.004250e+3	5.868304e-21
+ 2.014250e+3	5.846069e-21
+ 2.024250e+3	5.824014e-21
+ 2.034250e+3	5.802138e-21
+ 2.044250e+3	5.780437e-21
+ 2.054250e+3	5.758910e-21
+ 2.064250e+3	5.737554e-21
+ 2.074250e+3	5.716368e-21
+ 2.084250e+3	5.695349e-21
+ 2.094250e+3	5.674495e-21
+ 2.104250e+3	5.653804e-21
+ 2.114250e+3	5.633275e-21
+ 2.124250e+3	5.612905e-21
+ 2.134250e+3	5.592693e-21
+ 2.144250e+3	5.572637e-21
+ 2.154250e+3	5.552734e-21
+ 2.164250e+3	5.532983e-21
+ 2.174250e+3	5.513382e-21
+ 2.184250e+3	5.493930e-21
+ 2.194250e+3	5.474625e-21
+ 2.204250e+3	5.455465e-21
+ 2.214250e+3	5.436448e-21
+ 2.224250e+3	5.417572e-21
+ 2.234250e+3	5.398837e-21
+ 2.244250e+3	5.380241e-21
+ 2.254250e+3	5.361781e-21
+ 2.264250e+3	5.343457e-21
+ 2.274250e+3	5.325267e-21
+ 2.284250e+3	5.307209e-21
+ 2.294250e+3	5.289282e-21
+ 2.304250e+3	5.271485e-21
+ 2.314250e+3	5.253815e-21
+ 2.324250e+3	5.236272e-21
+ 2.334250e+3	5.218855e-21
+ 2.344250e+3	5.201561e-21
+ 2.354250e+3	5.184390e-21
+ 2.364250e+3	5.167340e-21
+ 2.374250e+3	5.150409e-21
+ 2.384250e+3	5.133598e-21
+ 2.394250e+3	5.116903e-21
+ 2.404250e+3	5.100325e-21
+ 2.414250e+3	5.083862e-21
+ 2.424250e+3	5.067512e-21
+ 2.434250e+3	5.051274e-21
+ 2.444250e+3	5.035148e-21
+ 2.454250e+3	5.019132e-21
+ 2.464250e+3	5.003225e-21
+ 2.474250e+3	4.987425e-21
+ 2.484250e+3	4.971732e-21
+ 2.494250e+3	4.956145e-21
+ 2.504250e+3	4.940662e-21
+ 2.514250e+3	4.925282e-21
+ 2.524250e+3	4.910005e-21
+ 2.534250e+3	4.894829e-21
+ 2.544250e+3	4.879754e-21
+ 2.554250e+3	4.864777e-21
+ 2.564250e+3	4.849899e-21
+ 2.574250e+3	4.835118e-21
+ 2.584250e+3	4.820433e-21
+ 2.594250e+3	4.805844e-21
+ 2.604250e+3	4.791349e-21
+ 2.614250e+3	4.776947e-21
+ 2.624250e+3	4.762638e-21
+ 2.634250e+3	4.748421e-21
+ 2.644250e+3	4.734294e-21
+ 2.654250e+3	4.720257e-21
+ 2.664250e+3	4.706309e-21
+ 2.674250e+3	4.692449e-21
+ 2.684250e+3	4.678676e-21
+ 2.694250e+3	4.664989e-21
+ 2.704250e+3	4.651389e-21
+ 2.714250e+3	4.637872e-21
+ 2.724250e+3	4.624440e-21
+ 2.734250e+3	4.611091e-21
+ 2.744250e+3	4.597824e-21
+ 2.754250e+3	4.584639e-21
+ 2.764250e+3	4.571535e-21
+ 2.774250e+3	4.558510e-21
+ 2.784250e+3	4.545565e-21
+ 2.794250e+3	4.532698e-21
+ 2.804250e+3	4.519910e-21
+ 2.814250e+3	4.507198e-21
+ 2.824250e+3	4.494563e-21
+ 2.834250e+3	4.482003e-21
+ 2.844250e+3	4.469518e-21
+ 2.854250e+3	4.457108e-21
+ 2.864250e+3	4.444771e-21
+ 2.874250e+3	4.432507e-21
+ 2.884250e+3	4.420316e-21
+ 2.894250e+3	4.408196e-21
+ 2.904250e+3	4.396147e-21
+ 2.914250e+3	4.384168e-21
+ 2.924250e+3	4.372259e-21
+ 2.934250e+3	4.360419e-21
+ 2.944250e+3	4.348648e-21
+ 2.954250e+3	4.336945e-21
+ 2.964250e+3	4.325309e-21
+ 2.974250e+3	4.313739e-21
+ 2.984250e+3	4.302236e-21
+ 2.994250e+3	4.290798e-21
+ 3.004250e+3	4.279425e-21
+ 3.014250e+3	4.268116e-21
+ 3.024250e+3	4.256871e-21
+ 3.034250e+3	4.245690e-21
+ 3.044250e+3	4.234571e-21
+ 3.054250e+3	4.223515e-21
+ 3.064250e+3	4.212520e-21
+ 3.074250e+3	4.201586e-21
+ 3.084250e+3	4.190713e-21
+ 3.094250e+3	4.179900e-21
+ 3.104250e+3	4.169146e-21
+ 3.114250e+3	4.158452e-21
+ 3.124250e+3	4.147816e-21
+ 3.134250e+3	4.137238e-21
+ 3.144250e+3	4.126718e-21
+ 3.154250e+3	4.116255e-21
+ 3.164250e+3	4.105848e-21
+ 3.174250e+3	4.095498e-21
+ 3.184250e+3	4.085204e-21
+ 3.194250e+3	4.074964e-21
+ 3.204250e+3	4.064780e-21
+ 3.214250e+3	4.054650e-21
+ 3.224250e+3	4.044573e-21
+ 3.234250e+3	4.034551e-21
+ 3.244250e+3	4.024581e-21
+ 3.254250e+3	4.014664e-21
+ 3.264250e+3	4.004799e-21
+ 3.274250e+3	3.994985e-21
+ 3.284250e+3	3.985223e-21
+ 3.294250e+3	3.975512e-21
+ 3.304250e+3	3.965852e-21
+ 3.314250e+3	3.956242e-21
+ 3.324250e+3	3.946681e-21
+ 3.334250e+3	3.937170e-21
+ 3.344250e+3	3.927707e-21
+ 3.354250e+3	3.918293e-21
+ 3.364250e+3	3.908928e-21
+ 3.374250e+3	3.899610e-21
+ 3.384250e+3	3.890339e-21
+ 3.394250e+3	3.881116e-21
+ 3.404250e+3	3.871939e-21
+ 3.414250e+3	3.862808e-21
+ 3.424250e+3	3.853724e-21
+ 3.434250e+3	3.844685e-21
+ 3.444250e+3	3.835691e-21
+ 3.454250e+3	3.826742e-21
+ 3.464250e+3	3.817838e-21
+ 3.474250e+3	3.808978e-21
+ 3.484250e+3	3.800162e-21
+ 3.494250e+3	3.791389e-21
+ 3.504250e+3	3.782660e-21
+ 3.514250e+3	3.773974e-21
+ 3.524250e+3	3.765330e-21
+ 3.534250e+3	3.756728e-21
+ 3.544250e+3	3.748168e-21
+ 3.554250e+3	3.739650e-21
+ 3.564250e+3	3.731173e-21
+ 3.574250e+3	3.722738e-21
+ 3.584250e+3	3.714343e-21
+ 3.594250e+3	3.705988e-21
+ 3.604250e+3	3.697673e-21
+ 3.614250e+3	3.689399e-21
+ 3.624250e+3	3.681163e-21
+ 3.634250e+3	3.672967e-21
+ 3.644250e+3	3.664810e-21
+ 3.654250e+3	3.656692e-21
+ 3.664250e+3	3.648611e-21
+ 3.674250e+3	3.640569e-21
+ 3.684250e+3	3.632565e-21
+ 3.694250e+3	3.624599e-21
+ 3.704250e+3	3.616669e-21
+ 3.714250e+3	3.608777e-21
+ 3.724250e+3	3.600921e-21
+ 3.734250e+3	3.593102e-21
+ 3.744250e+3	3.585319e-21
+ 3.754250e+3	3.577572e-21
+ 3.764250e+3	3.569861e-21
+ 3.774250e+3	3.562185e-21
+ 3.784250e+3	3.554545e-21
+ 3.794250e+3	3.546939e-21
+ 3.804250e+3	3.539368e-21
+ 3.814250e+3	3.531832e-21
+ 3.824250e+3	3.524330e-21
+ 3.834250e+3	3.516861e-21
+ 3.844250e+3	3.509427e-21
+ 3.854250e+3	3.502026e-21
+ 3.864250e+3	3.494658e-21
+ 3.874250e+3	3.487324e-21
+ 3.884250e+3	3.480022e-21
+ 3.894250e+3	3.472753e-21
+ 3.904250e+3	3.465516e-21
+ 3.914250e+3	3.458312e-21
+ 3.924250e+3	3.451139e-21
+ 3.934250e+3	3.443998e-21
+ 3.944250e+3	3.436889e-21
+ 3.954250e+3	3.429810e-21
+ 3.964250e+3	3.422763e-21
+ 3.974250e+3	3.415747e-21
+ 3.984250e+3	3.408762e-21
+ 3.994250e+3	3.401807e-21
+ 4.004250e+3	3.394882e-21
+ 4.014250e+3	3.387987e-21
+ 4.024250e+3	3.381123e-21
+ 4.034250e+3	3.374287e-21
+ 4.044250e+3	3.367482e-21
+ 4.054250e+3	3.360705e-21
+ 4.064250e+3	3.353958e-21
+ 4.074250e+3	3.347240e-21
+ 4.084250e+3	3.340550e-21
+ 4.094250e+3	3.333889e-21
+ 4.104250e+3	3.327256e-21
+ 4.114250e+3	3.320651e-21
+ 4.124250e+3	3.314074e-21
+ 4.134250e+3	3.307525e-21
+ 4.144250e+3	3.301004e-21
+ 4.154250e+3	3.294509e-21
+ 4.164250e+3	3.288043e-21
+ 4.174250e+3	3.281603e-21
+ 4.184250e+3	3.275190e-21
+ 4.194250e+3	3.268804e-21
+ 4.204250e+3	3.262444e-21
+ 4.214250e+3	3.256111e-21
+ 4.224250e+3	3.249804e-21
+ 4.234250e+3	3.243523e-21
+ 4.244250e+3	3.237268e-21
+ 4.254250e+3	3.231039e-21
+ 4.264250e+3	3.224835e-21
+ 4.274250e+3	3.218657e-21
+ 4.284250e+3	3.212503e-21
+ 4.294250e+3	3.206375e-21
+ 4.304250e+3	3.200272e-21
+ 4.314250e+3	3.194194e-21
+ 4.324250e+3	3.188140e-21
+ 4.334250e+3	3.182111e-21
+ 4.344250e+3	3.176106e-21
+ 4.354250e+3	3.170125e-21
+ 4.364250e+3	3.164168e-21
+ 4.374250e+3	3.158235e-21
+ 4.384250e+3	3.152325e-21
+ 4.394250e+3	3.146440e-21
+ 4.404250e+3	3.140577e-21
+ 4.414250e+3	3.134738e-21
+ 4.424250e+3	3.128922e-21
+ 4.434250e+3	3.123129e-21
+ 4.444250e+3	3.117359e-21
+ 4.454250e+3	3.111612e-21
+ 4.464250e+3	3.105887e-21
+ 4.474250e+3	3.100185e-21
+ 4.484250e+3	3.094505e-21
+ 4.494250e+3	3.088847e-21
+ 4.504250e+3	3.083212e-21
+ 4.514250e+3	3.077598e-21
+ 4.524250e+3	3.072006e-21
+ 4.534250e+3	3.066435e-21
+ 4.544250e+3	3.060886e-21
+ 4.554250e+3	3.055359e-21
+ 4.564250e+3	3.049853e-21
+ 4.574250e+3	3.044368e-21
+ 4.584250e+3	3.038904e-21
+ 4.594250e+3	3.033460e-21
+ 4.604250e+3	3.028038e-21
+ 4.614250e+3	3.022636e-21
+ 4.624250e+3	3.017255e-21
+ 4.634250e+3	3.011894e-21
+ 4.644250e+3	3.006554e-21
+ 4.654250e+3	3.001234e-21
+ 4.664250e+3	2.995933e-21
+ 4.674250e+3	2.990653e-21
+ 4.684250e+3	2.985393e-21
+ 4.694250e+3	2.980152e-21
+ 4.704250e+3	2.974931e-21
+ 4.714250e+3	2.969729e-21
+ 4.724250e+3	2.964547e-21
+ 4.734250e+3	2.959384e-21
+ 4.744250e+3	2.954240e-21
+ 4.754250e+3	2.949115e-21
+ 4.764250e+3	2.944009e-21
+ 4.774250e+3	2.938922e-21
+ 4.784250e+3	2.933854e-21
+ 4.794250e+3	2.928804e-21
+ 4.804250e+3	2.923773e-21
+ 4.814250e+3	2.918760e-21
+ 4.824250e+3	2.913766e-21
+ 4.834250e+3	2.908789e-21
+ 4.844250e+3	2.903831e-21
+ 4.854250e+3	2.898891e-21
+ 4.864250e+3	2.893969e-21
+ 4.874250e+3	2.889064e-21
+ 4.884250e+3	2.884178e-21
+ 4.894250e+3	2.879309e-21
+ 4.904250e+3	2.874457e-21
+ 4.914250e+3	2.869623e-21
+ 4.924250e+3	2.864806e-21
+ 4.934250e+3	2.860006e-21
+ 4.944250e+3	2.855224e-21
+ 4.954250e+3	2.850458e-21
+ 4.964250e+3	2.845710e-21
+ 4.974250e+3	2.840978e-21
+ 4.984250e+3	2.836263e-21
+ 4.994250e+3	2.831565e-21
+-----------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

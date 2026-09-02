@@ -1,0 +1,16 @@
+{
+  "key": "phelps",
+  "display_name": "Phelps database",
+  "source": "Phelps database, via LXCat",
+  "reference": "www.lxcat.net/Phelps",
+  "comment": "Based on Yamabe, Buckman, and Phelps, Phys. Rev. 27, 1345 (1983) but with revisions in Oct 1997.",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": false,
+    "effective": true,
+    "ionization": true,
+    "excitation": true,
+    "excitation_count": 1
+  }
+}

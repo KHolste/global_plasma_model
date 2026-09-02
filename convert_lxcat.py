@@ -25,6 +25,9 @@ class LXCatBlock:
     updated: str = ""
     species: str = ""
     param: str = ""
+    database: str = ""       # z.B. "Hayashi database"
+    permlink: str = ""       # z.B. "www.lxcat.net/Hayashi"
+    db_comment: str = ""     # Quellenangabe der Datenbank
     energies: list[float] = field(default_factory=list)
     cross_sections: list[float] = field(default_factory=list)
 
@@ -34,13 +37,36 @@ def parse_lxcat(filepath: str | Path) -> list[LXCatBlock]:
     blocks = []
     lines = Path(filepath).read_text(encoding="utf-8").splitlines()
 
+    # Eine LXCat-Datei kann mehrere Datenbanken enthalten. Jeder Block gehoert
+    # zu der Datenbank, deren Kopf zuletzt kam.
+    db_name = db_permlink = db_comment = ""
+    db_comment_offen = False
+
     i = 0
     while i < len(lines):
         line = lines[i].strip()
 
+        if line.startswith("DATABASE:"):
+            db_name = line[9:].strip()
+            db_permlink = db_comment = ""
+            db_comment_offen = False
+        elif line.startswith("PERMLINK:"):
+            db_permlink = line[9:].strip()
+        elif line.startswith("COMMENT:") and not db_comment:
+            db_comment = line[8:].strip()
+            db_comment_offen = True
+        elif db_comment_offen:
+            if line and not line.startswith(("*", "x", "-")) and ":" not in line[:12]:
+                db_comment += " " + line
+            else:
+                db_comment_offen = False
+
         # Block-Start erkennen
         if line in ("ELASTIC", "EXCITATION", "IONIZATION", "EFFECTIVE", "ATTACHMENT"):
-            block = LXCatBlock(block_type=line, target_line="", threshold_or_mM=0.0)
+            db_comment_offen = False
+            block = LXCatBlock(block_type=line, target_line="", threshold_or_mM=0.0,
+                               database=db_name, permlink=db_permlink,
+                               db_comment=db_comment)
 
             # Zeile 2: Target
             i += 1
@@ -128,7 +154,7 @@ def write_csv(block: LXCatBlock, filepath: Path):
     """Schreibe einen Block als CSV."""
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(f"# {block.process_desc}\n")
-        f.write(f"# Source: LXCat / Biagi database (MagBoltz V8.97)\n")
+        f.write(f"# Source: LXCat, {block.database or 'unbekannte Datenbank'}\n")
         f.write(f"# Target: {block.target_line}\n")
         if block.block_type in ("EXCITATION", "IONIZATION"):
             f.write(f"# Threshold: {block.threshold_or_mM} eV\n")
@@ -144,109 +170,146 @@ def write_csv(block: LXCatBlock, filepath: Path):
             f.write(f"{e},{cs}\n")
 
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: python convert_lxcat.py <lxcat_file> <output_dir>")
-        print("Examples:")
-        print("  python convert_lxcat.py cross_sections/tests/xenon_all_Biagi_database.txt cross_sections/xenon/biagi")
-        print("  python convert_lxcat.py cross_sections/tests/xenon_all_Hayashi_database.txt cross_sections/xenon/hayashi")
-        print("")
-        print("Legacy (flat): python convert_lxcat.py <file> <gas_name>")
-        sys.exit(1)
+def datenbank_kurz(name: str) -> str:
+    """Aus "Hayashi database" wird "hayashi"."""
+    wort = name.replace("database", "").strip().split()
+    return sanitize_filename(wort[0].lower()) if wort else "unbekannt"
 
-    lxcat_file = Path(sys.argv[1])
-    out_dir = Path(sys.argv[2])
 
-    if not lxcat_file.exists():
-        print(f"FEHLER: {lxcat_file} nicht gefunden!")
-        sys.exit(1)
+def erzeugt_am(lxcat_file: Path) -> str:
+    """Das Erzeugungsdatum aus dem Dateikopf, sonst leer."""
+    for zeile in lxcat_file.read_text(encoding="utf-8").splitlines()[:5]:
+        if zeile.startswith("Generated on"):
+            rest = zeile.replace("Generated on", "").strip()
+            return rest.split(".")[0].strip()
+    return ""
 
-    print(f"Parsing: {lxcat_file}")
-    blocks = parse_lxcat(lxcat_file)
-    print(f"Gefunden: {len(blocks)} Bloecke")
 
-    # Zielverzeichnis (wird aus Argument genommen, nicht mehr aus gas_name abgeleitet)
-    gas_name = out_dir.parent.name if out_dir.parent.name != "cross_sections" else out_dir.name
+def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
+                       lxcat_file: Path, datum: str) -> dict:
+    """Alle Bloecke einer Datenbank in ein Verzeichnis schreiben."""
+    global _filename_counter
+    _filename_counter = {}
+
     out_dir.mkdir(parents=True, exist_ok=True)
     exc_dir = out_dir / "excitation"
     exc_dir.mkdir(exist_ok=True)
 
+    db_name = blocks[0].database or out_dir.name
     metadata = {
-        "source": "LXCat / Biagi database (MagBoltz V8.97)",
+        "source": f"LXCat, {db_name}",
         "origin_file": str(lxcat_file),
-        "retrieved": "2026-03-28",
+        "retrieved": datum,
         "gas": gas_name,
         "processes": [],
     }
 
-    n_elastic = 0
-    n_excitation = 0
-    n_ionization = 0
-    n_skipped = 0
+    zahl = {"ELASTIC": 0, "EXCITATION": 0, "IONIZATION": 0, "EFFECTIVE": 0, "sonst": 0}
 
     for block in blocks:
         entry = {
             "type": block.block_type,
             "target": block.target_line,
             "process": block.process_desc,
-            "threshold_eV": block.threshold_or_mM if block.block_type != "ELASTIC" else None,
-            "mM": block.threshold_or_mM if block.block_type == "ELASTIC" else None,
+            "threshold_eV": block.threshold_or_mM if block.block_type not in ("ELASTIC", "EFFECTIVE") else None,
+            "mM": block.threshold_or_mM if block.block_type in ("ELASTIC", "EFFECTIVE") else None,
             "data_points": len(block.energies),
         }
 
         if block.block_type == "ELASTIC":
-            filepath = out_dir / "elastic.csv"
-            write_csv(block, filepath)
+            write_csv(block, out_dir / "elastic.csv")
             entry["file"] = "elastic.csv"
-            n_elastic += 1
-            print(f"  ELASTIC: {len(block.energies)} Punkte -> {filepath}")
+            zahl["ELASTIC"] += 1
+
+        elif block.block_type == "EFFECTIVE":
+            # Der effektive Querschnitt ist der gesamte Impulsuebertrag, also
+            # elastisch plus inelastisch. Er wird abgelegt, damit er sichtbar
+            # ist, aber nicht als elastischer Querschnitt verwendet.
+            write_csv(block, out_dir / "effective.csv")
+            entry["file"] = "effective.csv"
+            entry["note"] = ("Gesamter Impulsuebertrag, nicht der elastische. "
+                             "Nicht als elastischer Querschnitt verwendbar.")
+            zahl["EFFECTIVE"] += 1
 
         elif block.block_type == "EXCITATION":
-            state = extract_state_name(block.target_line)
-            if not state:
-                state = f"exc_{n_excitation}"
-            base = f"excitation_{sanitize_filename(state)}"
-            fname = f"{unique_filename(base)}.csv"
-            filepath = exc_dir / fname
-            write_csv(block, filepath)
+            state = extract_state_name(block.target_line) or f"exc_{zahl['EXCITATION']}"
+            fname = f"{unique_filename('excitation_' + sanitize_filename(state))}.csv"
+            write_csv(block, exc_dir / fname)
             entry["file"] = f"excitation/{fname}"
             entry["state"] = state
-            n_excitation += 1
-            print(f"  EXCITATION ({state}): {len(block.energies)} Punkte, "
-                  f"E_thr={block.threshold_or_mM} eV -> {filepath}")
+            zahl["EXCITATION"] += 1
 
         elif block.block_type == "IONIZATION":
-            filepath = out_dir / "ionization.csv"
-            write_csv(block, filepath)
-            entry["file"] = "ionization.csv"
-            n_ionization += 1
-            print(f"  IONIZATION: {len(block.energies)} Punkte, "
-                  f"E_thr={block.threshold_or_mM} eV -> {filepath}")
+            name = "ionization.csv" if zahl["IONIZATION"] == 0 else f"ionization_{zahl['IONIZATION']}.csv"
+            write_csv(block, out_dir / name)
+            entry["file"] = name
+            zahl["IONIZATION"] += 1
 
         else:
-            n_skipped += 1
             entry["file"] = None
-            entry["note"] = "skipped (unsupported type)"
-            print(f"  {block.block_type}: UEBERSPRUNGEN")
+            entry["note"] = "nicht unterstuetzter Typ"
+            zahl["sonst"] += 1
 
         metadata["processes"].append(entry)
 
-    # Metadaten speichern
-    meta_path = out_dir / "metadata.json"
-    with open(meta_path, "w", encoding="utf-8") as f:
+    with open(out_dir / "metadata.json", "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
-    print(f"\nMetadaten: {meta_path}")
 
-    # Zusammenfassung
-    print(f"\n{'='*60}")
-    print(f"  Zusammenfassung: {gas_name}")
-    print(f"{'='*60}")
-    print(f"  Elastisch:    {n_elastic}")
-    print(f"  Anregung:     {n_excitation}")
-    print(f"  Ionisation:   {n_ionization}")
-    print(f"  Uebersprungen: {n_skipped}")
-    print(f"  Gesamt:       {len(blocks)}")
-    print(f"  Zielordner:   {out_dir}")
+    db_info = {
+        "key": out_dir.name,
+        "display_name": db_name,
+        "source": f"{db_name}, via LXCat",
+        "reference": blocks[0].permlink or "www.lxcat.net",
+        "comment": blocks[0].db_comment,
+        "retrieved": datum,
+        "gas": gas_name,
+        "processes": {
+            "elastic": zahl["ELASTIC"] > 0,
+            "effective": zahl["EFFECTIVE"] > 0,
+            "ionization": zahl["IONIZATION"] > 0,
+            "excitation": zahl["EXCITATION"] > 0,
+            "excitation_count": zahl["EXCITATION"],
+        },
+    }
+    with open(out_dir / "db_info.json", "w", encoding="utf-8") as f:
+        json.dump(db_info, f, indent=2, ensure_ascii=False)
+
+    print(f"  {db_name:<22} -> {out_dir}")
+    print(f"      elastisch {zahl['ELASTIC']}, effektiv {zahl['EFFECTIVE']}, "
+          f"Anregung {zahl['EXCITATION']}, Ionisation {zahl['IONIZATION']}"
+          + (f", uebersprungen {zahl['sonst']}" if zahl["sonst"] else ""))
+    return zahl
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Aufruf: python convert_lxcat.py <lxcat_datei> <zielordner>")
+        print("Enthaelt die Datei mehrere Datenbanken, entsteht je Datenbank")
+        print("ein Unterordner:")
+        print("  python convert_lxcat.py argon.txt cross_sections/argon")
+        print("  -> cross_sections/argon/hayashi/, cross_sections/argon/phelps/")
+        sys.exit(1)
+
+    lxcat_file = Path(sys.argv[1])
+    out_dir = Path(sys.argv[2])
+    if not lxcat_file.exists():
+        print(f"FEHLER: {lxcat_file} nicht gefunden!")
+        sys.exit(1)
+
+    blocks = parse_lxcat(lxcat_file)
+    datum = erzeugt_am(lxcat_file)
+    gas_name = out_dir.name if out_dir.parent.name == "cross_sections" else out_dir.parent.name
+
+    nach_db = {}
+    for b in blocks:
+        nach_db.setdefault(b.database or "", []).append(b)
+
+    print(f"{lxcat_file}: {len(blocks)} Bloecke aus {len(nach_db)} Datenbank(en)"
+          + (f", erzeugt am {datum}" if datum else ""))
+
+    for db_name, db_blocks in nach_db.items():
+        ziel = out_dir if len(nach_db) == 1 else out_dir / datenbank_kurz(db_name)
+        schreibe_datenbank(db_blocks, ziel, gas_name, lxcat_file, datum)
 
 
 if __name__ == "__main__":

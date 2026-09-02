@@ -161,6 +161,8 @@ def querschnitte(gas: str, gas_dir: Path, bilder: bool) -> int:
 
         kurven = []
         for p in prozesse:
+            if not p.get("file"):
+                continue          # Prozesstyp, den der Wandler nicht ablegt
             quelldatei = db_dir / p["file"]
             if not quelldatei.exists():
                 continue

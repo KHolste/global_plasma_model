@@ -5,7 +5,7 @@ die Quellen liegen unter `cross_sections/` und `chemistry/`.
 
 | Gas | Wirkungsquerschnitte | Ratenkoeffizienten |
 |-----|---------------------|--------------------|
-| argon | 0 | 0 |
+| argon | 30 | 30 |
 | iodine | 0 | 30 |
 | krypton | 0 | 0 |
 | xenon | 68 | 61 |
