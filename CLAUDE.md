@@ -64,6 +64,16 @@ Der Rechenkern wählt seinen Weg über den Konfigurationsschlüssel
 `chemistry_package`: ist er gesetzt und das Paket ladbar, rechnet der
 generische Löser darüber, sonst die fest verdrahtete Xenon-Physik. Ein
 fehlerhaftes Paket führt zu einer Warnung und zum Rückfall, nicht zum Abbruch.
+Der Dichteprofil-Faktor wirkt auf jede Volumenreaktion und auf keinen
+Wandfluss. Prüfbar daran, dass die Ionisation aus der Summe von Ionen- und
+Neutralbilanz herausfällt, unabhängig davon, wie groß der Faktor ist.
+
+Der Energieverlust an der Wand wird aus dem Randschichtpotential gerechnet:
+`V/Te = ln(0.25 n_e v̄_e / Σ_i Z_i n_i u_B,i)`, Energie je Ion
+`0.5 + Z (2 + V/Te)` in Einheiten von Te. Für Xenon ergibt das 7.77 statt der
+bisherigen festen 7.0, der Strahlstrom sinkt am Standardpunkt um gut vier
+Prozent. Der alte Weg bleibt über `wall_energy_model 0` erreichbar.
+
 Strahlstrom, Schub und Wirkungsgrade kommen auf beiden Wegen aus **einer**
 Rechnung, die über die Ionensorten summiert und die Ladungszahl in
 Bohm-Geschwindigkeit, Strom, Austrittsgeschwindigkeit und Raumladungsgrenze
@@ -82,11 +92,6 @@ bewusst nicht mitversioniert.
 
 Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
-- Der Dichteprofil-Faktor wirkt uneinheitlich zwischen Erzeugung und Verlust und
-  zwischen den Bilanzgleichungen; Teilchen- und Energiebuchhaltung stimmen nicht
-  überein, sobald er von eins abweicht.
-- Der Energieverlust der Elektronen an der Wand ist eine feste Zahl statt aus
-  dem Randschichtpotential gerechnet.
 - Die Legacy-Ratenanpassungen sind Xenon-Polynome ohne Absicherung gegen die
   Gasauswahl; Argon und Krypton rechnen still mit Xenon-Raten.
 - Konvergenzabbruch oberhalb etwa 60 bis 70 W, Ursache nicht untersucht.

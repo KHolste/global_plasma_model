@@ -140,6 +140,87 @@ int main() {
     check("ne with negative ions", abs(ne2 - (n - 1e15)) < 1e5,
           to_string(ne2) + " vs " + to_string(n - 1e15));
 
+    // ── Test 5: Dichteprofil-Faktor wirkt einheitlich ────────
+    //
+    // Der Faktor korrigiert Volumenreaktionen, nicht Wandfluesse. Ist er
+    // ueberall gleich angesetzt, faellt die Ionisation aus der Summe von
+    // Ionen- und Neutralbilanz heraus: was als Ion entsteht, verschwindet
+    // als Neutralteilchen. Diese Summe darf also nicht davon abhaengen, wie
+    // gross der Faktor ist. Genau das stimmte vorher nicht.
+    cout << "\n--- Test 5: Dichteprofil-Faktor ---" << endl;
+    {
+        SimContext c1 = ctx; c1.solver.density_profile_factor = 1.0;
+        SimContext c2 = ctx; c2.solver.density_profile_factor = 0.6;
+
+        auto l1 = residual_raw(c1, ps, P_RFG, nullptr);
+        auto l2 = residual_raw(c2, ps, P_RFG, nullptr);
+        double summe1 = l1[0] + l1[1];
+        double summe2 = l2[0] + l2[1];
+        check("Legacy: Ionisation faellt aus der Teilchensumme heraus",
+              abs(summe1 - summe2) <= 1e-9 * max(abs(summe1), 1e-30),
+              to_string(summe1) + " vs " + to_string(summe2));
+
+        auto g1 = assemble_residual(sys, state, P_abs_V, ctx.thruster.Q0,
+                                     ctx.thruster, c1, c1.solver.alpha_e_wall, 1.0);
+        auto g2 = assemble_residual(sys, state, P_abs_V, ctx.thruster.Q0,
+                                     ctx.thruster, c2, c2.solver.alpha_e_wall, 0.6);
+        double gsum1 = g1[0] + g1[1];
+        double gsum2 = g2[0] + g2[1];
+        check("Generisch: Ionisation faellt ebenso heraus",
+              abs(gsum1 - gsum2) <= 1e-9 * max(abs(gsum1), 1e-30),
+              to_string(gsum1) + " vs " + to_string(gsum2));
+
+        // Bei abweichendem Faktor muessen beide Wege weiter zusammenpassen
+        double d_ion = abs(g2[1] - l2[0]) / (abs(l2[0]) + 1e-30);
+        double d_neu = abs(g2[0] - l2[1]) / (abs(l2[1]) + 1e-30);
+        double d_ee  = abs(g2[2] - l2[2]) / (abs(l2[2]) + 1e-30);
+        check("Ionenbilanz auch bei Faktor 0.6 (<5%)", d_ion < tol, to_string(d_ion*100) + "%");
+        check("Neutralbilanz auch bei Faktor 0.6 (<5%)", d_neu < tol, to_string(d_neu*100) + "%");
+        check("Elektronenenergie auch bei Faktor 0.6 (<5%)", d_ee < tol, to_string(d_ee*100) + "%");
+
+        // Der Faktor muss ueberhaupt wirken -- sonst prueft der Test nichts
+        check("Faktor aendert die Ionenbilanz", abs(l1[0] - l2[0]) > 1e-30 * abs(l1[0]));
+    }
+
+    // ── Test 6: Wandenergie aus dem Randschichtpotential ─────
+    cout << "\n--- Test 6: Wandenergie ---" << endl;
+    {
+        // Fuer eine einzelne einfach geladene Sorte muss das allgemeine
+        // Flussgleichgewicht den Lehrbuchausdruck ergeben.
+        double u = uB(ctx.gas.M, Te);
+        double V_over_Te = sheath_potential_over_Te(n, n*u, Te);
+        double lehrbuch = log(sqrt(ctx.gas.M / (2*pi*me)));
+        check("Randschichtpotential wie im Lehrbuch",
+              abs(V_over_Te - lehrbuch) < 1e-12 * lehrbuch,
+              to_string(V_over_Te) + " vs " + to_string(lehrbuch));
+
+        // Es ist ein Verhaeltnis: eine gemeinsame Skalierung aendert nichts
+        double V_skaliert = sheath_potential_over_Te(10*n, 10*n*u, Te);
+        check("unabhaengig von der Dichteskala",
+              abs(V_skaliert - V_over_Te) < 1e-12 * V_over_Te);
+
+        // Energie je Paar: 0.5 aus der Vorschicht, 2 Elektronen, Randschicht
+        SimContext cm = ctx; cm.solver.wall_energy_model = 1;
+        double alpha = wall_energy_alpha(cm, n, Te);
+        check("Energie je Paar", abs(alpha - (2.5 + lehrbuch)) < 1e-12 * alpha,
+              to_string(alpha));
+        check("Groessenordnung wie die bisherige feste Zahl",
+              alpha > 7.0 && alpha < 8.5, to_string(alpha));
+
+        // Die feste Zahl bleibt als Rueckfall exakt erhalten
+        SimContext cf = ctx; cf.solver.wall_energy_model = 0; cf.solver.alpha_e_wall = 7.0;
+        check("Rueckfall auf die feste Zahl",
+              abs(wall_energy_alpha(cf, n, Te) - 7.0) < 1e-12);
+
+        // Ein zweifach geladenes Ion traegt mehr fort: es nimmt zwei
+        // Elektronen mit und faellt durch das doppelte Potential.
+        double a1 = wall_energy_per_ion(1, V_over_Te);
+        double a2 = wall_energy_per_ion(2, V_over_Te);
+        check("zweifach geladen traegt mehr Energie", a2 > a1, to_string(a2));
+        check("Aufbau der Energie je Ion",
+              abs(a2 - (0.5 + 2*(2.0 + V_over_Te))) < 1e-12);
+    }
+
     // ── Zusammenfassung ──────────────────────────────────────
     cout << "\n" << string(60, '=') << endl;
     cout << "  Ergebnis: " << passed << " passed, " << failed << " failed" << endl;

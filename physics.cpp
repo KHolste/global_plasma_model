@@ -68,29 +68,33 @@ std::array<double,4> residual_raw(const SimContext& ctx, const PlasmaState& s,
     if (!rf.valid) { double nan = std::numeric_limits<double>::quiet_NaN(); return {nan,nan,nan,nan}; }
 
     double P_vol = rf.P_abs * sp.P_abs_scale / t.V;
+    // Der Dichteprofil-Faktor korrigiert das Volumenmittel eines Produkts von
+    // Dichten. Er gehoert deshalb an jede Volumenreaktion und an keinen
+    // Wandfluss -- dort steht ohnehin schon die Randdichte ueber hL und hR.
     double n_eff = sp.density_profile_factor * s.n;
     double lam = lambda_i(s.ng, g.sigma_i);
     double ub = uB(g.M, s.Te);
     double aeff = Aeff(t, lam);
+    double R_iz = n_eff * s.ng * Kiz(ctx, s.Te);   // Ionisationsrate je Volumen
 
     // r1: Ionenbilanz
-    double r1 = n_eff*s.ng*Kiz(ctx, s.Te) - s.n*ub*aeff/t.V;
-    // r2: Neutralbilanz
-    double r2 = t.Q0/t.V + s.n*ub*Aeff1(t, lam)/t.V - s.n*s.ng*Kiz(ctx, s.Te) - 0.25*s.ng*vg(g.M, s.Tg)*t.Ag/t.V;
+    double r1 = R_iz - s.n*ub*aeff/t.V;
+    // r2: Neutralbilanz -- dieselbe Ionisationsrate wie in r1
+    double r2 = t.Q0/t.V + s.n*ub*Aeff1(t, lam)/t.V - R_iz - 0.25*s.ng*vg(g.M, s.Tg)*t.Ag/t.V;
     // r4: Gasenergie
-    double Pg1 = 3.0*me/g.M * kB*(s.Te*conv-s.Tg) * s.n*s.ng*Kel(ctx, s.Te);
-    double Pg2 = 0.25*g.M*ub*ub * s.n*s.ng*g.sigma_i*vi(g.M, s.Tg);
+    double Pg1 = 3.0*me/g.M * kB*(s.Te*conv-s.Tg) * n_eff*s.ng*Kel(ctx, s.Te);
+    double Pg2 = 0.25*g.M*ub*ub * n_eff*s.ng*g.sigma_i*vi(g.M, s.Tg);
     double Pg3 = g.kappa*(s.Tg-Tg0)/t.lambda_0 * t.A/t.V;
     double r4 = Pg1 + Pg2 - Pg3;
     // r3: Elektronenenergie
-    double P2 = g.Eiz * n_eff*s.ng*Kiz(ctx, s.Te);
+    double P2 = g.Eiz * R_iz;
     double P3;
     if (ctx.rates.excitation_model == 1 && !ctx.rates.kex.empty())
         P3 = Pexc_coeff(ctx, s.Te) * n_eff * s.ng;
     else
         P3 = g.Eexc * n_eff*s.ng*Kex(ctx, s.Te);
     double P4 = 3.0*me/g.M * kB*(s.Te*conv-s.Tg) * n_eff*s.ng*Kel(ctx, s.Te);
-    double P5 = sp.alpha_e_wall*kB*s.Te*conv * s.n*ub*aeff/t.V;
+    double P5 = wall_energy_alpha(ctx, s.n, s.Te)*kB*s.Te*conv * s.n*ub*aeff/t.V;
     double r3 = P_vol - (P2 + P3 + P4 + P5);
 
     return {r1, r2, r3, r4};

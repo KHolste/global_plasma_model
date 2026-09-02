@@ -19,6 +19,7 @@
 #include "phys_const.hpp"
 #include "sim_context.hpp"
 #include "rates.hpp"
+#include "physics.hpp"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -258,14 +259,19 @@ inline std::vector<double> assemble_residual(
     }
 
     // ── 1. Volumenreaktionen ────────────────────────────────
+    // Der Dichteprofil-Faktor korrigiert das Volumenmittel eines Produkts von
+    // Dichten. Er wirkt deshalb auf jede Volumenreaktion, und zwar einmal auf
+    // die fertige Rate -- dieselbe Rate geht danach in die Speziesbilanzen,
+    // in die Elektronenenergie und in die Gasheizung ein. An Wandfluessen hat
+    // er nichts zu suchen; dort steht die Randdichte ueber hL und hR.
     for (auto& rxn : sys.reactions) {
         if (rxn.surface_gamma > 0) continue;  // Oberflaechenreaktionen separat
 
         double K = rxn.rate.evaluate(ctx, Te);
         if (K <= 0) continue;
 
-        // Reaktionsrate: K * Produkt(n_reactant)
-        double rate = K;
+        // Reaktionsrate: K * Produkt(n_reactant), mit Profilfaktor
+        double rate = K * density_profile_factor;
         for (auto& [sp_id, stoech] : rxn.reactants) {
             if (sp_id == "e") {
                 rate *= std::pow(ne, stoech);
@@ -283,30 +289,18 @@ inline std::vector<double> assemble_residual(
             if (idx >= 0) resid[idx] += delta * rate;
         }
 
-        // Energieverlust -> Elektronenenergiebilanz
-        if (rxn.energy_eV > 0 && rxn.is_electron_impact) {
-            double E_J = rxn.energy_eV * e;
-            double n_eff = ne * density_profile_factor;
-            double rate_e = K;
-            for (auto& [sp_id, stoech] : rxn.reactants) {
-                if (sp_id == "e") rate_e *= std::pow(n_eff, stoech);
-                else {
-                    int idx = sys.species_index(sp_id);
-                    if (idx >= 0) rate_e *= std::pow(state[idx], stoech);
-                }
-            }
-            resid[Te_i] -= E_J * rate_e;
-        }
+        // Energieverlust -> Elektronenenergiebilanz, dieselbe Rate
+        if (rxn.energy_eV > 0 && rxn.is_electron_impact)
+            resid[Te_i] -= rxn.energy_eV * e * rate;
 
-        // Elastische Heizung -> Gastemperatur
+        // Elastische Heizung -> Gastemperatur, ebenfalls dieselbe Rate
         if (rxn.contributes_elastic) {
             for (auto& [sp_id, stoech] : rxn.reactants) {
                 if (sp_id == "e") continue;
                 int idx = sys.species_index(sp_id);
                 if (idx >= 0) {
                     double M_sp = sys.species[idx].mass_kg;
-                    double Pg = 3.0 * me / M_sp * kB * (Te*conv - Tg) * ne * state[idx] * K;
-                    resid[Tg_i] += Pg;
+                    resid[Tg_i] += 3.0 * me / M_sp * kB * (Te*conv - Tg) * rate;
                 }
             }
         }
@@ -345,10 +339,22 @@ inline std::vector<double> assemble_residual(
     // Aeff1: fuer Neutralrueckstrom (ohne Grid-Anteil)
     double Aeff1 = 2*hR*pi*geom.R*geom.L + (2 - geom.betai)*hL*pi*geom.R*geom.R;
 
+    // Randschichtpotential aus dem Gleichgewicht von Elektronen- und
+    // Ionenfluss zur Wand. Es haengt an der gesamten Ionenzusammensetzung und
+    // wird deshalb vor der Speziesschleife einmal gebildet.
+    double sum_Z_n_uB = 0;
+    for (int i = 0; i < (int)sys.species.size(); ++i) {
+        const auto& sp = sys.species[i];
+        if (!sp.is_positive_ion()) continue;
+        sum_Z_n_uB += sp.charge * state[i] * std::sqrt(sp.charge * kB*Te*conv / sp.mass_kg);
+    }
+    const double V_over_Te = sheath_potential_over_Te(ne, sum_Z_n_uB, Te);
+
     for (int i = 0; i < (int)sys.species.size(); ++i) {
         auto& sp = sys.species[i];
         if (sp.is_positive_ion()) {
-            double uBi = std::sqrt(kB*Te*conv / sp.mass_kg);
+            // Bohm-Geschwindigkeit mit Ladungszahl, wie in der Extraktion
+            double uBi = std::sqrt(sp.charge * kB*Te*conv / sp.mass_kg);
             double wall_loss = state[i] * uBi * Aeff / V;
             resid[i] -= wall_loss;
 
@@ -362,13 +368,19 @@ inline std::vector<double> assemble_residual(
                 }
             }
 
-            // Ion-Neutral Stoss-Heizung (Chabert Pg2)
+            // Ion-Neutral Stoss-Heizung (Chabert Pg2) -- Volumenprozess,
+            // also mit Profilfaktor
             double vi_val = std::sqrt(8*kB*Tg / (pi*sp.mass_kg));
-            double Pg2 = 0.25 * sp.mass_kg * uBi * uBi * state[i] * n_neut_total * sigma_avg * vi_val;
+            double Pg2 = 0.25 * sp.mass_kg * uBi * uBi * density_profile_factor
+                         * state[i] * n_neut_total * sigma_avg * vi_val;
             resid[Tg_i] += Pg2;
 
-            // Elektronen-Wandverlust-Energie
-            resid[Te_i] -= alpha_e_wall * kB * Te * conv * wall_loss;
+            // Energie, die ein Ion der Ladung Z samt seiner Z Elektronen an
+            // die Wand traegt: Vorschicht, Randschicht, Elektronenanteil.
+            double alpha = (ctx.solver.wall_energy_model == 0)
+                           ? alpha_e_wall
+                           : wall_energy_per_ion(sp.charge, V_over_Te);
+            resid[Te_i] -= alpha * kB * Te * conv * wall_loss;
         }
         else if (sp.is_neutral()) {
             // Neutralverlust durch Gitter

@@ -222,6 +222,7 @@ void applyConfig(SimContext& ctx, const ConfigData& cd) {
     if (c.count("P_abs_scale")) s.P_abs_scale = c.at("P_abs_scale");
     if (c.count("density_profile_factor")) s.density_profile_factor = c.at("density_profile_factor");
     if (c.count("alpha_e_wall")) s.alpha_e_wall = c.at("alpha_e_wall");
+    if (c.count("wall_energy_model")) s.wall_energy_model = (int)c.at("wall_energy_model");
     if (c.count("newton_tol"))  s.newton_tol = c.at("newton_tol");
     if (c.count("newton_max_iter")) s.newton_max_iter = (int)c.at("newton_max_iter");
     if (c.count("newton_max_log_step")) s.newton_max_log_step = c.at("newton_max_log_step");

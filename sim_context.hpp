@@ -107,6 +107,10 @@ struct SolverParams {
     double P_RFG_max    = 80.0;
     double P_abs_scale  = 1.0;
     double density_profile_factor = 1.0;
+    // Energie, die ein Elektron-Ion-Paar an die Wand traegt, in Einheiten von
+    // Te. Modell 1 rechnet sie aus dem Randschichtpotential, Modell 0 nimmt
+    // die feste Zahl alpha_e_wall wie bisher.
+    int    wall_energy_model = 1;
     double alpha_e_wall = 7.0;
 
     double newton_tol        = 1e-2;

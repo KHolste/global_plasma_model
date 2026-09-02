@@ -45,6 +45,44 @@ inline double beam_current_mA(const SimContext& ctx, const PlasmaState& s) {
 
 template <typename T> inline int signum(T val) { return (T(0)<val)-(val<T(0)); }
 
+// ═══ Randschicht und Wandenergie ═══════════════════════════
+//
+// Vor einer floatenden Wand stellt sich das Potential so ein, dass der
+// Elektronenfluss den Ionenfluss gerade ausgleicht:
+//
+//     0.25 * n_e * v_e_quer * exp(-V/Te) = sum_i Z_i * n_i * u_B,i
+//
+// Daraus folgt V/Te = ln( 0.25 * n_e * v_e_quer / sum_i Z_i n_i u_B,i ).
+// Fuer eine einzelne einfach geladene Sorte geht das in den Lehrbuchausdruck
+// ln( sqrt(M / (2 pi m_e)) ) ueber (Lieberman & Lichtenberg, Kap. 10).
+//
+// Die Energie je verlorenem Ion setzt sich zusammen aus 0.5*Te kinetischer
+// Energie aus der Vorschicht, Z*V aus der Beschleunigung in der Randschicht
+// und Z*2*Te, die die Z mitgehenden Elektronen forttragen.
+
+inline double electron_mean_speed(double Te_eV) {
+    return std::sqrt(8*kB*Te_eV*conv/(pi*me));
+}
+
+inline double sheath_potential_over_Te(double ne, double sum_Z_n_uB, double Te_eV) {
+    if (!(ne > 0) || !(sum_Z_n_uB > 0) || !(Te_eV > 0)) return 0.0;
+    double verhaeltnis = 0.25 * ne * electron_mean_speed(Te_eV) / sum_Z_n_uB;
+    if (!(verhaeltnis > 1.0)) return 0.0;   // kein rueckhaltendes Potential
+    return std::log(verhaeltnis);
+}
+
+// Energie je verlorenem Ion der Ladung Z, in Einheiten von Te.
+inline double wall_energy_per_ion(int Z, double V_over_Te) {
+    return 0.5 + Z * (2.0 + V_over_Te);
+}
+
+// Fuer den fest verdrahteten Weg: eine Sorte, Ladung eins.
+inline double wall_energy_alpha(const SimContext& ctx, double n, double Te) {
+    if (ctx.solver.wall_energy_model == 0) return ctx.solver.alpha_e_wall;
+    double u = uB(ctx.gas.M, Te);
+    return wall_energy_per_ion(1, sheath_potential_over_Te(n, n*u, Te));
+}
+
 // ═══ Zustandspruefungen ════════════════════════════════════
 
 constexpr double iondeg_max = 0.95;

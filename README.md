@@ -170,6 +170,7 @@ solve_mode 2
 gas_species xenon
 rate_model 2
 use_paper_kel 1
+wall_energy_model 1
 ```
 
 Add `chemistry_package xenon_simple` (or any directory under `chemistry/`) to
@@ -218,7 +219,8 @@ reported as an incomplete environment rather than as a failure. Last full run:
 
 ## Known Limitations
 
-- 0D assumption: homogeneous density profile (correctable via `density_profile_factor`)
+- 0D assumption: homogeneous density profile (correctable via `density_profile_factor`,
+  which now acts on every volume reaction and on no wall flux)
 - Multiply charged ions are carried by the extraction and by the chemistry
   layer, but no cross-section data for the second ionization stage is shipped
 - No separate metastable state balance
