@@ -1,0 +1,27 @@
+# E + Ar -> E + E + Ar+, Ionization, Schwelle 15.76 eV | BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat), BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat), via LXCat, abgerufen 02 Sep 2026
+energy_eV,cross_section_m2
+15.76,0.000000e+00
+18,1.277200e-21
+19,2.074700e-21
+20,3.219900e-21
+21,4.408700e-21
+22,5.405200e-21
+23,6.672000e-21
+24,7.663000e-21
+25,8.700000e-21
+30,1.225100e-20
+40,1.725600e-20
+50,1.951700e-20
+60,2.117900e-20
+70,2.226900e-20
+80,2.283400e-20
+90,2.377700e-20
+100,2.457600e-20
+125,2.436600e-20
+150,2.314200e-20
+175,2.190200e-20
+200,2.073500e-20
+225,1.967200e-20
+250,1.871200e-20
+275,1.769100e-20
+300,1.724900e-20

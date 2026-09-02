@@ -1,0 +1,24 @@
+# E + Ar -> E + E + Ar(+), Ionization
+# Source: LXCat, TRINITI database
+# Target: Ar -> Ar(+)
+# Threshold: 15.8 eV
+# Comment: AR iOH. 15.8EV pEBgOB 1978.
+# Updated: 2017-01-18 17:50:58
+# Data points: 16
+energy_eV,cross_section_m2
+15.8,0.0
+16.0,2e-22
+17.0,1.34e-21
+18.0,2.9e-21
+19.0,4.6e-21
+20.0,6.3e-21
+21.0,7.9e-21
+22.0,9.3e-21
+23.0,1.06e-20
+24.0,1.18e-20
+26.0,1.41e-20
+30.0,1.8e-20
+34.0,2.11e-20
+40.0,2.4e-20
+50.0,2.53e-20
+100.0,2e-20

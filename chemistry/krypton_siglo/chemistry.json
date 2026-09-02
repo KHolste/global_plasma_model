@@ -1,0 +1,172 @@
+{
+  "name": "Krypton (siglo)",
+  "description": "Krypton aus LXCat, SIGLO database. Elastischer Stoss, Einfachionisation und 5 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Kr",
+      "name": "Krypton",
+      "type": "neutral_atom",
+      "mass_kg": 1.3914984e-25,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0094
+    },
+    {
+      "id": "Kr+",
+      "name": "Kr+",
+      "type": "positive_ion",
+      "mass_kg": 1.3914984e-25,
+      "charge": 1,
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Kr": 1
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "el_Kr",
+      "name": "Elastisch: e + Kr -> e + Kr",
+      "type": "elastic",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kel_Kr.csv"
+      },
+      "energy_eV": 0.0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    },
+    {
+      "id": "iz_Kr",
+      "name": "Ionisation: e + Kr -> 2e + Kr+",
+      "type": "ionization",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 2,
+        "Kr+": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kiz_Kr.csv"
+      },
+      "energy_eV": 14.0,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_0",
+      "name": "Anregung: e + Kr -> e + Kr(exc_0) bei 9.915 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_0.csv"
+      },
+      "energy_eV": 9.915,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_1",
+      "name": "Anregung: e + Kr -> e + Kr(exc_1) bei 10.033 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_1.csv"
+      },
+      "energy_eV": 10.033,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_2",
+      "name": "Anregung: e + Kr -> e + Kr(exc_2) bei 10.563 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_2.csv"
+      },
+      "energy_eV": 10.563,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_3",
+      "name": "Anregung: e + Kr -> e + Kr(exc_3) bei 10.644 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_3.csv"
+      },
+      "energy_eV": 10.644,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Kr_exc_4",
+      "name": "Anregung: e + Kr -> e + Kr(exc_4) bei 11.304 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Kr": 1
+      },
+      "products": {
+        "e": 1,
+        "Kr": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Kr_exc_4.csv"
+      },
+      "energy_eV": 11.304,
+      "is_electron_impact": true
+    }
+  ]
+}

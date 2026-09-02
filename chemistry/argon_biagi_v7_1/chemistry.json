@@ -1,0 +1,134 @@
+{
+  "name": "Argon (biagi_v7_1)",
+  "description": "Argon aus LXCat, Biagi-v7.1 (Magboltz version 7.1). Elastischer Stoss, Einfachionisation und 3 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Ar",
+      "name": "Argon",
+      "type": "neutral_atom",
+      "mass_kg": 6.6335209e-26,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0177
+    },
+    {
+      "id": "Ar+",
+      "name": "Ar+",
+      "type": "positive_ion",
+      "mass_kg": 6.6335209e-26,
+      "charge": 1,
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Ar": 1
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "el_Ar",
+      "name": "Elastisch: e + Ar -> e + Ar",
+      "type": "elastic",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kel_Ar.csv"
+      },
+      "energy_eV": 0.0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    },
+    {
+      "id": "iz_Ar",
+      "name": "Ionisation: e + Ar -> 2e + Ar+",
+      "type": "ionization",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 2,
+        "Ar+": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kiz_Ar.csv"
+      },
+      "energy_eV": 15.7,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_exc_0",
+      "name": "Anregung: e + Ar -> e + Ar(exc_0) bei 11.55 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_exc_0.csv"
+      },
+      "energy_eV": 11.55,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_exc_1",
+      "name": "Anregung: e + Ar -> e + Ar(exc_1) bei 13.0 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_exc_1.csv"
+      },
+      "energy_eV": 13.0,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_exc_2",
+      "name": "Anregung: e + Ar -> e + Ar(exc_2) bei 14.0 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_exc_2.csv"
+      },
+      "energy_eV": 14.0,
+      "is_electron_impact": true
+    }
+  ]
+}

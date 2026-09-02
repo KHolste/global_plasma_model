@@ -22,8 +22,33 @@ from rate_coefficients import CrossSectionData, compute_rate_coefficient
 E_CH = 1.602176487e-19  # J/eV
 
 
-def precompute(base_dir: Path):
+def mehrdeutig(base_dir: Path) -> list[str]:
+    """Namen der Zweit- und Folgesaetze, falls die Datenbank mehrere mitbringt.
+
+    Manche Datenbanken enthalten zu einem Gas mehrere in sich geschlossene
+    Saetze -- BSR fuehrt fuer Argon zwei, IAA mehrere elastische Varianten.
+    Die Sammeltabelle wuerde sie unbesehen aufaddieren und damit doppelt
+    zaehlen. Welcher Satz gemeint ist, ist eine physikalische Entscheidung;
+    sie gehoert nicht in dieses Skript.
+    """
+    return sorted(f.name for f in base_dir.glob("*.csv")
+                  if f.name.startswith(("elastic_", "ionization_"))
+                  and f.stem.rsplit("_", 1)[-1].isdigit())
+
+
+def precompute(base_dir: Path, trotzdem: bool = False):
     print(f"Basis: {base_dir}")
+
+    weitere = mehrdeutig(base_dir)
+    if weitere and not trotzdem:
+        print("  ABBRUCH: die Datenbank bringt mehr als einen elastischen oder")
+        print("  ionisierenden Satz mit:")
+        for name in weitere:
+            print(f"    {name}")
+        print("  Die Sammeltabellen wuerden die Saetze aufaddieren und damit")
+        print("  doppelt zaehlen. Welcher Satz gilt, ist zu entscheiden; danach")
+        print("  die uebrigen Dateien entfernen oder mit --trotzdem rechnen.")
+        return False
 
     Te_grid = np.arange(0.5, 20.05, 0.05)
     print(f"Te-Gitter: {Te_grid[0]:.2f} - {Te_grid[-1]:.2f} eV ({len(Te_grid)} Punkte)")
@@ -81,19 +106,20 @@ def precompute(base_dir: Path):
         print(f"  WARNUNG: excitation/ Verzeichnis nicht gefunden")
 
     print("Fertig.")
+    return True
 
 
 def main():
-    if len(sys.argv) >= 2:
-        base = Path(sys.argv[1])
-    else:
-        base = Path("cross_sections/xenon/biagi")
+    argumente = [a for a in sys.argv[1:] if a != "--trotzdem"]
+    trotzdem = "--trotzdem" in sys.argv
+    base = Path(argumente[0]) if argumente else Path("cross_sections/xenon/biagi")
 
     if not base.is_dir():
         print(f"FEHLER: {base} nicht gefunden!")
         sys.exit(1)
 
-    precompute(base)
+    if not precompute(base, trotzdem):
+        sys.exit(2)
 
 
 if __name__ == "__main__":

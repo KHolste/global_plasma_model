@@ -167,7 +167,10 @@ DerivedQuantities compute_derived_from(const SimContext& ctx, const ExtractionRe
     d.P_RF = 0.5 * (R_ind + t.R_ohm) * I_coil_val * I_coil_val;
 
     d.gamma_eff = (d.P_RF > 1e-10) ? ex.P_beam_W/(ex.P_beam_W + d.P_RF) : 0;
-    d.xi_mN_kW = (d.P_RF > 1e-10) ? 1000*d.T_total_N/d.P_RF : 0;
+    // Schub je Leistung in mN/kW: Newton in Millinewton (1e3) und
+    // Watt in Kilowatt (1e3), zusammen 1e6. Der Faktor 1e3 rechnete
+    // bis 2026-09-02 in mN/W und war damit um drei Zehnerpotenzen zu klein.
+    d.xi_mN_kW = (d.P_RF > 1e-10) ? 1e6*d.T_total_N/d.P_RF : 0;
 
     return d;
 }

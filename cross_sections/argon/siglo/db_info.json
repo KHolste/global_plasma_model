@@ -1,0 +1,21 @@
+{
+  "key": "siglo",
+  "display_name": "SIGLO database",
+  "source": "SIGLO database, via LXCat",
+  "reference": "www.lxcat.net/SIGLO",
+  "comment": "From compilation of A.V. Phelps.",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": false,
+    "elastic_count": 0,
+    "effective": true,
+    "ionization": true,
+    "ionization_count": 1,
+    "excitation": true,
+    "excitation_count": 1,
+    "attachment": false
+  },
+  "vollstaendig": false,
+  "eindeutig": true
+}

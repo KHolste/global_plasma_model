@@ -1,0 +1,95 @@
+{
+  "source": "LXCat, TRINITI database",
+  "origin_file": "cross_sections\\tests\\argon_all_12_databases.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": [
+    {
+      "type": "EFFECTIVE",
+      "target": "Ar",
+      "process": "E + Ar -> E + Ar, Effective",
+      "threshold_eV": null,
+      "species": "e / Ar",
+      "mM": 1.3615e-05,
+      "data_points": 38,
+      "file": "effective.csv",
+      "note": "Gesamter Impulsuebertrag, nicht der elastische. Nicht als elastischer Querschnitt verwendbar."
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(1s5)",
+      "process": "E + Ar -> E + Ar(1s5), Excitation",
+      "threshold_eV": 11.54,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 24,
+      "file": "excitation/excitation_1s5.csv",
+      "state": "1s5"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(1s4)",
+      "process": "E + Ar -> E + Ar(1s4), Excitation",
+      "threshold_eV": 11.62,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 26,
+      "file": "excitation/excitation_1s4.csv",
+      "state": "1s4"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(1s3)",
+      "process": "E + Ar -> E + Ar(1s3), Excitation",
+      "threshold_eV": 11.78,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 16,
+      "file": "excitation/excitation_1s3.csv",
+      "state": "1s3"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(1s2)",
+      "process": "E + Ar -> E + Ar(1s2), Excitation",
+      "threshold_eV": 11.87,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 23,
+      "file": "excitation/excitation_1s2.csv",
+      "state": "1s2"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(F)",
+      "process": "E + Ar -> E + Ar(F), Excitation",
+      "threshold_eV": 12.9,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 19,
+      "file": "excitation/excitation_f.csv",
+      "state": "F"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar(A)",
+      "process": "E + Ar -> E + Ar(A), Excitation",
+      "threshold_eV": 14.0,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 17,
+      "file": "excitation/excitation_a.csv",
+      "state": "A"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Ar -> Ar(+)",
+      "process": "E + Ar -> E + E + Ar(+), Ionization",
+      "threshold_eV": 15.8,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 16,
+      "file": "ionization.csv"
+    }
+  ]
+}

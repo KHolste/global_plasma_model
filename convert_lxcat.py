@@ -293,14 +293,24 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
         "gas": gas_name,
         "processes": {
             "elastic": zahl["ELASTIC"] > 0,
+            "elastic_count": zahl["ELASTIC"],
             "effective": zahl["EFFECTIVE"] > 0,
             "ionization": zahl["IONIZATION"] > 0,
+            "ionization_count": zahl["IONIZATION"],
             "excitation": zahl["EXCITATION"] > 0,
             "excitation_count": zahl["EXCITATION"],
             "attachment": zahl["ATTACHMENT"] > 0,
         },
         "vollstaendig": zahl["ELASTIC"] > 0 and zahl["IONIZATION"] > 0 and zahl["EXCITATION"] > 0,
+        "eindeutig": zahl["ELASTIC"] <= 1 and zahl["IONIZATION"] <= 1,
     }
+    if not db_info["eindeutig"]:
+        db_info["hinweis"] = (
+            "Die Datenbank liefert mehrere elastische oder ionisierende Saetze. "
+            "Welcher davon mit welchen Anregungen einen zusammengehoerigen Satz "
+            "bildet, ist eine physikalische Entscheidung und keine Umwandlung. "
+            "Solange sie nicht getroffen ist, werden keine Ratentabellen gerechnet."
+        )
     with open(out_dir / "db_info.json", "w", encoding="utf-8") as f:
         json.dump(db_info, f, indent=2, ensure_ascii=False)
 
@@ -309,6 +319,7 @@ def schreibe_datenbank(blocks, out_dir: Path, gas_name: str,
           f"Anregung {zahl['EXCITATION']}, Ionisation {zahl['IONIZATION']}, "
           f"Anlagerung {zahl['ATTACHMENT']}"
           + ("   [vollstaendig]" if db_info["vollstaendig"] else "")
+          + ("   [mehrdeutig]" if not db_info["eindeutig"] else "")
           + (f", uebersprungen {zahl['sonst']}" if zahl["sonst"] else ""))
     return zahl
 

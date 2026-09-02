@@ -1,0 +1,22 @@
+{
+  "key": "bsr",
+  "display_name": "BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)",
+  "source": "BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat), via LXCat",
+  "reference": "www.lxcat.net/BSR",
+  "comment": "Last update on February 18, 2013. Results from the BSR-500 model: B-spline R-matrix calculations in the 500 target state approximation, including 78 bounds states and 422 continuum pseudo-states.",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": true,
+    "elastic_count": 3,
+    "effective": false,
+    "ionization": true,
+    "ionization_count": 2,
+    "excitation": true,
+    "excitation_count": 62,
+    "attachment": false
+  },
+  "vollstaendig": true,
+  "eindeutig": false,
+  "hinweis": "Die Datenbank liefert mehrere elastische oder ionisierende Saetze. Welcher davon mit welchen Anregungen einen zusammengehoerigen Satz bildet, ist eine physikalische Entscheidung und keine Umwandlung. Solange sie nicht getroffen ist, werden keine Ratentabellen gerechnet."
+}

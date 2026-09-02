@@ -1,0 +1,30 @@
+# E + Ar -> E + Ar(3d[3/2]2), Excitation
+# Source: LXCat, IST-Lisbon database
+# Target: Ar -> Ar(3d[3/2]2)
+# Threshold: 13.9 eV
+# Comment: NIFS-DATA-7 National Institute for Fusion Science (Jpn), ISSN 0915-6364.
+# Updated: 2018-04-20 19:50:23
+# Data points: 22
+energy_eV,cross_section_m2
+13.9,0.0
+14.0,1.5e-23
+15.0,1.6e-22
+16.0,3e-22
+18.0,4.75e-22
+19.0,5.1e-22
+20.0,5.24e-22
+22.0,5.2e-22
+25.0,4.75e-22
+30.0,3.6e-22
+35.0,2.45e-22
+40.0,1.76e-22
+50.0,1e-22
+60.0,6.4e-23
+80.0,3.1e-23
+100.0,1.77e-23
+150.0,6.5e-24
+200.0,3.15e-24
+300.0,1.13e-24
+315.0,1e-24
+500.0,0.0
+1000.0,0.0

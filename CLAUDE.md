@@ -109,21 +109,40 @@ Quelle und zwei Spalten. Dazu je eine Abbildung pro Prozess und
 `python make_data_overview.py`; die CSV-Dateien sind mitversioniert, die
 Abbildungen nicht.
 
-Stand der Querschnitte: Krypton 184 aus acht Datenbanken, Sauerstoff O₂ 150
-aus zehn, Xenon 68 aus zwei, atomarer Sauerstoff 32 aus drei, Argon 30 aus
-zwei, O⁻ zwei. Für Iod gibt es **keine** Querschnitte, nur Ratenkoeffizienten.
+Stand der Querschnitte: Argon 282 aus zwölf Datenbanken, Krypton 184 aus
+acht, Sauerstoff O₂ 150 aus zehn, Xenon 68 aus zwei, atomarer Sauerstoff 32
+aus drei, O⁻ zwei. Für Iod gibt es **keine** Querschnitte, nur
+Ratenkoeffizienten.
 
 Als **vollständig** gilt ein Satz, der elastischen Stoß, Ionisation und
 Anregungen enthält; nur dafür werden Ratentabellen gerechnet. Das sind Xenon
-(Biagi, Hayashi), Argon (Hayashi), Krypton (Biagi, Biagi-v7.1, Morgan, SIGLO),
-O₂ (Biagi, IAA, Itikawa, MuroranIT, TRINITI) und atomarer Sauerstoff (IAA).
-Sätze mit `effective` statt `elastic` sind nicht vollständig: der effektive
-Querschnitt ist der gesamte Impulsübertrag und würde den inelastischen Anteil
-doppelt zählen.
+(Biagi, Hayashi), Argon (Biagi, Biagi-v7.1, Hayashi, IST-Lisbon, Morgan,
+Puech), Krypton (Biagi, Biagi-v7.1, Morgan, SIGLO), O₂ (Biagi, IAA, Itikawa,
+MuroranIT, TRINITI) und atomarer Sauerstoff (IAA). Sätze mit `effective` statt
+`elastic` sind nicht vollständig: der effektive Querschnitt ist der gesamte
+Impulsübertrag und würde den inelastischen Anteil doppelt zählen.
 
-Chemiepakete gibt es für Xenon (Biagi), Argon (Hayashi) und Krypton (Biagi).
-Für O₂ ist keines angelegt — ein molekularer Satz braucht eine Entscheidung
-über Spezies und Kanäle und ist keine reine Umwandlung.
+Vollständig, aber **mehrdeutig** sind Argon BSR und Argon IAA: BSR führt zwei
+in sich geschlossene Sätze nebeneinander, IAA vier elastische Varianten. Die
+Sammeltabellen würden sie aufaddieren und damit doppelt zählen, deshalb bricht
+`precompute_rates.py` dort ab und nennt die Zweitsätze; `db_info.json` führt
+das als `eindeutig: false`. Welcher Satz gilt, ist eine physikalische
+Entscheidung; danach die übrigen Dateien entfernen oder mit `--trotzdem`
+rechnen.
+
+Chemiepakete gibt es für alle vollständigen und eindeutigen Sätze der drei
+Edelgase, also zwei für Xenon, vier für Krypton und sechs für Argon. Für O₂
+ist keines angelegt — ein molekularer Satz braucht eine Entscheidung über
+Spezies und Kanäle und ist keine reine Umwandlung.
+
+`noble_gas_comparison.py` rechnet die drei Edelgase gegeneinander: erst Xe, Kr
+und Ar aus Biagi über einen Durchflussbereich, dann je Gas alle Datenbanken an
+einem Punkt. Alle Gase laufen über den generischen Weg mit demselben
+Triebwerk; fällt ein Lauf mangels Paket auf die fest verdrahtete Physik
+zurück, bricht das Skript ab, statt ein Xenon-Ergebnis als Argon auszugeben.
+Der Durchfluss wird **von oben nach unten** durchfahren: die leichten Gase
+finden bei kleinem Durchfluss von einem kalten Startwert aus keine Lösung, wohl
+aber von der vorigen Sprosse aus.
 
 Neue Gase kommen über drei Aufrufe herein: `convert_lxcat.py <datei>
 cross_sections/<gas>` zerlegt eine LXCat-Datei — bei mehreren Datenbanken je
@@ -138,6 +157,12 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 
 ## Erledigte Befunde
+
+**Schub je Leistung** stand um den Faktor tausend zu niedrig. Die Größe heißt
+überall `xi_mN_kW`, gerechnet wurde aber Millinewton je **Watt**: der Faktor
+war 1e3 statt 1e6. Am Standardpunkt sind es 81 mN/kW und nicht 0.08. Betroffen
+sind nur Ausgabe und Anzeige, keine Bilanz — die Größe geht nirgends in die
+Rechnung ein.
 
 **Molekulare Netze rechnen im C++-Kern.** Das Iod-Paket läuft über den
 generischen Weg: sieben Gleichungen, fünf schwere Spezies, darunter ein

@@ -1,0 +1,21 @@
+{
+  "key": "ist_lisbon",
+  "display_name": "IST-Lisbon database",
+  "source": "IST-Lisbon database, via LXCat",
+  "reference": "www.lxcat.net/IST-Lisbon",
+  "comment": "A. Yanguas-Gil, J. Cotrino and L.L. Alves ''An update of argon inelastic cross sections for plasma discharges'' 2005 J. Phys. D: Appl. Phys. 38 1588-1598. Cross sections were defined for energies up to 1 keV and were adjusted as to yield good agreement between calculated and measured swarm parameters. The calculations use a two-term Boltzmann solver with the SST growth model. The cross sections are handled choosing a linear interpolation scheme with no extrapolation after the last energy point, within energy-grids with 1000 points and constant step-sizes comprised between 0.001 and 0.7 eV, according to the (low/high) reduced-field values considered. The elastic momentum-transfer cross section is obtained from the effective proposed by Phelps et al, as published in Yamade et al, Phys. Rev (1983). The inelastic electron cross sections for the 4s states are obtained from Khakoo et al, with the cross sections for the resonant transitions multiplied by a factor of 0.5. The inelastic electron cross sections for the 4p states, 3d and 5s states, and 5p states are obtained from Chilton et al., Hayashi and Weber et al, respectively. The inelastic electron cross sections for the 4d and 6s states are estimated using the formulae proposed by Drawin. The ionization cross section is taken from the measurements of Rapp and Englander-Golden.",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": true,
+    "elastic_count": 1,
+    "effective": false,
+    "ionization": true,
+    "ionization_count": 1,
+    "excitation": true,
+    "excitation_count": 37,
+    "attachment": false
+  },
+  "vollstaendig": true,
+  "eindeutig": true
+}

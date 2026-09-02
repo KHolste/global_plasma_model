@@ -68,3 +68,7 @@ gas_guard_params.txt
 
 # Datenuebersicht: die CSV-Dateien kommen mit, die Bilder nicht
 data_overview/**/figures/
+
+# Vergleichsrechnungen der Edelgase (erzeugt)
+noble_gas_comparison.csv
+vergleich_params.txt

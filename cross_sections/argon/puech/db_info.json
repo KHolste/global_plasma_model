@@ -1,0 +1,21 @@
+{
+  "key": "puech",
+  "display_name": "Puech database",
+  "source": "Puech database, via LXCat",
+  "reference": "www.lxcat.net/Puech",
+  "comment": "V Puech and L Torchin, \"Collision cross sections and electron swarm parameters in argon\", J. Phys. D: Appl. Phys. 19 2309 (1986). Elasic momentum transfer cross section corrected on 27 Nov 2012.",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": true,
+    "elastic_count": 1,
+    "effective": false,
+    "ionization": true,
+    "ionization_count": 1,
+    "excitation": true,
+    "excitation_count": 40,
+    "attachment": false
+  },
+  "vollstaendig": true,
+  "eindeutig": true
+}

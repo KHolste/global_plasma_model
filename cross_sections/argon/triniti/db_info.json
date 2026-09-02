@@ -1,0 +1,21 @@
+{
+  "key": "triniti",
+  "display_name": "TRINITI database",
+  "source": "TRINITI database, via LXCat",
+  "reference": "www.lxcat.net/TRINITI",
+  "comment": "",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": {
+    "elastic": false,
+    "elastic_count": 0,
+    "effective": true,
+    "ionization": true,
+    "ionization_count": 1,
+    "excitation": true,
+    "excitation_count": 6,
+    "attachment": false
+  },
+  "vollstaendig": false,
+  "eindeutig": true
+}

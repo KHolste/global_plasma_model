@@ -1,0 +1,50 @@
+{
+  "source": "LXCat, Morgan (Kinema Research & Software)",
+  "origin_file": "cross_sections\\tests\\argon_all_12_databases.txt",
+  "retrieved": "02 Sep 2026",
+  "gas": "argon",
+  "processes": [
+    {
+      "type": "ELASTIC",
+      "target": "Ar",
+      "process": "E + Ar -> E + Ar, Elastic",
+      "threshold_eV": null,
+      "species": "e / Ar",
+      "mM": 1.36e-05,
+      "data_points": 60,
+      "file": "elastic.csv"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.55eV)",
+      "process": "E + Ar -> E + Ar*(11.55eV), Excitation",
+      "threshold_eV": 11.55,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 18,
+      "file": "excitation/excitation_exc_0.csv",
+      "state": "exc_0"
+    },
+    {
+      "type": "EXCITATION",
+      "target": "Ar -> Ar*(11.55eV)",
+      "process": "E + Ar -> E + Ar*(11.55eV), Excitation",
+      "threshold_eV": 11.55,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 19,
+      "file": "excitation/excitation_exc_1.csv",
+      "state": "exc_1"
+    },
+    {
+      "type": "IONIZATION",
+      "target": "Ar -> Ar^+",
+      "process": "E + Ar -> E + E + Ar+, Ionization",
+      "threshold_eV": 15.759,
+      "species": "e / Ar",
+      "mM": null,
+      "data_points": 40,
+      "file": "ionization.csv"
+    }
+  ]
+}
