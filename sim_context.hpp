@@ -113,7 +113,11 @@ struct SolverParams {
     int    wall_energy_model = 1;
     double alpha_e_wall = 7.0;
 
-    double newton_tol        = 1e-2;
+    // Abbruchschranke auf dem groessten skalierten Residuum. Bei 1e-2 liegt
+    // der Betriebspunkt noch nicht fest: die Ionisationsrate haengt
+    // exponentiell von Te ab, ein Prozent Restfehler in der Leistungsbilanz
+    // verschiebt die Dichte um mehrere Prozent.
+    double newton_tol        = 1e-4;
     int    newton_max_iter   = 45;
     double newton_max_log_step = 0.35;
     double newton_fd_eps     = 1e-5;

@@ -6,6 +6,8 @@ Fuehrt identische Konfigurationen auf beiden Backends aus und vergleicht
 die Ergebnisse toleranzbasiert. Prueft Drift, nicht Identitaet.
 
 Systematische Unterschiede (dokumentiert, kein Testfail):
+  - Abbruchschranke: C++ 1e-4 auf dem groessten skalierten Residuum, Python
+    eine anders normierte RMS-Groesse mit sehr viel lockererer Schranke
   - P_abs: C++ berechnet via Bessel-BVP (P_abs < P_RFG), Python nimmt P direkt
   - I_beam: C++ nutzt einfachen Bohm-Fluss, Python nutzt Bohm+CL+eta_opt
   - ne: Koppelt an P_abs, daher systematisch verschoben
@@ -257,9 +259,14 @@ def compare_results(case_id, cpp_res, py_res, tol):
               0.10 < ne_ratio < 0.70,
               f"C++/Py={ne_ratio:.3f} (C++={c['ne']:.2e}, Py={p['ne']:.2e})")
 
-        # ng-Ratio: variiert leicht mit Betriebspunkt
+        # ng-Ratio: variiert leicht mit Betriebspunkt. Obergrenze am 2026-09-02
+        # von 0.85 auf 0.90 angehoben: die C++-Seite rechnet seit der Umstellung
+        # der Abbruchschranke von 1e-2 auf 1e-4 genauer, wodurch sich das
+        # Verhaeltnis an den oberen Sweep-Punkten auf 0.867 verschoben hat. Die
+        # Python-Seite laeuft weiterhin mit ihrer eigenen, deutlich lockereren
+        # Schranke; das Verhaeltnis bleibt ein Driftwaechter, kein Massstab.
         check(f"{prefix}: ng ratio stable",
-              0.25 < ng_ratio < 0.85,
+              0.25 < ng_ratio < 0.90,
               f"C++/Py={ng_ratio:.3f} (C++={c['ng']:.2e}, Py={p['ng']:.2e})")
 
         # I_beam: C++ Bohm-direkt (hoch), Python Bohm+CL+eta_opt (niedrig)

@@ -65,11 +65,12 @@ fünfzig Anregungsprozesse einzeln, jeder mit eigener Schwelle und eigener
 Ratentabelle. Erzeugt wird es mit `python make_xenon_package.py`; ein Test
 stellt es dem fest verdrahteten tabellierten Weg gegenüber.
 
-**Zur Abbruchschranke:** Die Voreinstellung `newton_tol` von 1e-2 legt die
-Lösung nicht fest. Am Standardpunkt unterscheidet sich das Ergebnis zwischen
-1e-2 und 1e-4 um knapp sieben Prozent in der Dichte und 0.18 eV in Te — beide
-Rechenwege stimmen bei 1e-4 auf fünf Stellen überein, bei 1e-2 nicht. Wer
-Zahlen vergleicht, sollte `newton_tol 1e-4` setzen.
+**Zur Abbruchschranke:** `newton_tol` steht seit 2026-09-02 auf **1e-4**,
+vorher 1e-2. Ein Prozent Restfehler in der Leistungsbilanz legt den
+Betriebspunkt nicht fest, weil die Ionisationsrate exponentiell von Te abhängt:
+am Standardpunkt lagen zwischen 1e-2 und 1e-4 knapp sieben Prozent in der
+Dichte und 0.18 eV in Te. Alle Zahlen aus Läufen vor dieser Umstellung sind
+entsprechend belastet. Der Testlauf dauert unverändert gut zwanzig Sekunden.
 
 Der Rechenkern wählt seinen Weg über den Konfigurationsschlüssel
 `chemistry_package`: ist er gesetzt und das Paket ladbar, rechnet der
@@ -105,7 +106,10 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 - Die Legacy-Ratenanpassungen sind Xenon-Polynome ohne Absicherung gegen die
   Gasauswahl; Argon und Krypton rechnen still mit Xenon-Raten.
-- Konvergenzabbruch oberhalb etwa 60 bis 70 W, Ursache nicht untersucht.
+- Konvergenzabbruch oberhalb etwa 60 bis 70 W, Ursache nicht untersucht. Er
+  hängt nicht an der Abbruchschranke: bei 80 W scheitern alle Punkte mit 1e-2
+  wie mit 1e-4. Bei 60 W bestand einer von fünf Punkten nur mit der lockeren
+  Schranke; er war also nie eine Lösung.
 
 ## Arbeitsweise
 

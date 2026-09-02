@@ -12,7 +12,8 @@ Based on **Chabert et al., Phys. Plasmas 19, 073512 (2012)**, extended with tabu
 - **Multi-gas architecture**: Xenon fully integrated, Krypton/Argon structurally prepared
 - **Chemistry packages**: species/reactions/rate tables read from JSON by both the Python and the C++ side; select one with `chemistry_package` to run the generic solver over it
 - **PyQt6 GUI** with real-time streaming, live plots, and parameter sweeps
-- **Levenberg-Marquardt solver** with Pseudo-Transient Continuation (PTC) warm-start
+- **Levenberg-Marquardt solver** with Pseudo-Transient Continuation (PTC) warm-start,
+  convergence tolerance 1e-4 on the largest scaled residual
 - **Adaptive power bracketing** for robust fixed-current operation across all rate models
 
 ## Model Overview
