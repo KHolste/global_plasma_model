@@ -1,0 +1,149 @@
+{
+  "_description": "Variantenbasis fuer die zwei dominantesten Iod-Modellunsicherheiten. Jede Variante ist eine alternative Ratentabelle fuer einen spezifischen Prozess.",
+
+  "Kelm_I2": {
+    "process_id": "el_I2",
+    "process_name": "e + I2 -> e + I2 (Elastic MTCS)",
+    "physical_significance": "Bestimmt die Elektron-Neutral-Kollisionsfrequenz nu_m und damit die RF-Kopplung. Faktor-5-Diskrepanz zwischen Hauptquellen.",
+    "default": "nominal",
+    "variants": {
+      "nominal": {
+        "file": "Kelm_I2/nominal.csv",
+        "source": "Ambalampitiya et al. 2021 (BPBSR-29 MTCS)",
+        "data_origin": "theoretical",
+        "description": "BSR-Berechnung mit Extrapolation nach Esteves 2022. Basis der Lafleur Table 14 Fits.",
+        "fit_error_pct": 8.06,
+        "Te_range_eV": [1.5, 50],
+        "rationale": "Neueste vollstaendige BSR-Rechnung. Konsistent mit Esteves (2022) Plasmamodell-Validierung."
+      },
+      "yadav_high": {
+        "file": "Kelm_I2/yadav_high.csv",
+        "source": "Yadav et al. 2020 proxy (5x nominal)",
+        "data_origin": "estimated_variant",
+        "description": "Yadav MTCS ca. 5x groesser als Ambalampitiya (Review Fig.18). R-Matrix-Methode mit SEP und CI-Ansaetzen.",
+        "quality_note": "Faktor 5 Diskrepanz ungeklaert. Review: 'further work needed'. Nicht als nominal empfohlen.",
+        "rationale": "Obere Grenze der theoretischen MTCS-Vorhersagen."
+      },
+      "total_elastic": {
+        "file": "Kelm_I2/total_elastic.csv",
+        "source": "Table 14 K_el,I2 (totaler elastischer QS)",
+        "data_origin": "theoretical",
+        "description": "Totaler elastischer Querschnitt statt MTCS. sigma_total >= sigma_MTCS (Gleichheit nur bei isotroper Streuung).",
+        "quality_note": "Physikalische Obergrenze fuer MTCS. Liegt zwischen nominal und yadav_high.",
+        "rationale": "Konservative obere Schranke fuer RF-Kopplungsstudien."
+      },
+      "esteves_low": {
+        "file": "Kelm_I2/esteves_low.csv",
+        "source": "Sensitivitaetsvariante (0.7x nominal)",
+        "data_origin": "estimated_variant",
+        "description": "0.7x nominal als untere Sensitivitaetsgrenze. Basiert auf moeglicher Ueberschaetzung durch Extrapolation bei niedrigen Energien.",
+        "rationale": "Untere Grenze fuer Unsicherheitsstudien."
+      }
+    },
+    "recommendation": "Verwende 'nominal' (Ambalampitiya 2021) als Standard. Fuer Unsicherheitsbandbreite: [esteves_low, total_elastic] = [0.7x, ~1.5x nominal]. Yadav_high (5x) nur fuer extreme Sensitivitaetstests.",
+    "open_question": "Die Faktor-5-Diskrepanz zwischen Ambalampitiya und Yadav ist ungeklaert. Neue theoretische oder experimentelle Arbeiten noetig."
+  },
+
+  "Kdissatt_I2": {
+    "process_id": "dissatt_I2",
+    "process_name": "e + I2 -> I- + I (Dissociative Attachment)",
+    "physical_significance": "Primaerquelle fuer I- negative Ionen. Bestimmt Elektronegativitaet alpha = n_I-/n_e. Starke Quellendivergenz ueber 3 Groessenordnungen bei niedrigen Energien.",
+    "default": "nominal",
+    "variants": {
+      "nominal": {
+        "file": "Kdissatt_I2/nominal.csv",
+        "source": "Ambalampitiya et al. 2021 (BPBSR-29)",
+        "data_origin": "theoretical",
+        "description": "BSR-Berechnung. Normiert auf Truby (1969) thermischen Attachment-Ratenkoeffizienten.",
+        "fit_error_pct": 17.22,
+        "Te_range_eV": [2, 50],
+        "rationale": "Neueste vollstaendige Berechnung. Konsistent mit experimenteller Normierung."
+      },
+      "hamilton_low": {
+        "file": "Kdissatt_I2/hamilton_low.csv",
+        "source": "Hamilton 2015 proxy (0.3x nominal)",
+        "data_origin": "estimated_variant",
+        "description": "Hamilton-Querschnitt tendenziell niedriger. Proxy: 0.3x nominal.",
+        "quality_note": "Verschiedene Normierung und Energiebehandlung als Ambalampitiya.",
+        "rationale": "Untere Grenze basierend auf Review Fig.21 Vergleich."
+      },
+      "biondi_high": {
+        "file": "Kdissatt_I2/biondi_high.csv",
+        "source": "Biondi/Fox proxy (3x nominal)",
+        "data_origin": "estimated_variant",
+        "description": "Historisch hoechste experimentelle Werte. Moeglicherweise durch HI-Verunreinigung beeinflusst (Review p.22).",
+        "quality_note": "Review: 'Caledonia had already highlighted these discrepancies'. Vorsicht bei Verwendung.",
+        "rationale": "Obere historische Grenze. Zeigt maximale Unsicherheitsbandbreite."
+      },
+      "esteves_mid": {
+        "file": "Kdissatt_I2/esteves_mid.csv",
+        "source": "Esteves 2022 proxy (1.5x nominal)",
+        "data_origin": "estimated_variant",
+        "description": "Esteves nutzt Ambalampitiya mit anderer Normierung und Tg-abhaengiger Anpassung.",
+        "rationale": "Mittlere Variante zwischen nominal und biondi_high."
+      }
+    },
+    "recommendation": "Verwende 'nominal' (Ambalampitiya 2021) als Standard. Fuer Unsicherheitsbandbreite: [hamilton_low, esteves_mid] = [0.3x, 1.5x nominal]. Biondi_high (3x) nur als extremes oberes Limit.",
+    "open_question": "Divergenz unter 1 eV ungeklaert. Tg-Abhaengigkeit (Review: Brooks 1990) nicht in Fits enthalten. Atomares Dissoziationsprodukt (I ground vs I excited) unsicher."
+  },
+
+  "surface_gamma": {
+    "process_id": "surfrec_I",
+    "process_name": "I (wall) -> 0.5 I2 (Surface Recombination)",
+    "physical_significance": "Bestimmt die Rate der atomaren Wandrekombination. Direkt proportional zum I2-Rueckfluss und damit zur Dissoziationsbalance. Werte in der Literatur: 0.005-0.44.",
+    "default": "grondein_002",
+    "_note": "Keine CSV-Dateien noetig (konstanter Wert). Varianten werden ueber gamma-Wert im Solver gesetzt.",
+    "variants": {
+      "grondein_002": {
+        "value": 0.02,
+        "source": "Grondein et al. 2016, Table II",
+        "data_origin": "estimated",
+        "description": "Konservativer Basiswert ohne experimentellen Fit."
+      },
+      "lafleur_007": {
+        "value": 0.07,
+        "source": "Lafleur et al. 2022, Sec.4.2",
+        "data_origin": "experimental_fit",
+        "description": "Gefittet an experimentelle Ion-Beam-Komposition des NPT30-I2. Deutlich hoeher als Grondein. Liefert bessere Uebereinstimmung mit Experiment."
+      },
+      "high_044": {
+        "value": 0.44,
+        "source": "Lafleur 2026 Review, Sec.4 (reported range)",
+        "data_origin": "literature_range",
+        "description": "Oberes Limit aus Literatururuebersicht. Material- und temperaturabhaengig."
+      }
+    },
+    "recommendation": "Verwende 'lafleur_007' (gamma=0.07) als neuen empfohlenen Default fuer validierte Modelle. 'grondein_002' als konservativer Vergleichswert."
+  },
+
+  "recombination_rates": {
+    "process_ids": ["rec_Ip_Im", "rec_I2p_Im"],
+    "process_name": "Ion-Ion Rekombination (I+ + I- und I2+ + I-)",
+    "physical_significance": "Verlustkanal fuer negative Ionen. Bestimmt zusammen mit Attachment die stationaere I- Dichte.",
+    "default": "lafleur_2026_eq26",
+    "variants": {
+      "lafleur_2026_eq26": {
+        "K_rec_Ip": 5e-14,
+        "K_rec_I2p": 5e-14,
+        "source": "Lafleur 2026 Review Eq.26: 5e-14 * sqrt(300/Tg)",
+        "data_origin": "empirical",
+        "description": "Basierend auf Greaves (2020) und Chlor-Analogie. Gleiche Rate fuer beide Reaktionen."
+      },
+      "lafleur_2022_fitted": {
+        "K_rec_Ip": 1.47e-14,
+        "K_rec_I2p": 5.8e-14,
+        "source": "Lafleur et al. 2022, Sec.2.1 (Yeung [41] + Greaves [42])",
+        "data_origin": "literature",
+        "description": "K_rec,I+ deutlich niedriger (Yeung 1982), K_rec,I2+ leicht hoeher. Verwendet im validierten NPT30-I2 Modell."
+      },
+      "grondein_2016": {
+        "K_rec_Ip": 9.311e-15,
+        "K_rec_I2p": 1.22e-13,
+        "source": "Grondein et al. 2016 (Yeung 1982 + Greaves original)",
+        "data_origin": "literature",
+        "description": "Aeltere Werte. Lafleur 2026 Review haelt diese fuer zu niedrig (K_rec,I+) bzw. zu hoch (K_rec,I2+)."
+      }
+    },
+    "recommendation": "Verwende 'lafleur_2026_eq26' (5e-14 fuer beide) als nominalen Default. 'lafleur_2022_fitted' als Alternative fuer Validierung gegen NPT30-I2."
+  }
+}

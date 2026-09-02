@@ -1,0 +1,91 @@
+{
+  "_description": "Bekannte Datenluecken, Unsicherheiten und offene Fragen fuer die Iod-Basisdatenbank V1. Basierend auf Lafleur et al. 2026, Sections 3 und 7.",
+
+  "critical_gaps": [
+    {
+      "id": "GAP-01",
+      "process": "Elastische Impulsuebertragungs-Querschnitte (MTCS) fuer I(2P3/2) und I(2P1/2)",
+      "severity": "high",
+      "description": "Keine MTCS-Daten fuer atomares Iod verfuegbar (Review p.14). Nur totale elastische Querschnitte bekannt. Fuer nu_m-Berechnung wird K_el,I als Proxy verwendet. Faktor ~2 Unsicherheit.",
+      "impact": "RF-Kopplungsberechnung, Kollisionsfrequenz",
+      "workaround": "Totaler elastischer Querschnitt als MTCS-Naeherung (konservativ, ueberschaetzt)"
+    },
+    {
+      "id": "GAP-02",
+      "process": "I2 MTCS: Faktor-5-Diskrepanz zwischen Quellen",
+      "severity": "high",
+      "description": "Ambalampitiya (2021) und Yadav (2020) MTCS fuer I2 unterscheiden sich um Faktor ~5 (Fig.18). Review: 'further work needed to clarify role of electron momentum transfer'.",
+      "impact": "nu_m fuer I2, RF-Kopplung",
+      "workaround": "Ambalampitiya (2021) MTCS verwendet (Basis der Fits in Table 14)"
+    },
+    {
+      "id": "GAP-03",
+      "process": "Dissoziative Anlagerung (e + I2 -> I- + I)",
+      "severity": "medium",
+      "description": "17% Fit-Fehler (hoechster aller Prozesse). 'Significant disagreement across all data sources' (Fig.21). Atomares Dissoziationsprodukt unsicher: I(2P3/2) oder I(2P1/2)?",
+      "impact": "I- Dichte, Elektronegativitaet",
+      "workaround": "Ambalampitiya (2021) Querschnitt verwendet, Tg-Abhaengigkeit ignoriert"
+    },
+    {
+      "id": "GAP-04",
+      "process": "Dissoziation (e + I2 -> 2I + e): Daten nur >10 eV",
+      "severity": "medium",
+      "description": "Nur Hamilton (2015) Querschnitt verfuegbar. Daten nur fuer Elektronenenergien >10 eV. 'Insufficient for an accurate description of most iodine discharges' (Review p.20).",
+      "impact": "Dissoziationsgrad bei niedrigem Te",
+      "workaround": "Hamilton-Querschnitt mit Esteves-Extrapolation (log-linear bei hohen, inverse power law bei niedrigen Energien)"
+    },
+    {
+      "id": "GAP-05",
+      "process": "Ionisationsquerschnitt-Spread fuer I(2P3/2)",
+      "severity": "medium",
+      "description": "Faktor ~2 Spread zwischen verschiedenen Berechnungen fuer Energien <30 eV (Fig.14). 'Crucial for plasma modeling' (Review p.14).",
+      "impact": "Ionisationsrate, Te-Bestimmung",
+      "workaround": "Ambalampitiya/Hamilton BSR-Daten als Referenz (neueste, konsistenteste Berechnung)"
+    }
+  ],
+
+  "known_simplifications_v1": [
+    {
+      "id": "SIMP-01",
+      "description": "I(2P1/2) metastabiler Zustand nicht als separate Spezies gefuehrt",
+      "rationale": "Erfordert separate Bilanzgleichung, Quenching-Kinetik, und spin-orbit excitation/de-excitation. Fuer V1 nicht noetig, da Dichte meist viel kleiner als I(2P3/2).",
+      "future": "Wichtig fuer Modelle mit Te > 5 eV und niedrigem Druck (metastable trapping)"
+    },
+    {
+      "id": "SIMP-02",
+      "description": "Atomare Anregung nur als einzelner gelumpter Level (0.9426 eV)",
+      "rationale": "Review Table 6 zeigt 5 Lumped Levels. Fuer V1 nur Level 1 (0.9426 eV) aktiv. Review warnt: 'strongly underestimates electron energy losses' (p.16). Hoehere Levels in V2 ergaenzen.",
+      "future": "Level 2 (6.77 eV), Level 3 (8.05 eV), Level 4 (8.18 eV) ergaenzen"
+    },
+    {
+      "id": "SIMP-03",
+      "description": "Vibrationelle Anregung ignoriert",
+      "rationale": "Beitrag klein gegenueber elektronischer Anregung und Dissoziation (Review p.23, Fig.23).",
+      "future": "K_vibexc,I2 in Table 13 verfuegbar fuer spaetere Erweiterung"
+    },
+    {
+      "id": "SIMP-04",
+      "description": "Elektropositive Sheath-Annahme",
+      "rationale": "Grondein (2016) und Esteves (2022) zeigen, dass fuer typische RF-Leistungen >200W die Elektronegativitaet alpha = n_I-/n_e < 1 ist. Fuer niedrige Leistung koennen Korrekturen noetig sein.",
+      "future": "Elektronegative hL/hR Formeln nach Ref.30 des Grondein-Papers"
+    },
+    {
+      "id": "SIMP-05",
+      "description": "Rekombinationsraten als Tg-unabhaengige Konstanten",
+      "rationale": "Eq.26 hat sqrt(300/Tg)-Abhaengigkeit. Fuer V1 bei Tg~300K ausgewertet.",
+      "future": "Tg-abhaengige Formulierung implementieren"
+    }
+  ],
+
+  "optional_processes_for_v2": [
+    {"process": "e + I2 -> I2* + e (Vibrationelle Anregung, C7)", "source": "Table 13: K_vibexc,I2"},
+    {"process": "I(2P1/2) Quenching durch I2 (F4)", "source": "Sec.3.6.2, K_quench ~ 3.1e-17 m^3/s"},
+    {"process": "Ladungsaustausch I + I+ -> I+ + I (D1)", "source": "Table 9, Sec.3.4, Smirnov cross-section"},
+    {"process": "Ladungsaustausch I2 + I+ -> I2+ + I (D2)", "source": "Table 9, Hause et al. 2015"},
+    {"process": "Thermische Dissoziation I2 + M -> 2I + M", "source": "Eq.17, K_th,diss = 1.37e-16 exp(-15250/T)"},
+    {"process": "Thermische Rekombination I + I + M -> I2 + M", "source": "Eq.18, K_th,recom = 6.51e-46 exp(754/T)"},
+    {"process": "Elektronen-Detachment e + I- -> I + 2e (E6)", "source": "Table 10, Hamilton (2022), threshold 3.059 eV"},
+    {"process": "I2+ Dissoziation e + I2+ -> I+ + I + e (E4)", "source": "Table 10, Hamilton (2022), threshold 2.68 eV"},
+    {"process": "Hoehere atomare Anregung (Levels 2-4 aus Table 6)", "source": "Table 13: K_exc2,I, K_exc3,I, K_exc4,I"}
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "_description": "Reconciliation der drei analysierten Paper gegen das bestehende Iod-Paket",
+  "_date": "2026-03-29",
+
+  "papers_analyzed": [
+    {
+      "id": "ambalampitiya_2021",
+      "citation": "Ambalampitiya et al., Atoms 9, 103 (2021)",
+      "content": "BPBSR cross-sections fuer I und I2: Elastic, Excitation, Ionization (BEB), DEA (LCP), Vibrational Excitation",
+      "relevance": "PRIMAERQUELLE fuer alle nominalen Raten im Paket. Tabelle 13/14 Fits des Lafleur-Reviews basieren auf diesen Daten.",
+      "new_data_for_project": "Keine neuen tabellierten Daten (nur auf Anfrage). Bestaetigt, dass unsere Fits korrekt sind.",
+      "action": "Keine Aenderung. Nominale Basis bestaetigt."
+    },
+    {
+      "id": "yadav_2020",
+      "citation": "Yadav et al., JQSRT 250, 107035 (2020)",
+      "content": "R-Matrix (Quantemol-N) Querschnitte fuer e-I2: Elastic, MTCS, DCS, DEA, Electronic Excitation, Ionization (BEB+CSP-ic), Rate Coefficients",
+      "relevance": "ALTERNATIVE MTCS-QUELLE. Bestaetigt Faktor-5-Diskrepanz zu Ambalampitiya. Liefert zusaetzliche I2-Anregungsquerschnitte (6 Zustaende vs. 4 bei Ambalampitiya).",
+      "key_findings": {
+        "I2_MTCS": "Fig.5: MTCS 100-1000 A^2 bei 0-20 eV, ~5x Ambalampitiya. Starke Feshbach-Resonanz bei 2.1 eV.",
+        "I2_DEA": "Fig.6: CI und SEP Modelle, konsistent mit Buchdal/Healy experimentellen Daten.",
+        "I2_excitation": "Fig.7a: 6 angeregte Zustaende (3Pi_u, 1Pi_u, 3Sigma_g-, 1Sigma_g+, plus 2 weitere). Detaillierter als Ambalampitiya (4 Zustaende).",
+        "I2_ionization": "Fig.7b: CSP-ic und BEB Methoden. CSP-ic deutlich hoeher als BEB bei hohen Energien.",
+        "rate_coefficients": "Fig.10: K_el, K_exc, K_iz, K_total vs. Te(K). Nur Figuren, keine Tabellen."
+      },
+      "new_data_for_project": "Keine neuen tabellierten Daten (nur Figuren + Supplementary). Bestaetigt yadav_high Variante.",
+      "action": "Bestehende yadav_high MTCS-Variante (5x nominal) bleibt beste Naeherung. Keine neue numerische Datenbasis moeglich ohne Digitalisierung."
+    },
+    {
+      "id": "lafleur_2022",
+      "citation": "Lafleur et al., Plasma Sources Sci. Technol. 31, 114001 (2022)",
+      "content": "0D Iod-Globalmodell fuer NPT30-I2 Gridded Ion Thruster. Experimentelle Validierung mit Beam Current, Mass Utilization, Ion Composition.",
+      "relevance": "WICHTIGSTE VALIDIERUNGSQUELLE. Nutzt Ambalampitiya [30] Querschnitte. Liefert experimentell gefittete Modellparameter.",
+      "key_findings": {
+        "surface_recombination": "gamma = 0.07 (gefittet an experimentelle Ion-Beam-Komposition, Fig.6). Deutlich hoeher als Grondein gamma=0.02.",
+        "recombination_rates": "K_rec,I+ = 1.47e-14 m^3/s, K_rec,I2+ = 5.8e-14 m^3/s (Yeung [41] und Greaves [42]). Abweichend von Lafleur 2026 Review Eq.26.",
+        "excitation_states": "2 vs. 25 atomare Anregungszustaende als Sensitivitaetsband (Fig.4a, blauer Bereich). Grosse Auswirkung auf Beam Current.",
+        "dissociation_cross_section": "Aus unveroeff. Ref [38], geplottet in Fig.2. Gleiche Form wie Hamilton 2015.",
+        "experimental_data": "NPT30-I2: R~1.5cm, L~2.3cm, f~3MHz. Beam current 0-25mA bei 0-20W, mdot=56 ug/s. Ion composition: I+/I2+ Anteil vs. Power."
+      },
+      "new_data_for_project": [
+        "gamma = 0.07 als neue Variante fuer surface_recombination",
+        "K_rec,I+ = 1.47e-14 und K_rec,I2+ = 5.8e-14 als alternative Rekombinationsraten",
+        "Experimentelle Validierungspunkte fuer NPT30-I2 Geometrie"
+      ],
+      "action": "Implementiere gamma=0.07 als Variante. Aktualisiere Rekombinationsraten. Ergaenze Validierungsreferenzen."
+    }
+  ],
+
+  "implementation_summary": {
+    "new_variants_added": [
+      "surfrec_I: gamma=0.07 (Lafleur 2022, experimentell gefittet)",
+      "rec_Ip_Im: K=1.47e-14 (Lafleur 2022 / Yeung 1982)",
+      "rec_I2p_Im: K=5.8e-14 (Lafleur 2022 / Greaves 2020)"
+    ],
+    "nominal_changes": "Keine. Ambalampitiya 2021 bleibt nominale Basis.",
+    "data_not_implemented": [
+      "Yadav MTCS: Keine tabellierten Daten verfuegbar, yadav_high (5x) bleibt Proxy",
+      "Yadav I2 Excitation (6 states): Nur Figuren, nicht digitalisierbar ohne Qualitaetsverlust",
+      "Lafleur 2022 Dissociation CS: Unveroeff. Ref [38], nicht reproduzierbar"
+    ]
+  }
+}

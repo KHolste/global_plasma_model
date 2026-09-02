@@ -1,0 +1,51 @@
+{
+  "package_id": "iodine_lafleur_v1",
+  "display_name": "Iodine V1 (Lafleur 2026 Review)",
+  "gas": "iodine",
+  "version": "1.0",
+  "status": "experimental",
+  "backend_support": ["python"],
+  "data_origin": "theoretical",
+  "description": "Kuratierte Iod-Basisdatenbank fuer 0D-Globalmodelle. Core-Set: 6 Spezies (e, I2, I, I+, I2+, I-), 12 Reaktionen. Ratenkoeffizienten aus Ambalampitiya et al. (2021) BSR-Berechnungen, extrahiert via Fits aus Lafleur et al. (2026) Tables 13/14.",
+  "primary_reference": "Lafleur T et al 2026 J. Phys. D: Appl. Phys. 59 023001",
+  "cross_section_basis": "Ambalampitiya et al 2021 (BPBSR-29), Hamilton 2015 (BEB), Esteves 2022 (extrapolations)",
+
+  "species_count": 6,
+  "reaction_count": 12,
+  "core_processes": [
+    "e + I2 -> I2+ + 2e (Ionisation, 9.31 eV)",
+    "e + I2 -> I+ + I + 2e (Diss. Ionisation, 11.63 eV)",
+    "e + I2 -> 2I + e (Dissoziation, 1.542 eV)",
+    "e + I2 -> I- + I (Diss. Attachment)",
+    "e + I -> I+ + 2e (Ionisation, 10.451 eV)",
+    "e + I -> I* + e (Anregung, lumped 0.9426 eV)",
+    "e + I2 -> I2* + e (Mol. Anregung, 2.18 eV)",
+    "e + I2 -> I2 + e (Elastisch MTCS)",
+    "e + I -> I + e (Elastisch total)",
+    "I+ + I- -> 2I (Rekombination)",
+    "I2+ + I- -> I + I2 (Rekombination)",
+    "I (wall) -> 0.5 I2 (Oberflaechenrekombination)"
+  ],
+
+  "curation_notes": [
+    "Alle Elektron-Impact-Raten aus Eq.33/34 Fits, nicht direkt aus Querschnitten integriert",
+    "MTCS fuer atomares I nicht verfuegbar - totaler elastischer QS als Proxy",
+    "Dissoziative Anlagerung hat hoechste Unsicherheit (17% Fit-Fehler, Quellen-Divergenz)",
+    "Atomare Anregung nur Level 1 (0.9426 eV) - unterschaetzt Energieverlust bei Te>5 eV",
+    "Rekombinationsraten bei Tg=300K ausgewertet (Eq.26 hat sqrt(300/Tg)-Abhaengigkeit)",
+    "Oberflaechenrekombination gamma=0.02 ist konservativer Materialunabhaengiger Wert"
+  ],
+
+  "thermophysical_data": {
+    "thermal_conductivity_I": "kappa_I = 5.307e-5 * T^0.804 [W/(m*K)], Eq.3",
+    "thermal_conductivity_I2": "kappa_I2 = 1.167e-5 * T^0.969 [W/(m*K)], Eq.4",
+    "viscosity_I": "mu_I = 3.252e-5 * (T/233)^1.5 * 233/(233+T) [Pa*s], Eq.5",
+    "viscosity_I2": "mu_I2 = 4.424e-5 * (T/473)^1.5 * 473/(473+T) [Pa*s], Eq.6",
+    "vapor_pressure_solid": "log10(p/Pa) = -3512.830/T - 2.013*log10(T) + 18.37972, Eq.1",
+    "vapor_pressure_liquid": "log10(p/Pa) = 9.24828 - 1694.23/(T-58.32), Eq.2",
+    "dissociation_energy": "D = 1.542 eV (D0 molecular ground state)",
+    "electron_affinity": "EA = 3.059 eV",
+    "ionization_energy_I": "10.451 eV",
+    "ionization_energy_I2": "9.31 eV"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Xenon (simple)",
+  "description": "Einfaches Xenon-Modell nach Chabert 2012. 3 Spezies (e, Xe, Xe+), 3 Reaktionen (Ionisation, Anregung, elastisch). Aequivalent zum Legacy-C++-Solver.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Xe",
+      "name": "Xenon",
+      "type": "neutral_atom",
+      "mass_kg": 2.1801711e-25,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0057
+    },
+    {
+      "id": "Xe+",
+      "name": "Xe+",
+      "type": "positive_ion",
+      "mass_kg": 2.1801711e-25,
+      "charge": 1,
+      "is_beam_extracted": true
+    }
+  ],
+
+  "reactions": [
+    {
+      "id": "iz_Xe",
+      "name": "Ionisation: e + Xe -> 2e + Xe+",
+      "type": "ionization",
+      "reactants": {"e": 1, "Xe": 1},
+      "products": {"e": 2, "Xe+": 1},
+      "rate": {
+        "model": "arrhenius",
+        "A": 1.8e-13,
+        "E_a_eV": 12.127
+      },
+      "energy_eV": 12.127,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Xe",
+      "name": "Anregung: e + Xe -> e + Xe*",
+      "type": "excitation",
+      "reactants": {"e": 1, "Xe": 1},
+      "products": {"e": 1, "Xe": 1},
+      "rate": {
+        "model": "arrhenius",
+        "A": 1.2921e-13,
+        "E_a_eV": 11.6
+      },
+      "energy_eV": 11.6,
+      "is_electron_impact": true
+    },
+    {
+      "id": "el_Xe",
+      "name": "Elastisch: e + Xe -> e + Xe",
+      "type": "elastic",
+      "reactants": {"e": 1, "Xe": 1},
+      "products": {"e": 1, "Xe": 1},
+      "rate": {
+        "model": "constant",
+        "value": 1e-13
+      },
+      "energy_eV": 0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    }
+  ]
+}
