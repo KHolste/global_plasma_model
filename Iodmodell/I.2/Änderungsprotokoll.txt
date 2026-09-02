@@ -1,0 +1,20 @@
+#######
+Version 1.2 21.05.2019
+-------
+Leistung, Fluss, Performance
+Bugfixes
+-------
+
+#######
+Version 1.1 
+-------
+Nur Leistung
+Bugfixes
+-------
+
+#######
+Version 1.0 
+-------
+Konstantin Keil
+Erstinbetriebnahme
+-------
