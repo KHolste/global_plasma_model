@@ -14,9 +14,9 @@ Zwei Auswertungen:
                            an einem Punkt. Zeigt, wieviel allein die Wahl der
                            Querschnittsquelle ausmacht.
 
-Der Durchfluss wird von oben nach unten durchfahren. Der Loeser uebernimmt
-jede Sprosse als Startwert der naechsten; von einem kalten Startwert aus
-findet er die Loesung bei kleinem Durchfluss fuer die leichten Gase nicht.
+Der Durchfluss wird von unten nach oben durchfahren. Der Kern faehrt sich
+seine Durchfluss-Leiter bei Bedarf selbst, deshalb tragen auch die kalten
+Startpunkte der leichten Gase.
 
 Aufruf:
     python noble_gas_comparison.py
@@ -51,8 +51,8 @@ rate_model 0
 """
 
 P_RFG = 18.0          # Generatorleistung [W]
-Q_OBEN = 0.80         # oberster Durchfluss [sccm]
-Q_SCHRITT = -0.05     # abwaerts
+Q_UNTEN = 0.25        # unterster Durchfluss [sccm]
+Q_SCHRITT = 0.05
 Q_ANZAHL = 12
 Q_PUNKT = 0.50        # Punkt fuer den Datenbankvergleich [sccm]
 
@@ -90,7 +90,7 @@ def lauf(prog: Path, gas: str, db: str) -> list[Punkt]:
     """Einen Durchflusslauf rechnen und die konvergierten Punkte zurueckgeben."""
     text = (BASIS
             + f"P_RFG {P_RFG}\n"
-            + f"Q0sccm_start {Q_OBEN}\n"
+            + f"Q0sccm_start {Q_UNTEN}\n"
             + f"Q0sccm_step {Q_SCHRITT}\n"
             + f"jjmax {Q_ANZAHL}\n"
             + f"gas_species {gas}\n"

@@ -156,6 +156,23 @@ struct SolverParams {
     double soft_rel_improve = 0.80;
 };
 
+// Durchfluss-Leiter: Wo die Leistungsleiter von unten hochfaehrt, faehrt
+// diese von oben herunter -- viel Neutralgas ist der gutmuetige Fall. Sie
+// beginnt beim Vielfachen des Zieldurchflusses und teilt je Sprosse durch
+// den Faktor. Beide Rechenwege lesen dieselben Zahlen; es sind Fangnetze
+// fuer den Loeser und keine Physik, deshalb stehen sie nicht in der
+// Konfiguration.
+constexpr double FLOW_RAMP_START  = 2.0;
+constexpr double FLOW_RAMP_FAKTOR = 1.25;
+// Kleinster noch versuchter Schritt und Sprossenbudget. Beides greift nur
+// dort, wo die Loesung ueber wenige Prozent Durchfluss um Groessenordnungen
+// springt -- am Verloeschen des Plasmas.
+constexpr double FLOW_RAMP_MIN    = 1.005;
+constexpr int    FLOW_RAMP_SPROSSEN = 120;
+// Wie oft die Leiter hoeher ansetzen darf, wenn schon die oberste
+// Sprosse nicht traegt.
+constexpr int    FLOW_RAMP_HOCH   = 4;
+
 // ═════════════════════════════════════════════════════════════
 // Plasmazustand und RF-Zustand (Datenstrukturen)
 // ═════════════════════════════════════════════════════════════

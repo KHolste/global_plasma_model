@@ -238,6 +238,55 @@ static SolveResult power_ramp_solve(const SimContext& ctx, double P_ziel,
     return SolveResult{};
 }
 
+// Fortsetzung im Durchfluss: von einem hoeheren, gutmuetigen Durchfluss aus
+// schrittweise herunterfahren und jede Sprosse als Startwert der naechsten
+// verwenden. Bei kleinem Durchfluss liegt die Loesung -- vor allem bei den
+// leichten Gasen -- so weit von jedem kalten Startwert entfernt, dass der
+// Loeser sie sonst nicht findet, obwohl es sie gibt. Ein Durchflusssweep
+// faehrt diese Leiter von oben herunter nebenbei, weil jeder Punkt die
+// Loesung des vorigen erbt; der einzelne Punkt hatte sie nicht.
+//
+// Rueckgabe nur, wenn der Zieldurchfluss tatsaechlich erreicht wurde -- eine
+// Loesung bei groesserem Durchfluss waere die Antwort auf eine andere Frage.
+static SolveResult flow_ramp_solve(const SimContext& ctx, double P_RFG,
+                                   const PlasmaState& guess) {
+    const double q_ziel = ctx.thruster.Q0sccm;
+    if (!(q_ziel > 0.0)) return SolveResult{};
+
+    // Eigene Kopie des Kontexts: der Aufrufer bekommt seinen unveraendert
+    // zurueck, und der veraenderliche Zustand bleibt an einem Objekt.
+    SimContext c = ctx;
+    PlasmaState warm = state_in_bounds(ctx.solver, guess) ? guess : safe_defaults(ctx);
+    double q = q_ziel * FLOW_RAMP_START, q_gut = 0.0, faktor = FLOW_RAMP_FAKTOR;
+    int hoch = 0;
+
+    for (int schritt = 0; schritt < FLOW_RAMP_SPROSSEN; ++schritt) {
+        c.thruster.Q0sccm = q;
+        c.recompute();
+        SolveResult r = multi_start_solve(c, P_RFG, warm, true);
+        if (r.converged && state_finite_positive(r.state)) {
+            warm = r.state;
+            q_gut = q;
+            if (q <= q_ziel * (1.0 + 1e-12)) return r;
+            // Nach einer getragenen Sprosse wieder groesser werden, sonst
+            // schrumpft die Schrittweite an der ersten steilen Stelle bis
+            // zum Abbruch und die Leiter erreicht das Ziel nie.
+            faktor = std::min(FLOW_RAMP_FAKTOR, 1.0 + 1.5 * (faktor - 1.0));
+            q = std::max(q / faktor, q_ziel);
+        } else if (q_gut <= 0.0) {
+            // Noch keine tragende Sprosse. Nicht aufgeben, sondern weiter
+            // hinauf: mehr Neutralgas ist der gutmuetigere Fall.
+            if (++hoch > FLOW_RAMP_HOCH) return SolveResult{};
+            q *= FLOW_RAMP_START;
+        } else {
+            faktor = 1.0 + 0.5 * (faktor - 1.0);      // kleinere Schritte versuchen
+            if (faktor < FLOW_RAMP_MIN) break;
+            q = std::max(q_gut / faktor, q_ziel);
+        }
+    }
+    return SolveResult{};
+}
+
 PowerSolveResult solve_at_fixed_power(const SimContext& ctx, double P_RFG_fixed, const PlasmaState& guess) {
     PowerSolveResult out;
     SolveResult best = multi_start_solve(ctx, P_RFG_fixed, guess, true);
@@ -246,6 +295,14 @@ PowerSolveResult solve_at_fixed_power(const SimContext& ctx, double P_RFG_fixed,
         if (ramp.converged && state_finite_positive(ramp.state)) {
             std::cout << "POWER_RAMP " << std::fixed << std::setprecision(4)
                       << P_RFG_fixed << " erreicht" << std::endl;
+            best = ramp;
+        }
+    }
+    if (!(best.converged && state_finite_positive(best.state))) {
+        SolveResult ramp = flow_ramp_solve(ctx, P_RFG_fixed, guess);
+        if (ramp.converged && state_finite_positive(ramp.state)) {
+            std::cout << "FLOW_RAMP " << std::fixed << std::setprecision(4)
+                      << ctx.thruster.Q0sccm << " erreicht" << std::endl;
             best = ramp;
         }
     }

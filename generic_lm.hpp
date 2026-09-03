@@ -548,6 +548,41 @@ inline GenSolveResult gen_power_ramp(const ChemSystem& sys, const SimContext& ct
     return GenSolveResult{};
 }
 
+// Fortsetzung im Durchfluss, wie im fest verdrahteten Weg: von oben
+// herunterfahren, jede Sprosse als Startwert der naechsten. Nur ein Ergebnis
+// beim Zieldurchfluss zaehlt.
+inline GenSolveResult gen_flow_ramp(const ChemSystem& sys, const SimContext& ctx,
+                                    double P_RFG, const std::vector<double>& guess) {
+    const double q_ziel = ctx.thruster.Q0sccm;
+    if (!(q_ziel > 0.0)) return GenSolveResult{};
+
+    SimContext c = ctx;
+    std::vector<double> warm = guess;
+    double q = q_ziel * FLOW_RAMP_START, q_gut = 0.0, faktor = FLOW_RAMP_FAKTOR;
+    int hoch = 0;
+
+    for (int schritt = 0; schritt < FLOW_RAMP_SPROSSEN; ++schritt) {
+        c.thruster.Q0sccm = q;
+        c.recompute();
+        GenSolveResult r = gen_solve_multistart(sys, c, P_RFG, gen_starts(sys, c, warm));
+        if (r.converged && (int)r.state.size() == sys.state_size()) {
+            warm = r.state;
+            q_gut = q;
+            if (q <= q_ziel * (1.0 + 1e-12)) return r;
+            faktor = std::min(FLOW_RAMP_FAKTOR, 1.0 + 1.5 * (faktor - 1.0));
+            q = std::max(q / faktor, q_ziel);
+        } else if (q_gut <= 0.0) {
+            if (++hoch > FLOW_RAMP_HOCH) return GenSolveResult{};
+            q *= FLOW_RAMP_START;
+        } else {
+            faktor = 1.0 + 0.5 * (faktor - 1.0);
+            if (faktor < FLOW_RAMP_MIN) break;
+            q = std::max(q_gut / faktor, q_ziel);
+        }
+    }
+    return GenSolveResult{};
+}
+
 inline GenPowerResult gen_solve_at_fixed_power(
     const ChemSystem& sys, const SimContext& ctx,
     double P_RFG, const std::vector<double>& guess)
@@ -559,6 +594,14 @@ inline GenPowerResult gen_solve_at_fixed_power(
         if (ramp.converged && (int)ramp.state.size() == sys.state_size()) {
             std::cout << "POWER_RAMP " << std::fixed << std::setprecision(4)
                       << P_RFG << " erreicht" << std::endl;
+            r = ramp;
+        }
+    }
+    if (!(r.converged && (int)r.state.size() == sys.state_size())) {
+        GenSolveResult ramp = gen_flow_ramp(sys, ctx, P_RFG, guess);
+        if (ramp.converged && (int)ramp.state.size() == sys.state_size()) {
+            std::cout << "FLOW_RAMP " << std::fixed << std::setprecision(4)
+                      << ctx.thruster.Q0sccm << " erreicht" << std::endl;
             r = ramp;
         }
     }

@@ -140,9 +140,6 @@ und Ar aus Biagi über einen Durchflussbereich, dann je Gas alle Datenbanken an
 einem Punkt. Alle Gase laufen über den generischen Weg mit demselben
 Triebwerk; fällt ein Lauf mangels Paket auf die fest verdrahtete Physik
 zurück, bricht das Skript ab, statt ein Xenon-Ergebnis als Argon auszugeben.
-Der Durchfluss wird **von oben nach unten** durchfahren: die leichten Gase
-finden bei kleinem Durchfluss von einem kalten Startwert aus keine Lösung, wohl
-aber von der vorigen Sprosse aus.
 
 Neue Gase kommen über drei Aufrufe herein: `convert_lxcat.py <datei>
 cross_sections/<gas>` zerlegt eine LXCat-Datei — bei mehreren Datenbanken je
@@ -157,6 +154,25 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 
 ## Erledigte Befunde
+
+**Die Durchfluss-Leiter** steht neben der Leistungsleiter. Wo diese von
+unten hochfährt, fährt jene von oben herunter: viel Neutralgas ist der
+gutmütige Fall. Sie greift erst, wenn der direkte Versuch und die
+Leistungsleiter gescheitert sind, und gibt nur ein Ergebnis beim
+Zieldurchfluss zurück. Argon fand bei 0.40 sccm und 18 W von einem kalten
+Startwert aus keine Lösung, obwohl es sie gibt; jetzt konvergiert es dort auf
+vier Stellen genau auf denselben Punkt, den ein Sweep von oben liefert. Beide
+Rechenwege haben sie, die Kennzahlen stehen einmal in `sim_context.hpp`.
+
+Zwei Dinge waren dabei nicht offensichtlich. Die Schrittweite muss nach einer
+getragenen Sprosse **wieder wachsen**, sonst schrumpft sie an der ersten
+steilen Stelle bis zum Abbruch und die Leiter erreicht das Ziel nie. Und
+trägt schon die oberste Sprosse nicht, ist Aufgeben falsch: die Leiter setzt
+dann höher an, statt den Punkt für unlösbar zu erklären.
+
+Was danach noch scheitert, ist keine Startwertfrage mehr. Argon verlöscht bei
+10 W zwischen 0.26 und 0.24 sccm; dort findet auch ein warmer Nachbar nichts,
+weil es nichts zu finden gibt.
 
 **Schub je Leistung** stand um den Faktor tausend zu niedrig. Die Größe heißt
 überall `xi_mN_kW`, gerechnet wurde aber Millinewton je **Watt**: der Faktor
