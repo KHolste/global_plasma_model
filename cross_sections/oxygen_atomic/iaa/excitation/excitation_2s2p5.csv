@@ -1,7 +1,8 @@
 # E + O <-> E + O*((2s2p5)3PÂ°), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O <-> O*((2s2p5)3PÂ°)
-# Threshold: 0.0 eV
+# Threshold: 15.66 eV
+# Statistical weight ratio: 1.8
 # Comment: [Vaughan&Doering J. Geophys. Res. : Space Phys. 93, 289 (1988)].
 # Updated: 2024-01-03 11:02:40
 # Data points: 200

@@ -1,6 +1,6 @@
 {
   "source": "LXCat, Biagi-v7.1 (Magboltz version 7.1)",
-  "origin_file": "more_oxygen.txt",
+  "origin_file": "cross_sections\\tests\\krypton_and_oxygen_atomic_all_databases.txt",
   "retrieved": "02 Sep 2026",
   "gas": "krypton",
   "processes": [

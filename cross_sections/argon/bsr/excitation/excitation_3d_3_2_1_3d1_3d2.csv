@@ -1,7 +1,8 @@
 # E + Ar <-> E + Ar(3d [3/2]1, 3D1, 3d2), Excitation
 # Source: LXCat, BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)
 # Target: Ar <-> Ar(3d [3/2]1, 3D1, 3d2)
-# Threshold: 0.0 eV
+# Threshold: 14.226 eV
+# Statistical weight ratio: 3.0
 # Comment: BSR-500.
 # Updated: 2013-03-08 15:44:03
 # Data points: 138

@@ -1,0 +1,628 @@
+{
+  "name": "Argon (iaa)",
+  "description": "Argon aus LXCat, IAA (IAA). Elastischer Stoss, Einfachionisation und 29 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "wall_temperature_K": 293.0,
+  "sigma_i": 1e-18,
+  "species": [
+    {
+      "id": "e",
+      "name": "Elektron",
+      "type": "electron",
+      "mass_kg": 9.10938215e-31,
+      "charge": -1
+    },
+    {
+      "id": "Ar",
+      "name": "Argon",
+      "type": "neutral_atom",
+      "mass_kg": 6.6335209e-26,
+      "charge": 0,
+      "is_feedstock": true,
+      "thermal_conductivity": 0.0177
+    },
+    {
+      "id": "Ar+",
+      "name": "Ar+",
+      "type": "positive_ion",
+      "mass_kg": 6.6335209e-26,
+      "charge": 1,
+      "is_beam_extracted": true,
+      "wall_products": {
+        "Ar": 1
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "el_Ar",
+      "name": "Elastisch: e + Ar -> e + Ar",
+      "type": "elastic",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kel_Ar.csv"
+      },
+      "energy_eV": 0.0,
+      "is_electron_impact": true,
+      "elastic_heating": true,
+      "nu_m": true
+    },
+    {
+      "id": "iz_Ar",
+      "name": "Ionisation: e + Ar -> 2e + Ar+",
+      "type": "ionization",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 2,
+        "Ar+": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/Kiz_Ar.csv"
+      },
+      "energy_eV": 15.76,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4s",
+      "name": "Anregung: e + Ar -> e + Ar((4s) bei 11.55 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4s.csv"
+      },
+      "energy_eV": 11.55,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4s",
+      "name": "Anregung: e + Ar -> e + Ar((4s) bei 11.62 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4s.csv"
+      },
+      "energy_eV": 11.62,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4s'",
+      "name": "Anregung: e + Ar -> e + Ar((4s') bei 11.72 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4s'.csv"
+      },
+      "energy_eV": 11.72,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4s'",
+      "name": "Anregung: e + Ar -> e + Ar((4s') bei 11.83 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4s'.csv"
+      },
+      "energy_eV": 11.83,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 12.91 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 12.91,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 13.08 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 13.08,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 13.09 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 13.09,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 13.15 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 13.15,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 13.17 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 13.17,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p",
+      "name": "Anregung: e + Ar -> e + Ar((4p) bei 13.27 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p.csv"
+      },
+      "energy_eV": 13.27,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p'",
+      "name": "Anregung: e + Ar -> e + Ar((4p') bei 13.3 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p'.csv"
+      },
+      "energy_eV": 13.3,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p'",
+      "name": "Anregung: e + Ar -> e + Ar((4p') bei 13.33 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p'.csv"
+      },
+      "energy_eV": 13.33,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(4p'",
+      "name": "Anregung: e + Ar -> e + Ar((4p') bei 13.48 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(4p'.csv"
+      },
+      "energy_eV": 13.48,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 13.84 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 13.84,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 13.9 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 13.9,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 13.98 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 13.98,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 14.01 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 14.01,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 14.06 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 14.06,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(5s",
+      "name": "Anregung: e + Ar -> e + Ar((5s) bei 14.07 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(5s.csv"
+      },
+      "energy_eV": 14.07,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 14.09 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 14.09,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(5s",
+      "name": "Anregung: e + Ar -> e + Ar((5s) bei 14.09 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(5s.csv"
+      },
+      "energy_eV": 14.09,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d",
+      "name": "Anregung: e + Ar -> e + Ar((3d) bei 14.153 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d.csv"
+      },
+      "energy_eV": 14.153,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d'",
+      "name": "Anregung: e + Ar -> e + Ar((3d') bei 14.21 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d'.csv"
+      },
+      "energy_eV": 14.21,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d'",
+      "name": "Anregung: e + Ar -> e + Ar((3d') bei 14.23 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d'.csv"
+      },
+      "energy_eV": 14.23,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d'",
+      "name": "Anregung: e + Ar -> e + Ar((3d') bei 14.24 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d'.csv"
+      },
+      "energy_eV": 14.24,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(5s'",
+      "name": "Anregung: e + Ar -> e + Ar((5s') bei 14.241 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(5s'.csv"
+      },
+      "energy_eV": 14.241,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(5s'",
+      "name": "Anregung: e + Ar -> e + Ar((5s') bei 14.255 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(5s'.csv"
+      },
+      "energy_eV": 14.255,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_(3d'",
+      "name": "Anregung: e + Ar -> e + Ar((3d') bei 14.3 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_(3d'.csv"
+      },
+      "energy_eV": 14.3,
+      "is_electron_impact": true
+    },
+    {
+      "id": "exc_Ar_nf",
+      "name": "Anregung: e + Ar -> e + Ar(nf) bei 15.0 eV",
+      "type": "excitation",
+      "reactants": {
+        "e": 1,
+        "Ar": 1
+      },
+      "products": {
+        "e": 1,
+        "Ar": 1
+      },
+      "rate": {
+        "model": "tabulated",
+        "file": "rates/K_exc_Ar_nf.csv"
+      },
+      "energy_eV": 15.0,
+      "is_electron_impact": true
+    }
+  ]
+}

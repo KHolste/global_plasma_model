@@ -1,7 +1,8 @@
 # E + Kr <-> E + Kr(4d![3/2]2), Excitation
 # Source: LXCat, BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)
 # Target: Kr <-> Kr(4d![3/2]2)
-# Threshold: 0.0 eV
+# Threshold: 12.803 eV
+# Statistical weight ratio: 5.0
 # Comment: DBSR69 model, J.Phys.B44 (2011) 065201.
 # Updated: 2011-07-14 22:43:00
 # Data points: 97

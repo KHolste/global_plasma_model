@@ -28,6 +28,8 @@ class LXCatBlock:
     database: str = ""       # z.B. "Hayashi database"
     permlink: str = ""       # z.B. "www.lxcat.net/Hayashi"
     db_comment: str = ""     # Quellenangabe der Datenbank
+    #: Verhaeltnis der statistischen Gewichte, nur bei Doppelpfeil angegeben.
+    gewichtsverhaeltnis: float | None = None
     energies: list[float] = field(default_factory=list)
     cross_sections: list[float] = field(default_factory=list)
 
@@ -73,13 +75,24 @@ def parse_lxcat(filepath: str | Path) -> list[LXCatBlock]:
             if i < len(lines):
                 block.target_line = lines[i].strip()
 
-            # Zeile 3: Schwellenenergie oder m/M
+            # Zeile 3: Schwellenenergie oder m/M. Ist der Zielzustand mit
+            # Doppelpfeil angegeben, steht dahinter noch das Verhaeltnis der
+            # statistischen Gewichte, das BOLSIG+ fuer die Superelastik
+            # braucht. Uns interessiert nur die erste Zahl; wer die ganze
+            # Zeile in float gibt, verliert die Schwelle stillschweigend.
             i += 1
             if i < len(lines):
-                try:
-                    block.threshold_or_mM = float(lines[i].strip())
-                except ValueError:
-                    pass
+                teile = lines[i].split()
+                if teile:
+                    try:
+                        block.threshold_or_mM = float(teile[0])
+                    except ValueError:
+                        pass
+                    if len(teile) > 1:
+                        try:
+                            block.gewichtsverhaeltnis = float(teile[1])
+                        except ValueError:
+                            pass
 
             # Kommentarzeilen bis zur Datentabelle
             i += 1
@@ -160,6 +173,8 @@ def write_csv(block: LXCatBlock, filepath: Path):
             f.write(f"# Threshold: {block.threshold_or_mM} eV\n")
         elif block.block_type == "ELASTIC":
             f.write(f"# m/M: {block.threshold_or_mM}\n")
+        if block.gewichtsverhaeltnis is not None:
+            f.write(f"# Statistical weight ratio: {block.gewichtsverhaeltnis}\n")
         if block.comment:
             f.write(f"# Comment: {block.comment}\n")
         if block.updated:

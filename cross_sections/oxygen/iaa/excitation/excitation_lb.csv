@@ -1,7 +1,8 @@
 # E + O2 <-> E + O2*(LB), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O2 <-> O2*(LB)
-# Threshold: 0.0 eV
+# Threshold: 9.97 eV
+# Statistical weight ratio: 0.333333
 # Comment: (1994)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

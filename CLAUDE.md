@@ -122,18 +122,33 @@ MuroranIT, TRINITI) und atomarer Sauerstoff (IAA). Sätze mit `effective` statt
 `elastic` sind nicht vollständig: der effektive Querschnitt ist der gesamte
 Impulsübertrag und würde den inelastischen Anteil doppelt zählen.
 
-Vollständig, aber **mehrdeutig** sind Argon BSR und Argon IAA: BSR führt zwei
-in sich geschlossene Sätze nebeneinander, IAA vier elastische Varianten. Die
-Sammeltabellen würden sie aufaddieren und damit doppelt zählen, deshalb bricht
-`precompute_rates.py` dort ab und nennt die Zweitsätze; `db_info.json` führt
-das als `eindeutig: false`. Welcher Satz gilt, ist eine physikalische
-Entscheidung; danach die übrigen Dateien entfernen oder mit `--trotzdem`
-rechnen.
+Bringt eine Datenbank **mehrere Sätze** mit, gilt keiner davon von selbst:
+BSR führt für Argon zwei in sich geschlossene Rechnungen nebeneinander, IAA
+vier elastische Varianten. Aufaddiert würde doppelt gezählt. Welcher Satz
+gilt, steht in **`auswahl.json`** neben den Daten — elastischer Querschnitt,
+ionisierender, Liste der Anregungen, dazu die Begründung. Der Wandler
+schreibt `metadata.json` und `db_info.json` bei jedem Lauf neu und würde die
+Entscheidung mitnehmen; `auswahl.json` überlebt und wird von Hand gepflegt.
+Fehlt sie, rechnen `precompute_rates.py` und `make_gas_package.py` nichts und
+nennen die Zweitsätze; gelesen wird sie über `cs_auswahl.py`, das beide
+benutzen.
 
-Chemiepakete gibt es für alle vollständigen und eindeutigen Sätze der drei
-Edelgase, also zwei für Xenon, vier für Krypton und sechs für Argon. Für O₂
-ist keines angelegt — ein molekularer Satz braucht eine Entscheidung über
-Spezies und Kanäle und ist keine reine Umwandlung.
+Für Argon ist entschieden: bei **BSR** der neuere Satz von 2016/2017 mit dem
+Impulsuebertrag als elastischem Querschnitt, bei **IAA** der als
+Impulsübertrag und vollständiger Satz gekennzeichnete — die Quelle rät von
+den aus dem totalen Querschnitt zurückgerechneten Varianten ausdrücklich ab.
+
+Chemiepakete gibt es für alle Sätze der drei Edelgase, bei denen der Satz
+feststeht: zwei für Xenon, vier für Krypton, acht für Argon. Für O₂ ist
+keines angelegt — ein molekularer Satz braucht eine Entscheidung über Spezies
+und Kanäle und ist keine reine Umwandlung.
+
+**Noch offen beim Sauerstoff:** O₂ IAA, Itikawa, MuroranIT und TRINITI sowie
+atomarer Sauerstoff IAA haben Sammeltabellen aus der Zeit vor dieser Regel.
+Sie sind mit mehreren Sätzen gerechnet und stammen von vor der Behebung des
+Schwellenfehlers unten; neu rechnen lässt sich erst, wenn für sie eine
+`auswahl.json` vorliegt. Bei Itikawa und MuroranIT geht das nicht ohne
+Entscheidung über die dissoziativen Ionisationskanäle.
 
 `noble_gas_comparison.py` rechnet die drei Edelgase gegeneinander: erst Xe, Kr
 und Ar aus Biagi über einen Durchflussbereich, dann je Gas alle Datenbanken an
@@ -154,6 +169,19 @@ Aus der Bestandsaufnahme vom 2026-09-02, noch nicht angefasst:
 
 
 ## Erledigte Befunde
+
+**Doppelpfeil-Blöcke verloren ihre Schwellenenergie.** Gibt LXCat den
+Zielzustand mit `<->` an, steht in der dritten Zeile hinter der Schwelle noch
+das Verhältnis der statistischen Gewichte, das BOLSIG+ für die Superelastik
+braucht. Der Wandler gab die ganze Zeile in `float`, was scheiterte, und
+ließ stillschweigend die Null stehen. Betroffen waren 152 Querschnitte in
+Argon BSR und IAA, Krypton BSR sowie O₂ und atomarem Sauerstoff aus IAA —
+darunter die Ionisation von Argon BSR, die statt 15.76 eV eine Schwelle von
+null trug. Die Ratenkoeffizienten selbst hängen nicht daran, wohl aber der
+Energieverlust je Anregung; in den betroffenen `kex_table.csv` stand die
+Spalte auf null. Der Wandler nimmt jetzt die erste Zahl der Zeile und
+schreibt das Gewichtsverhältnis als eigene Kopfzeile mit, damit die
+Doppelpfeil-Form in den Daten sichtbar bleibt.
 
 **Die Durchfluss-Leiter** steht neben der Leistungsleiter. Wo diese von
 unten hochfährt, fährt jene von oben herunter: viel Neutralgas ist der

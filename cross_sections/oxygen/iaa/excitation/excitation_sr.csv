@@ -1,7 +1,8 @@
 # E + O2 <-> E + O2*(SR), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O2 <-> O2*(SR)
-# Threshold: 0.0 eV
+# Threshold: 6.12 eV
+# Statistical weight ratio: 0.333333
 # Comment: Source: Fit to [Suzuki et al. J. Chem. Phys. 134, 064311 (2011)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

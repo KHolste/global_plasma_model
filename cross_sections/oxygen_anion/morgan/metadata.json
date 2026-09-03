@@ -1,6 +1,6 @@
 {
   "source": "LXCat, Morgan (Kinema Research & Software)",
-  "origin_file": "negative_oxygen.txt",
+  "origin_file": "cross_sections\\tests\\oxygen_anion_Morgan_database.txt",
   "retrieved": "02 Sep 2026",
   "gas": "oxygen_anion",
   "processes": [

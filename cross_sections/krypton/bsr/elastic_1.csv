@@ -1,7 +1,8 @@
 # E + Kr <-> E + Kr, Elastic
 # Source: LXCat, BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)
 # Target: Kr
-# m/M: 0.0
+# m/M: 6.5e-06
+# Statistical weight ratio: 1.0
 # Comment: momentum-transfer, DBSR_pol model, Phys.Rev. A83, 032713 (2011).
 # Updated: 2013-03-01 02:06:59
 # Data points: 613

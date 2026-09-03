@@ -1,7 +1,8 @@
 # E + Ar <-> E + Ar*((3d)[5/2]2Â°), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: Ar <-> Ar*((3d)[5/2]2Â°)
-# Threshold: 0.0 eV
+# Threshold: 14.06 eV
+# Statistical weight ratio: 5.0
 # Comment: [Chilton&Lin, Phys. Rev. A 60, 3712 (1999)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

@@ -1,7 +1,8 @@
 # E + O2 <-> E + E + O2+, Ionization
 # Source: LXCat, IAA (IAA)
 # Target: O2 <-> O2+
-# Threshold: 0.0 eV
+# Threshold: 12.07 eV
+# Statistical weight ratio: 1.0
 # Comment: 32, 734 (1966)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

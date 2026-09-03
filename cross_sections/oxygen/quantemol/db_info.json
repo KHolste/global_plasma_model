@@ -8,11 +8,14 @@
   "gas": "oxygen",
   "processes": {
     "elastic": false,
+    "elastic_count": 0,
     "effective": false,
     "ionization": true,
+    "ionization_count": 1,
     "excitation": false,
     "excitation_count": 0,
     "attachment": false
   },
-  "vollstaendig": false
+  "vollstaendig": false,
+  "eindeutig": true
 }

@@ -1,7 +1,8 @@
 # E + Ar <-> E + E + Ar+, Ionization
 # Source: LXCat, BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)
 # Target: Ar <-> Ar^+
-# Threshold: 0.0 eV
+# Threshold: 15.76 eV
+# Statistical weight ratio: 1.0
 # Comment: BSR-500 model.
 # Updated: 2013-02-18 21:14:04
 # Data points: 25

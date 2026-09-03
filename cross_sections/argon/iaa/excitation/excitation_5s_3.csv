@@ -1,7 +1,8 @@
 # E + Ar <-> E + Ar*((5s')[1/2]P1Â°), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: Ar <-> Ar*((5s')[1/2]P1Â°)
-# Threshold: 0.0 eV
+# Threshold: 14.255 eV
+# Statistical weight ratio: 3.0
 # Comment: Fit based on [Stewart et al, Phys. Rev. A 65, 032704 (2002)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

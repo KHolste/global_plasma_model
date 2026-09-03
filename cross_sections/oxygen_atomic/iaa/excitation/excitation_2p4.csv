@@ -1,7 +1,8 @@
 # E + O <-> E + O*((2p4)1D), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O <-> O*((2p4)1D)
-# Threshold: 0.0 eV
+# Threshold: 1.967 eV
+# Statistical weight ratio: 0.6
 # Comment: 91, 1691 (1986)].
 # Updated: 2024-01-03 11:02:40
 # Data points: 200

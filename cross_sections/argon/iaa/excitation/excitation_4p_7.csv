@@ -1,7 +1,8 @@
 # E + Ar <-> E + Ar*((4p')[1/2]1), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: Ar <-> Ar*((4p')[1/2]1)
-# Threshold: 0.0 eV
+# Threshold: 13.33 eV
+# Statistical weight ratio: 3.0
 # Comment: 2178 (1981)].
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

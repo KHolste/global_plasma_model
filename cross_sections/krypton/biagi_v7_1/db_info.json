@@ -8,11 +8,14 @@
   "gas": "krypton",
   "processes": {
     "elastic": true,
+    "elastic_count": 1,
     "effective": false,
     "ionization": true,
+    "ionization_count": 1,
     "excitation": true,
     "excitation_count": 4,
     "attachment": false
   },
-  "vollstaendig": true
+  "vollstaendig": true,
+  "eindeutig": true
 }

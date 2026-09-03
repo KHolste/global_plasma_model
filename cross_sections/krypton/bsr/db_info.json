@@ -8,11 +8,15 @@
   "gas": "krypton",
   "processes": {
     "elastic": true,
+    "elastic_count": 2,
     "effective": false,
     "ionization": false,
+    "ionization_count": 0,
     "excitation": true,
     "excitation_count": 68,
     "attachment": false
   },
-  "vollstaendig": false
+  "vollstaendig": false,
+  "eindeutig": false,
+  "hinweis": "Die Datenbank liefert mehrere elastische oder ionisierende Saetze. Welcher davon mit welchen Anregungen einen zusammengehoerigen Satz bildet, ist eine physikalische Entscheidung und keine Umwandlung. Solange sie nicht getroffen ist, werden keine Ratentabellen gerechnet."
 }

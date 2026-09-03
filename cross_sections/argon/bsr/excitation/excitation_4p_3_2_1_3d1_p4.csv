@@ -1,7 +1,8 @@
 # E + Ar <-> E + Ar(4p![3/2]1, 3D1, p4), Excitation
 # Source: LXCat, BSR (Quantum-mechanical calculations by O. Zatsarinny and K. Bartschat)
 # Target: Ar <-> Ar(4p![3/2]1, 3D1, p4)
-# Threshold: 0.0 eV
+# Threshold: 13.396 eV
+# Statistical weight ratio: 3.0
 # Comment: BSR-500.
 # Updated: 2013-02-18 21:14:04
 # Data points: 199

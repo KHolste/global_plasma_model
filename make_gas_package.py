@@ -32,6 +32,7 @@ import numpy as np
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
+import cs_auswahl  # noqa: E402
 from rate_coefficients import CrossSectionData, compute_rate_coefficient  # noqa: E402
 
 E_CH = 1.602176487e-19
@@ -73,15 +74,33 @@ def baue(gas: str, cs_dir: Path, out_dir: Path) -> int:
     meta = json.loads((cs_dir / "metadata.json").read_text(encoding="utf-8"))
     prozesse = meta["processes"]
 
-    elastisch = next((p for p in prozesse if p["type"] == "ELASTIC"), None)
-    ionisation = next((p for p in prozesse if p["type"] == "IONIZATION"), None)
-    anregungen = [p for p in prozesse if p["type"] == "EXCITATION"]
+    # Welcher Satz gilt, wenn die Datenbank mehrere mitbringt, steht in
+    # auswahl.json neben den Daten. Ohne Entscheidung wird nichts gebaut --
+    # das Paket wuerde sonst zwei Rechnungen desselben Gases vermengen.
+    if not cs_auswahl.ist_entschieden(cs_dir):
+        print(f"FEHLER: {cs_dir} bringt mehrere Saetze mit "
+              f"({', '.join(cs_auswahl.zweitsaetze(cs_dir))}).",
+              file=sys.stderr)
+        print(f"Welcher gilt, gehoert nach {cs_dir / 'auswahl.json'}.",
+              file=sys.stderr)
+        return 1
+
+    el_datei = cs_auswahl.elastic_datei(cs_dir).name
+    iz_datei = cs_auswahl.ionization_datei(cs_dir).name
+    exc_gewaehlt = {p.as_posix().split("/")[-1]
+                    for p in cs_auswahl.excitation_dateien(cs_dir)}
+
+    elastisch = next((p for p in prozesse if p["file"] == el_datei), None)
+    ionisation = next((p for p in prozesse if p["file"] == iz_datei), None)
+    anregungen = [p for p in prozesse if p["type"] == "EXCITATION"
+                  and Path(p["file"]).name in exc_gewaehlt]
     if not elastisch or not ionisation:
         print("FEHLER: elastischer oder ionisierender Prozess fehlt.", file=sys.stderr)
         return 1
 
     print(f"Quelle: {cs_dir}")
-    print(f"  1 elastisch, 1 ionisierend, {len(anregungen)} Anregungen")
+    print(f"  1 elastisch ({el_datei}), 1 ionisierend ({iz_datei}), "
+          f"{len(anregungen)} Anregungen")
     print(f"  Te-Gitter: {TE_GRID[0]:.2f} bis {TE_GRID[-1]:.2f} eV, {len(TE_GRID)} Punkte")
 
     rates_dir = out_dir / "rates"

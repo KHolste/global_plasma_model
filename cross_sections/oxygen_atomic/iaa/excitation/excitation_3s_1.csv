@@ -1,7 +1,8 @@
 # E + O <-> E + O*((3s)3SÂ°), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O <-> O*((3s)3SÂ°)
-# Threshold: 0.0 eV
+# Threshold: 9.521 eV
+# Statistical weight ratio: 0.6
 # Comment: Phys. 34, 2647 (2001)].
 # Updated: 2024-01-03 11:02:40
 # Data points: 200

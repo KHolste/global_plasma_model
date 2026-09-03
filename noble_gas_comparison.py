@@ -61,7 +61,8 @@ Q_PUNKT = 0.50        # Punkt fuer den Datenbankvergleich [sccm]
 DATENBANKEN = {
     "xenon":   ["biagi", "hayashi"],
     "krypton": ["biagi", "biagi_v7_1", "morgan", "siglo"],
-    "argon":   ["biagi", "biagi_v7_1", "hayashi", "ist_lisbon", "morgan", "puech"],
+    "argon":   ["biagi", "biagi_v7_1", "bsr", "hayashi", "iaa", "ist_lisbon",
+                "morgan", "puech"],
 }
 
 SYMBOL = {"xenon": "Xe", "krypton": "Kr", "argon": "Ar"}

@@ -1,6 +1,6 @@
 {
   "name": "Xenon (biagi)",
-  "description": "Xenon aus LXCat / Biagi database (MagBoltz V8.97). Elastischer Stoss, Einfachionisation und 50 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
+  "description": "Xenon aus LXCat, Biagi (transcription of data from SF Biagi's Fortran code, Magboltz.). Elastischer Stoss, Einfachionisation und 50 einzelne Anregungsprozesse mit je eigener Schwelle und eigener Ratentabelle, integriert ueber eine Maxwell-Verteilung.",
   "wall_temperature_K": 293.0,
   "sigma_i": 1e-18,
   "species": [

@@ -1,6 +1,6 @@
 {
   "source": "LXCat, Phelps database",
-  "origin_file": "cross_sections\\tests\\argon_all_12_databases.txt",
+  "origin_file": "cross_sections\\tests\\argon_all_Hayashi_Phelps_databases.txt",
   "retrieved": "02 Sep 2026",
   "gas": "argon",
   "processes": [

@@ -1,7 +1,8 @@
 # E + O2 <-> E + O2*(?), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O2 <-> O2*(?)
-# Threshold: 0.0 eV
+# Threshold: 11.0 eV
+# Statistical weight ratio: 0.333333
 # Comment: 0.1237 At 6 keV : Ïƒ = 7.486e-23 mÂ².
 # Updated: 2023-12-23 21:19:17
 # Data points: 200

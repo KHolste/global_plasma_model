@@ -1,7 +1,8 @@
 # E + O <-> E + O*(nf), Excitation
 # Source: LXCat, IAA (IAA)
 # Target: O <-> O*(nf)
-# Threshold: 0.0 eV
+# Threshold: 13.0 eV
+# Statistical weight ratio: 0.2
 # Comment: optically allowed states from sum of oscillator strengths f_o = (8 - Î£ f_x) = 0.247.
 # Updated: 2024-01-03 11:02:40
 # Data points: 200

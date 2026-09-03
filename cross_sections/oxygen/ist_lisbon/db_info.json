@@ -8,11 +8,15 @@
   "gas": "oxygen",
   "processes": {
     "elastic": false,
+    "elastic_count": 0,
     "effective": true,
     "ionization": true,
+    "ionization_count": 2,
     "excitation": true,
     "excitation_count": 11,
     "attachment": true
   },
-  "vollstaendig": false
+  "vollstaendig": false,
+  "eindeutig": false,
+  "hinweis": "Die Datenbank liefert mehrere elastische oder ionisierende Saetze. Welcher davon mit welchen Anregungen einen zusammengehoerigen Satz bildet, ist eine physikalische Entscheidung und keine Umwandlung. Solange sie nicht getroffen ist, werden keine Ratentabellen gerechnet."
 }
